@@ -74,6 +74,7 @@ Phase 1 Blender 房屋建筑现为默认场景；可用 `?architecture=legacy` �
 | --- | --- |
 | `?deskCandidate=0` / `?laptopCandidate=0` / `?midiCandidate=0` | 回看 C01 / C03 / C05 之前的程序化占位 |
 | `?floorMaterialTest=legacy` / `=1` | 回看 Phase 1 原地板 / 橡木测试地板 |
+| `?lightingPass=golden` | **待确认**：暖金灯光 + 灯串 + 蜡烛（`docs/golden-pass-01.md`）；`?fairyLights=0/1` 单独开关灯串 |
 | `?lightingPass=moon|warm|combined|bloom`、`?lightingDebug=1` | 电影感灯光层与调参面板 |
 | `?drumCandidate=1`、`?decorSample=1`、`?rugMaterialTest=1`、`?rugPileTest=1` | 未确认候选（默认不加载） |
 | `?voileSample=0`、`?curtainClosed=1`、`?architecture=legacy`、`?whiteModel=1`、`?visualBaseline=1` | 帘子、旧建筑、白模与旧灯光对比 |

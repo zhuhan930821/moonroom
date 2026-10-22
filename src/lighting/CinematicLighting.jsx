@@ -7,8 +7,27 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
 export const CINEMATIC_DEFAULTS = { moonlight: 3.2, warm: 105, ambient: 0.52, exposure: 1.0, bloomStrength: 0.28, bloomThreshold: 1.08 }
+// Golden pass: warm practicals lead, moonlight only rims the window side (reference: amber, lived-in).
+export const GOLDEN_DEFAULTS = { moonlight: 1.35, warm: 70, ambient: 0.95, exposure: 1.15, bloomStrength: 0.38, bloomThreshold: 1.0 }
+export const BLOOM_PASSES = ['bloom', 'golden']
+
+function GoldenLights({ settings, quality }) {
+  const w = settings.warm
+  return <>
+    <directionalLight position={[1.5, 7.8, -10.5]} color="#b9b4ff" intensity={settings.moonlight} castShadow shadow-mapSize-width={quality === 'high' ? 2048 : 1024} shadow-mapSize-height={quality === 'high' ? 2048 : 1024} shadow-camera-left={-11} shadow-camera-right={11} shadow-camera-top={9} shadow-camera-bottom={-9} shadow-camera-near={1} shadow-camera-far={32} shadow-bias={-0.00025} shadow-normalBias={0.035}/>
+    <hemisphereLight args={['#b496cc', '#8c5a3e', settings.ambient]} />
+    {/* desk, lounge moon lamp, drum-corner floor lamp, bed, bookshelf, room fill */}
+    <pointLight position={[-.9, 3.1, -3.1]} color="#ffb36a" intensity={w} distance={5.6} decay={2} castShadow={quality === 'high'} shadow-mapSize-width={512} shadow-mapSize-height={512}/>
+    <pointLight position={[4.15, 2.05, .55]} color="#ffbd78" intensity={w * .7} distance={5} decay={2}/>
+    <pointLight position={[-8.2, 3.0, -1.6]} color="#ffa95c" intensity={w * .45} distance={5.4} decay={2}/>
+    <pointLight position={[6.6, 3.6, -2.8]} color="#ffbf80" intensity={w * .45} distance={5.5} decay={2}/>
+    <pointLight position={[7.4, 2.6, 4.4]} color="#ffb877" intensity={w * .5} distance={5.5} decay={2}/>
+    <pointLight position={[0, 5.4, 1.5]} color="#ffc995" intensity={w * .7} distance={12} decay={2}/>
+  </>
+}
 
 export function CinematicLights({ layer, settings, quality }) {
+  if (layer === 'golden') return <GoldenLights settings={settings} quality={quality}/>
   const moon = layer === 'moon' || layer === 'combined' || layer === 'bloom'
   const warm = layer === 'warm' || layer === 'combined' || layer === 'bloom'
   const ambient = layer === 'combined' || layer === 'bloom'

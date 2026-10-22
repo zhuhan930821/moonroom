@@ -9,7 +9,8 @@ import Desktop from './ui/Desktop'
 import { preloadCoreAssets } from './scene/AssetModel'
 import GLBAsset from './scene/AssetModel'
 import { LightingProvider } from './lighting/LightingContext'
-import { CINEMATIC_DEFAULTS, CinematicLights, CinematicPostFX } from './lighting/CinematicLighting'
+import { BLOOM_PASSES, CINEMATIC_DEFAULTS, GOLDEN_DEFAULTS, CinematicLights, CinematicPostFX } from './lighting/CinematicLighting'
+import FairyLights from './scene/FairyLights'
 import { FLAGS } from './config/flags'
 
 preloadCoreAssets()
@@ -39,7 +40,7 @@ export default function App() {
   const [quality, setQuality] = useState('high')
   const [showSettings, setShowSettings] = useState(false)
   const [lightingPass, setLightingPass] = useState(FLAGS.lightingPass)
-  const [lighting, setLighting] = useState(CINEMATIC_DEFAULTS)
+  const [lighting, setLighting] = useState(FLAGS.lightingPass === 'golden' ? GOLDEN_DEFAULTS : CINEMATIC_DEFAULTS)
   const showLightingDebug = FLAGS.lightingDebug
   const cinematic = lightingPass !== 'current'
   const updateLighting = key => event => setLighting(value => ({ ...value, [key]: Number(event.target.value) }))
@@ -88,7 +89,8 @@ export default function App() {
         <Environment hit={game.hit} quality={quality} cinematic={cinematic}/>
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
         <Furniture hit={game.hit}/>
-        {cinematic && <CinematicPostFX enabled={lightingPass === 'bloom'} settings={lighting}/>} 
+        {FLAGS.fairyLights && <FairyLights quality={quality}/>}
+        {cinematic && <CinematicPostFX enabled={BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>} 
       </LightingProvider>}
       <PlayerController locked={game.locked} mode={game.mode} onPosition={game.updatePosition}/>
       {captureEnabled && <PerformanceProbe/>}
@@ -110,7 +112,7 @@ export default function App() {
       {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button></section>}
       {showLightingDebug && !whiteModel && <section className="lighting-debug" onClick={e=>e.stopPropagation()}>
         <header><span>LIGHTING PASS 01</span><button onClick={()=>setLightingPass(value=>value === 'current' ? 'bloom' : 'current')}>{lightingPass === 'current' ? '查看升级版' : '对比原版'}</button></header>
-        <label>渲染层<select value={lightingPass} onChange={e=>setLightingPass(e.target.value)}><option value="current">Current</option><option value="moon">Moon only</option><option value="warm">Warm only</option><option value="combined">Combined</option><option value="bloom">Combined + Bloom</option></select></label>
+        <label>渲染层<select value={lightingPass} onChange={e=>setLightingPass(e.target.value)}><option value="current">Current</option><option value="moon">Moon only</option><option value="warm">Warm only</option><option value="combined">Combined</option><option value="bloom">Combined + Bloom</option><option value="golden">Golden (warm)</option></select></label>
         <label>Moonlight <output>{lighting.moonlight.toFixed(2)}</output><input type="range" min="0" max="5" step=".05" value={lighting.moonlight} onChange={updateLighting('moonlight')}/></label>
         <label>Warm lights <output>{lighting.warm.toFixed(1)}</output><input type="range" min="0" max="180" step="1" value={lighting.warm} onChange={updateLighting('warm')}/></label>
         <label>Ambient <output>{lighting.ambient.toFixed(2)}</output><input type="range" min="0" max="1" step=".01" value={lighting.ambient} onChange={updateLighting('ambient')}/></label>

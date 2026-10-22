@@ -1,0 +1,61 @@
+{
+  "results": {
+    "hero-current": {
+      "fps": 12.740726221096915,
+      "calls": 380,
+      "triangles": 370962,
+      "geometries": 395,
+      "textures": 21
+    },
+    "hero-golden": {
+      "fps": 13.6518771331058,
+      "calls": 1,
+      "triangles": 1,
+      "geometries": 434,
+      "textures": 34
+    },
+    "drumCorner-current": {
+      "fps": 11.702179531073677,
+      "calls": 216,
+      "triangles": 269108,
+      "geometries": 278,
+      "textures": 14
+    },
+    "drumCorner-golden": {
+      "fps": 12.357884330202669,
+      "calls": 1,
+      "triangles": 1,
+      "geometries": 372,
+      "textures": 27
+    },
+    "bed-current": {
+      "fps": 14.256218660564452,
+      "calls": 319,
+      "triangles": 275358,
+      "geometries": 377,
+      "textures": 22
+    },
+    "bed-golden": {
+      "fps": 12.41804092956878,
+      "calls": 1,
+      "triangles": 1,
+      "geometries": 412,
+      "textures": 35
+    },
+    "deskView-current": {
+      "fps": 17.953321365092815,
+      "calls": 184,
+      "triangles": 190474,
+      "geometries": 274,
+      "textures": 13
+    },
+    "deskView-golden": {
+      "fps": 15.703979977058044,
+      "calls": 1,
+      "triangles": 1,
+      "geometries": 356,
+      "textures": 26
+    }
+  },
+  "errors": []
+}
