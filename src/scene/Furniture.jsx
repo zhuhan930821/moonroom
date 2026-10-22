@@ -50,7 +50,7 @@ function Rug(){
 
 // E01: "Messy bed 2.0" by thethieme (Sketchfab, CC BY 4.0, credit in ASSETS.md), recoloured to the
 // Moonroom palette. Base maps are dropped (they bake the original grey/black look); normal and
-// roughness maps keep the fabric folds and wood grain. Scaled 1.35x so it holds its own in the 20 m room.
+// roughness maps keep the fabric folds and wood grain. Scaled 1.7x so it reads as the room's big dream bed.
 const BED_TINTS = {
   Nordli_Cover: { color: new THREE.Color('#d98fae'), map: null },     // draped throw: rose knit
   Nordli_Comforter: { color: new THREE.Color('#f3e4dc'), map: null }, // folded duvet: cream
@@ -66,7 +66,7 @@ function Bed() {
     url="/assets/models/bed/messy-bed-2.glb"
     position={FURNITURE.bed.position}
     rotation={[0, -Math.PI / 2, 0]}
-    scale={1.35}
+    scale={1.7}
     axisCorrection={false}
     nodeOverrides={BED_TINTS}
     fallbackScale={1.5}
