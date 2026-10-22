@@ -5,6 +5,7 @@ import Furniture from './scene/Furniture'
 import PlayerController from './game/PlayerController'
 import { INTERACTIONS } from './config/scene'
 import { useInteractionSystem } from './game/useInteractionSystem'
+import { renderDemoLog, startDemoLog } from './audio/drums'
 import Desktop from './ui/Desktop'
 import DrumPanel from './ui/DrumPanel'
 import PianoPanel from './ui/PianoPanel'
@@ -78,6 +79,11 @@ export default function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+  useEffect(() => {
+    if (!FLAGS.demo) return
+    window.__moonroomGame = game
+    window.__moonroomAudio = { startDemoLog, renderDemoLog }
+  })
   const inExplore = game.mode === 'explore'
   const prompt = game.mode === 'beanbag' ? '起身' : inExplore && game.near ? INTERACTIONS[game.near].label : null
 
@@ -107,14 +113,14 @@ export default function App() {
       {inExplore && <div className="reticle"/>}
       {!whiteModel && <div className={`prompt ${prompt ? 'show' : ''}`} data-testid="interaction-prompt">{prompt && <><kbd>E</kbd><span>{prompt}</span></>}</div>}
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
-      {inExplore && !game.locked && <div className="unlock">点击画面继续探索</div>}
+      {inExplore && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
       {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse}/><div className="mode-exit">Esc · 返回房间</div></>}
       {game.mode === 'drums' && <DrumPanel game={game}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
-      {captureEnabled && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
+      {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
       {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button></section>}
       {showLightingDebug && !whiteModel && <section className="lighting-debug" onClick={e=>e.stopPropagation()}>
         <header><span>LIGHTING PASS 01</span><button onClick={()=>setLightingPass(value=>value === 'current' ? 'bloom' : 'current')}>{lightingPass === 'current' ? '查看升级版' : '对比原版'}</button></header>

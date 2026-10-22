@@ -18,6 +18,20 @@ export default function PlayerController({ locked, mode, onPosition }) {
   const desired = useRef(new THREE.Quaternion())
   const returning = useRef(false)
 
+  // Demo capture: a script places the explore camera directly (no pointer lock needed).
+  useEffect(() => {
+    if (!FLAGS.demo) return
+    window.__moonroomCamera = {
+      get: () => ({ position: position.current.toArray(), yaw: yaw.current, pitch: pitch.current }),
+      set: ({ position: p, yaw: y, pitch: x }) => {
+        if (p) position.current.set(...p)
+        if (y != null) yaw.current = y
+        if (x != null) pitch.current = x
+      },
+    }
+    return () => { delete window.__moonroomCamera }
+  }, [])
+
   useEffect(() => {
     const down = e => keys.add(e.code)
     const up = e => keys.delete(e.code)

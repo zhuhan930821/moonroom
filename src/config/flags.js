@@ -12,6 +12,8 @@ export function parseFlags(search = '') {
     captureMode: q.get('captureMode'),
     captureName: q.get('captureName') || q.get('spawn') || 'room',
     whiteModel: on('whiteModel'),
+    // Scripted product-video capture (scripts/record_demo.mjs): exposes camera/game/audio hooks, hides QA UI
+    demo: on('demo'),
     // Lighting
     lightingPass: ['current', 'moon', 'warm', 'combined', 'bloom', 'golden'].includes(pass) ? pass : 'golden',
     lightingDebug: on('lightingDebug'),
@@ -34,8 +36,8 @@ export function parseFlags(search = '') {
     decorSample: on('decorSample'),
     rugPileTest: on('rugPileTest'),
     rugMaterialTest: on('rugMaterialTest'),
-    // Mugo Moc (~/DrumApp) shown on the desk laptop/monitor; its dev server runs on 5173 by default
-    mugoUrl: q.get('mugoUrl') || import.meta.env?.VITE_MUGO_URL || 'http://localhost:5173/',
+    // Mugo Moc (~/DrumApp, deployed on Vercel) shown on the desk laptop/monitor; ?mugoUrl=http://localhost:5173/ for local dev
+    mugoUrl: q.get('mugoUrl') || import.meta.env?.VITE_MUGO_URL || 'https://web-ten-rho-z0tt3ihxv2.vercel.app/',
     // Curtains
     voile: notOff('voileSample'),
     curtainClosed: on('curtainClosed'),

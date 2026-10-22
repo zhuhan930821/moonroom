@@ -1,4 +1,5 @@
 import { takeLength } from './takes'
+import { FLAGS } from '../config/flags'
 
 // All CC0 (Virtuosity Drums, see ASSETS.md). Floor tom reuses the low tom pitched down.
 // `peak` is the target level after per-buffer normalisation: the source files range from
@@ -33,7 +34,11 @@ function getContext() {
     context = new (window.AudioContext || window.webkitAudioContext)()
     master = context.createGain()
     master.gain.value = volume
-    master.connect(context.destination)
+    if (FLAGS.demo) {
+      // Demo capture runs in slow motion; sound is rebuilt offline from the event log instead.
+      const mute = context.createGain(); mute.gain.value = 0
+      master.connect(mute).connect(context.destination)
+    } else master.connect(context.destination)
   }
   return context
 }
@@ -66,7 +71,13 @@ export async function prepareAudio() {
   return samplePromise
 }
 
-function voice(target, ctx, sample, when, level = 1) {
+// Demo capture: every live voice is logged with its (audio-clock) time for an offline remix.
+let demoLog = null
+export function startDemoLog() { demoLog = { events: [], origin: getContext().currentTime, ambient: ambientPlaying }; return demoLog.origin }
+const logEvent = (ctx, event) => { if (demoLog && ctx === context) demoLog.events.push(event); return event }
+
+function voice(target, ctx, sample, when, level = 1, pad) {
+  if (pad) logEvent(ctx, { pad, when, level })
   const source = ctx.createBufferSource()
   const gain = ctx.createGain()
   source.buffer = sample.buffer
@@ -83,12 +94,15 @@ export async function playDrum(name, when) {
   const audio = getContext()
   const at = Math.max(audio.currentTime, when ?? audio.currentTime)
   if (name === 'hihat' && openHat) { openHat.gain.gain.setTargetAtTime(0, at, .015); openHat = null }
-  const playing = voice(master, audio, samples[name], at)
+  const playing = voice(master, audio, samples[name], at, 1, name)
+  if (name === 'hihat' && demoLog) demoLog.events.push({ choke: true, when: at })
   if (name === 'hihatOpen') openHat = playing
   return at
 }
 
 export function audioNow() { return getContext().currentTime }
+
+
 
 export async function preparePiano() {
   const audio = getContext()
@@ -103,6 +117,7 @@ export async function preparePiano() {
 }
 
 function pianoVoice(target, ctx, roots, note, when, duration) {
+  const logged = logEvent(ctx, { note, when, end: duration != null ? when + duration : null })
   const root = PIANO_ROOTS.reduce((best, r) => Math.abs(r - note) < Math.abs(best - note) ? r : best)
   const source = ctx.createBufferSource()
   const gain = ctx.createGain()
@@ -111,7 +126,7 @@ function pianoVoice(target, ctx, roots, note, when, duration) {
   gain.gain.value = roots[root].gain
   source.connect(gain).connect(target)
   source.start(when)
-  const release = held => { const at = Math.max(when, held); gain.gain.setTargetAtTime(0, at, .12); source.stop(at + 1.2) }
+  const release = held => { const at = Math.max(when, held); logged.end = at; gain.gain.setTargetAtTime(0, at, .12); source.stop(at + 1.2) }
   if (duration != null) release(when + duration)
   return release
 }
@@ -167,7 +182,7 @@ export async function playTake(take, { loop = false, onHit, onEnd, onPosition } 
   const schedule = () => {
     for (const event of take.events) {
       if (event.pad === 'piano') pianoVoice(bus, audio, roots, event.note, start + event.t, event.d)
-      else voice(bus, audio, samples[event.pad], start + event.t)
+      else voice(bus, audio, samples[event.pad], start + event.t, 1, event.pad)
       later(() => !stopped && onHit?.(event.pad, event.note), start + event.t)
     }
     later(() => {
@@ -199,7 +214,11 @@ export async function renderTakeWav(take) {
     if (event.pad === 'piano') pianoVoice(out, offline, roots, event.note, event.t, event.d)
     else voice(out, offline, samples[event.pad], event.t)
   }
-  const rendered = await offline.startRendering()
+  return wavBlob(await offline.startRendering())
+}
+
+function wavBlob(rendered) {
+  const rate = rendered.sampleRate
   const frames = rendered.length
   const view = new DataView(new ArrayBuffer(44 + frames * 4))
   const text = (offset, value) => [...value].forEach((ch, i) => view.setUint8(offset + i, ch.charCodeAt(0)))
@@ -215,11 +234,12 @@ export async function renderTakeWav(take) {
   return new Blob([view], { type: 'audio/wav' })
 }
 
-function makeAmbient() {
-  const audio = getContext()
-  ambientGain = audio.createGain()
+function makeAmbient() { ambientGain = buildAmbient(getContext(), master) }
+
+function buildAmbient(audio, target) {
+  const ambientGain = audio.createGain()
   ambientGain.gain.value = 0
-  ambientGain.connect(master)
+  ambientGain.connect(target)
   // Original quiet drone and room air; no external music recording.
   ;[130.81, 196, 261.63].forEach((frequency, i) => {
     const osc = audio.createOscillator()
@@ -247,6 +267,7 @@ function makeAmbient() {
   gain.gain.value = .12
   noise.connect(filter).connect(gain).connect(ambientGain)
   noise.start()
+  return ambientGain
 }
 
 export async function setAmbientPlaying(playing) {
@@ -255,6 +276,7 @@ export async function setAmbientPlaying(playing) {
   if (!ambientGain) makeAmbient()
   ambientPlaying = playing
   ambientGain.gain.setTargetAtTime(playing ? .7 : 0, audio.currentTime, .8)
+  if (demoLog) demoLog.events.push({ ambient: playing, when: audio.currentTime })
   return ambientPlaying
 }
 
@@ -264,3 +286,25 @@ export function setMasterVolume(value) {
 }
 
 export function getAmbientPlaying() { return ambientPlaying }
+
+// Demo capture: re-render everything that sounded since startDemoLog() into a WAV,
+// starting at the log origin. Times are in the (possibly slowed) audio clock.
+export async function renderDemoLog(seconds) {
+  const [samples, roots] = await Promise.all([prepareAudio(), preparePiano()])
+  const rate = 44100
+  const offline = new OfflineAudioContext(2, Math.ceil(seconds * rate), rate)
+  const out = offline.createGain(); out.gain.value = volume; out.connect(offline.destination)
+  const origin = demoLog.origin
+  const ambient = buildAmbient(offline, out)
+  if (demoLog.ambient) ambient.gain.setValueAtTime(.7, 0)
+  for (const e of demoLog.events.filter(e => e.ambient != null)) ambient.gain.setTargetAtTime(e.ambient ? .7 : 0, Math.max(0, e.when - origin), .8)
+  let openHat = null
+  for (const e of [...demoLog.events].sort((a, b) => a.when - b.when)) {
+    const at = Math.max(0, e.when - origin)
+    if (e.choke && openHat) { openHat.gain.gain.setTargetAtTime(0, at, .015); openHat = null }
+    else if (e.pad) { const v = voice(out, offline, samples[e.pad], at, e.level); if (e.pad === 'hihatOpen') openHat = v }
+    else if (e.note != null) pianoVoice(out, offline, roots, e.note, at, (e.end ?? e.when + 2) - e.when)
+  }
+  const rendered = await offline.startRendering()
+  return wavBlob(rendered)
+}

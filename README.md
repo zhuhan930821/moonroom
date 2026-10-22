@@ -31,7 +31,7 @@ npm run preview
 | M | 沙发模式：环境音乐开关 |
 | C | 探索模式：拉开或合拢整面窗墙的纱帘 |
 
-靠近 CRT、鼓凳、钢琴、笔记本或沙发会出现提示。CRT 的 Diary、Music、Dreams、Studio 图标能打开窗口；**Studio** 列出所有录音工程，可播放、循环、量化、点格子编辑鼓点和钢琴音符、导出 WAV（工程保存在浏览器 localStorage）。书桌右侧的笔记本和副屏打开 **Mugo Moc**（`~/DrumApp`），默认地址 `http://localhost:5173/`，可用 `?mugoUrl=` 或环境变量 `VITE_MUGO_URL` 指向线上版本。右下角设置按钮可调音量和切换「精致 / 流畅」画质。
+靠近 CRT、鼓凳、钢琴、笔记本或沙发会出现提示。CRT 的 Diary、Music、Dreams、Studio 图标能打开窗口；**Studio** 列出所有录音工程，可播放、循环、量化、点格子编辑鼓点和钢琴音符、导出 WAV（工程保存在浏览器 localStorage）。书桌右侧的笔记本和副屏打开 **Mugo Moc**（`~/DrumApp`），默认打开线上版本 `https://web-ten-rho-z0tt3ihxv2.vercel.app/`；本地开发可用 `?mugoUrl=http://localhost:5173/` 或环境变量 `VITE_MUGO_URL` 覆盖。右下角设置按钮可调音量和切换「精致 / 流畅」画质。
 
 ## 结构
 

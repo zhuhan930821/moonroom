@@ -12,6 +12,6 @@ export default function MugoScreen({ onExit }) {
       <button onClick={onExit}>← 返回房间</button>
     </div>
     <iframe title="Mugo Moc" src={FLAGS.mugoUrl} onLoad={() => setLoaded(true)} allow="autoplay; microphone; fullscreen; clipboard-write"/>
-    {!loaded && <div className="mugo-wait">正在打开 Mugo… <small>如果一直是空白：先在 ~/DrumApp 运行 <code>npm run dev</code>，或用 <code>?mugoUrl=</code> 指定线上地址。</small></div>}
+    {!loaded && <div className="mugo-wait">正在打开 Mugo… <small>如果一直是空白：检查网络，或点右上角在新标签页打开；本地开发可用 <code>?mugoUrl=http://localhost:5173/</code>。</small></div>}
   </div>
 }
