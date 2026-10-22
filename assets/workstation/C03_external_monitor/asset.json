@@ -3,7 +3,7 @@
   "parent_asset": "C03",
   "display_name": "Moonroom companion monitor for the modern laptop",
   "category": "C_WORKSTATION",
-  "status": "THREEJS_PREVIEW_AWAITING_APPROVAL",
+  "status": "ACTIVE_USER_APPROVED",
   "source_reference": "assets/reference/Moonroom_Asset_Reference_Pack.zip!/Workstation/C03_laptop_screen_setup.png",
   "authorship": "Original Blender hard-surface model authored for Moonroom; no third-party mesh",
   "license": "Project-owned original asset; user-supplied crop used only for visual guidance",
@@ -21,5 +21,6 @@
   "collision": "Existing desk footprint remains authoritative; visible monitor mesh is not a player collider",
   "candidate_layout_note": "Right speaker is moved to x=3.5 only when the C03 candidate is enabled, so it does not cover the new display; default scene unchanged.",
   "validation": "GLB loaded in Moonroom without page or asset errors; both laptop and external monitor are visible in the same 1280x720 scene screenshot.",
-  "approval_required_before_default_replacement": true
+  "approval_required_before_default_replacement": false,
+  "activation_note": "User approved C01/C03/C05 as default workstation assets on 2026-10-22. Old procedural placeholders remain behind ?deskCandidate=0, ?laptopCandidate=0, ?midiCandidate=0."
 }

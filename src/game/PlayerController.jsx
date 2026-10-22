@@ -3,12 +3,13 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CAMERA_POSES, PLAYER, QA_LOOKS, QA_SPAWNS, START, START_LOOK } from '../config/scene'
 import { movePlayer } from './collision'
+import { FLAGS } from '../config/flags'
 
 const keys = new Set()
 
 export default function PlayerController({ locked, mode, onPosition }) {
   const { camera } = useThree()
-  const spawnName = new URLSearchParams(window.location.search).get('spawn')
+  const spawnName = FLAGS.spawn
   const initialLook = QA_LOOKS[spawnName] || START_LOOK
   const yaw = useRef(initialLook[0])
   const pitch = useRef(initialLook[1])

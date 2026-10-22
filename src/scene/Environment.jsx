@@ -5,7 +5,13 @@ import { ROOM, WINDOW_ARCHES } from '../config/scene'
 import SheerCurtainSample from './SheerCurtainSample'
 import GLBAsset from './AssetModel'
 import { GlowOrb, RoundedBox, StarField } from './Primitives'
+import { FLAGS } from '../config/flags'
 
+const ARCHITECTURE_URLS = {
+  phase1: '/assets/models/architecture/moonroom-architecture-phase1.glb',
+  oakTest: '/assets/models/architecture/moonroom-architecture-floor-material-test.glb',
+  polyhaven: '/assets/models/architecture/moonroom-architecture-polyhaven-wood-floor-test.glb',
+}
 const gold = '#b98669'
 const cloudColors = ['#f0a3c8', '#d98abc', '#ad83cb', '#fac1bd']
 // Open the entire window-facing wall to the sky while retaining the three
@@ -89,15 +95,9 @@ function CeilingLights() {
 }
 
 export default function Environment({ hit, quality, cinematic = false }) {
-  const params = new URLSearchParams(window.location.search)
-  const blenderArchitecture = params.get('architecture') !== 'legacy'
-  const floorMaterialTest = params.get('floorMaterialTest')
-  const architectureUrl = floorMaterialTest === 'legacy'
-    ? '/assets/models/architecture/moonroom-architecture-phase1.glb'
-    : floorMaterialTest === '1'
-      ? '/assets/models/architecture/moonroom-architecture-floor-material-test.glb'
-      : '/assets/models/architecture/moonroom-architecture-polyhaven-wood-floor-test.glb'
-  const visualBaseline = params.get('visualBaseline') === '1'
+  const blenderArchitecture = !FLAGS.legacyArchitecture
+  const architectureUrl = ARCHITECTURE_URLS[FLAGS.floor]
+  const visualBaseline = FLAGS.visualBaseline
   return <>
     <color attach="background" args={['#182657']} /><fog attach="fog" args={['#b47caf', 24, 58]} />
     {!cinematic && <><ambientLight intensity={visualBaseline?1.15:.55} color={visualBaseline?'#d5b5d9':'#d0c2df'} />
@@ -114,8 +114,8 @@ export default function Environment({ hit, quality, cinematic = false }) {
       <mesh receiveShadow position={[0, ROOM.height / 2, ROOM.depth / 2]} rotation-y={Math.PI}><planeGeometry args={[ROOM.width, ROOM.height]} /><meshStandardMaterial color="#6b4b71" /></mesh>
       <Windows />
     </>}
-    {new URLSearchParams(window.location.search).get('voileSample') !== '0' && <SheerCurtainSample />}<CeilingLights />
-    {params.get('decorSample') === '1' && <>
+    {FLAGS.voile && <SheerCurtainSample />}<CeilingLights />
+    {FLAGS.decorSample && <>
       <GLBAsset url="/assets/models/decor/moonroom-decor-phase01-ceiling-sample.glb" axisCorrection castShadow={false} fallbackScale={.1} />
       {!cinematic && <pointLight position={[2.9,6.55,-3.05]} color="#ffe0b5" intensity={3.5} distance={3.2} decay={2} />}
     </>}

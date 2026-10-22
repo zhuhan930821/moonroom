@@ -10,6 +10,7 @@ import Lounge from './Lounge'
 import Workstation from './Workstation'
 import DreamLoungeProps from './DreamLoungeProps'
 import GLBAsset from './AssetModel'
+import { FLAGS } from '../config/flags'
 
 function rugTexture() {
   const canvas = document.createElement('canvas')
@@ -31,15 +32,14 @@ function rugTexture() {
 
 function Rug(){
   const texture=useMemo(rugTexture,[])
-  const params=new URLSearchParams(window.location.search)
-  const baseline=params.get('visualBaseline')==='1'
-  if(params.get('rugPileTest')==='1') return <GLBAsset
+  const baseline=FLAGS.visualBaseline
+  if(FLAGS.rugPileTest) return <GLBAsset
     url="/assets/models/candidates/rug-star-moon-pile-test.glb"
     axisCorrection={false}
     castShadow={false}
     fallbackScale={.25}
   />
-  if(params.get('rugMaterialTest')==='1') return <GLBAsset
+  if(FLAGS.rugMaterialTest) return <GLBAsset
     url="/assets/models/candidates/rug-star-moon-material-test.glb"
     axisCorrection={false}
     castShadow={false}
@@ -92,6 +92,6 @@ function Details(){return <>
 </>}
 
 export default function Furniture({hit}) {
-  const candidateDrums = new URLSearchParams(window.location.search).get('drumCandidate') === '1'
+  const candidateDrums = FLAGS.drumCandidate
   return <><Details/><Bed/><Bookcase/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit}/> : <DrumKit hit={hit}/>}<Lounge/><DreamLoungeProps/><Keyboard/><RecordPlayer/><Foxes/></>
 }

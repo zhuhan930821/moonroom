@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { FURNITURE } from '../config/scene'
 import { GlowOrb, RoundedBox } from './Primitives'
 import GLBAsset from './AssetModel'
+import { FLAGS } from '../config/flags'
 
 const CRT_COLLIDERS = [{name:'CRT_Collider',position:[0,.72,0],size:[2.8,1.45,1.35]}]
 const CRT_ANCHORS = [{name:'CRT_Interaction',position:[0,.9,-.7]}]
@@ -55,7 +56,7 @@ function ExternalMonitor() {
   </GLBAsset>
 }
 
-export default function Workstation(){const p=FURNITURE.desk.position;const params=new URLSearchParams(window.location.search);const deskCandidate=params.get('deskCandidate')!=='0';const laptopCandidate=params.get('laptopCandidate')!=='0';const midiCandidate=params.get('midiCandidate')!=='0';return <group>
+export default function Workstation(){const p=FURNITURE.desk.position;const {desk:deskCandidate,laptop:laptopCandidate,midi:midiCandidate}=FLAGS;return <group>
   {deskCandidate ? <GLBAsset url="/assets/models/candidates/C01-workstation-desk-review.glb" position={p} axisCorrection={false} /> : <>
     <RoundedBox args={[8.25,.18,1.8]} color="#a36c6c" position={[p[0],1.22,p[2]]} />
     {[-3.8,3.8].map(x=>[-.65,.65].map(z=><RoundedBox key={`${x}/${z}`} args={[.13,1.22,.13]} color="#735260" position={[p[0]+x,.61,p[2]+z]}/>))}

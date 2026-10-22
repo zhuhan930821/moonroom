@@ -10,6 +10,7 @@ import { preloadCoreAssets } from './scene/AssetModel'
 import GLBAsset from './scene/AssetModel'
 import { LightingProvider } from './lighting/LightingContext'
 import { CINEMATIC_DEFAULTS, CinematicLights, CinematicPostFX } from './lighting/CinematicLighting'
+import { FLAGS } from './config/flags'
 
 preloadCoreAssets()
 
@@ -37,20 +38,13 @@ export default function App() {
   const game = useInteractionSystem(root)
   const [quality, setQuality] = useState('high')
   const [showSettings, setShowSettings] = useState(false)
-  const query = new URLSearchParams(window.location.search)
-  const requestedPass = query.get('lightingPass')
-  const [lightingPass, setLightingPass] = useState(['current','moon','warm','combined','bloom'].includes(requestedPass) ? requestedPass : 'current')
+  const [lightingPass, setLightingPass] = useState(FLAGS.lightingPass)
   const [lighting, setLighting] = useState(CINEMATIC_DEFAULTS)
-  const showLightingDebug = query.get('lightingDebug') === '1'
+  const showLightingDebug = FLAGS.lightingDebug
   const cinematic = lightingPass !== 'current'
   const updateLighting = key => event => setLighting(value => ({ ...value, [key]: Number(event.target.value) }))
   const captureRef = useRef(null)
-  const captureEnabled = new URLSearchParams(window.location.search).get('capture') === '1'
-  const whiteModel = new URLSearchParams(window.location.search).get('whiteModel') === '1'
-  const captureMode = new URLSearchParams(window.location.search).get('captureMode')
-  const captureName = new URLSearchParams(window.location.search).get('captureName')
-    || new URLSearchParams(window.location.search).get('spawn')
-    || 'room'
+  const { capture: captureEnabled, whiteModel, captureMode, captureName } = FLAGS
   const capture = async () => {
     const state = captureRef.current
     if (!state) return

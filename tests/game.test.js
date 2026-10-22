@@ -30,3 +30,14 @@ test('movement faces the window, slides along obstacles, and cannot tunnel throu
   assert.ok(corridor.z<2)
   assert.equal(isBlocked(corridor.x,corridor.z),false)
 })
+
+test('URL flags default to the approved room and only QA params override it', async () => {
+  const { parseFlags } = await import('../src/config/flags.js')
+  const base = parseFlags('')
+  assert.equal(base.desk && base.laptop && base.midi && base.voile, true)
+  assert.equal(base.drumCandidate || base.decorSample || base.capture, false)
+  assert.equal(base.floor, 'polyhaven')
+  assert.equal(base.lightingPass, 'current')
+  const qa = parseFlags('?deskCandidate=0&floorMaterialTest=legacy&lightingPass=bloom&spawn=bed')
+  assert.equal(qa.desk, false); assert.equal(qa.floor, 'phase1'); assert.equal(qa.lightingPass, 'bloom'); assert.equal(qa.captureName, 'bed')
+})

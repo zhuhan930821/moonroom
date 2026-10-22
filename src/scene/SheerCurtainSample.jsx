@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { FLAGS } from '../config/flags'
 
 // One track serves the entire transparent front wall, not three arch-sized curtains.
 const WALL_SPAN = 19.6
@@ -89,7 +90,7 @@ function VoilePanel({ x, side, phase, gather }) {
 
 export default function SheerCurtainSample() {
   // QA can render the closed state without relying on a timing-sensitive keypress.
-  const initiallyClosed = new URLSearchParams(window.location.search).get('curtainClosed') === '1'
+  const initiallyClosed = FLAGS.curtainClosed
   const gather = useRef(initiallyClosed ? 0 : 0.86)
   const target = useRef(initiallyClosed ? 0 : 0.86)
   useEffect(() => {

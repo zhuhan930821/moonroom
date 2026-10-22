@@ -36,9 +36,12 @@ npm run preview
 | 路径 | 内容 |
 | --- | --- |
 | `src/config/scene.js` | 统一房间、家具、碰撞、相机姿态、交互坐标 |
+| `src/config/flags.js` | 所有 URL 复查/调试开关及其默认值（唯一入口） |
 | `src/game/` | 第一人称控制、碰撞与统一交互模式 |
 | `src/scene/AssetModel.jsx` | 可复用 GLB 加载、材质覆盖、加载占位、碰撞体与交互锚点 |
 | `src/scene/` | 房间、月亮河远景、GLB 核心家具、床、狐狸与装饰 |
+| `assets/moonroom_asset_inventory.csv` | 62 项原子资产清单与生产状态（以此为准） |
+| `assets/workstation/` | 工作台资产 C01–C05 的源文件、GLB、预览与 `asset.json` |
 | `src/ui/Desktop.jsx` | CRT 桌面和三个可点击窗口 |
 | `src/audio/drums.js` | CC0 鼓采样播放、原创合成环境音、音量控制 |
 | `public/assets/models/` | CRT、完整架子鼓、软体躺椅 GLB |
@@ -63,9 +66,21 @@ Phase A2 的 Dream Lounge 审计记录位于 `docs/phase-a2-audit.md`。当前�
 
 Phase 1 Blender 房屋建筑现为默认场景；可用 `?architecture=legacy` 临时查看旧 Three.js 建筑。建筑、审片截图和集成记录见 `docs/architecture-phase-1.md`。新建筑只替换房屋外壳，不改变鼓组、电脑、家具碰撞或交互坐标。
 
+## 默认场景与复查开关
+
+所有 URL 开关统一在 `src/config/flags.js` 解析。默认 URL 显示已确认的房间；以下开关只用于复查：
+
+| 开关 | 作用 |
+| --- | --- |
+| `?deskCandidate=0` / `?laptopCandidate=0` / `?midiCandidate=0` | 回看 C01 / C03 / C05 之前的程序化占位 |
+| `?floorMaterialTest=legacy` / `=1` | 回看 Phase 1 原地板 / 橡木测试地板 |
+| `?lightingPass=moon|warm|combined|bloom`、`?lightingDebug=1` | 电影感灯光层与调参面板 |
+| `?drumCandidate=1`、`?decorSample=1`、`?rugMaterialTest=1`、`?rugPileTest=1` | 未确认候选（默认不加载） |
+| `?voileSample=0`、`?curtainClosed=1`、`?architecture=legacy`、`?whiteModel=1`、`?visualBaseline=1` | 帘子、旧建筑、白模与旧灯光对比 |
+
 ## 已知边界
 
-- CRT、鼓组和躺椅已转为 GLB；床、书架、现代笔记本、狐狸及次要装饰仍是程序化模型。
+- 已确认的默认 GLB：鼓组（D01）、CRT（C02）、工作长桌（C01）、笔记本与副屏（C03）、音箱（C04）、MIDI（C05）、躺椅、床与 Phase 1 建筑（Poly Haven 木地板）。书架、唱片机、侧墙键盘、狐狸及次要装饰仍是程序化模型。
 - 环境音乐是浏览器合成的安静持续音，不是完整曲目。
 - 暂无手柄、移动端触控、AI 狐狸对话或房间外可行走地图。
 - 画质开关提供低分辨率和较少云层；60 FPS 仍需在目标中端硬件上实测。

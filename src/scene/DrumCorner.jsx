@@ -2,12 +2,13 @@ import { ContactShadows } from '@react-three/drei'
 import { FURNITURE } from '../config/scene'
 import GLBAsset from './AssetModel'
 import { useLighting } from '../lighting/LightingContext'
+import { FLAGS } from '../config/flags'
 
 const HIDDEN_VELVET = ['Batched_Plum_Curtain_Velvet']
 
 export default function DrumCorner() {
   const { cinematic } = useLighting()
-  const voileSample = new URLSearchParams(window.location.search).get('voileSample') !== '0'
+  const voileSample = FLAGS.voile
   return <GLBAsset url="/assets/models/drum-corner.glb" position={FURNITURE.drums.position} hiddenNodes={voileSample ? HIDDEN_VELVET : []}>
     {!cinematic && <><pointLight position={[-2.48, 2.32, -.20]} color="#ffaf62" intensity={24} distance={5.4} decay={2} castShadow shadow-mapSize-width={512} shadow-mapSize-height={512}/>
     <pointLight position={[1.5, 3.3, -3.8]} color="#80a8ff" intensity={9} distance={7.5} decay={2}/>

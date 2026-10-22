@@ -2,7 +2,7 @@
   "asset_id": "C03",
   "display_name": "Moonroom modern laptop (C03 workstation screen pair, part 1)",
   "category": "C_WORKSTATION",
-  "status": "THREEJS_PREVIEW_AWAITING_APPROVAL",
+  "status": "ACTIVE_USER_APPROVED",
   "source_reference": "assets/reference/Moonroom_Asset_Reference_Pack.zip!/Workstation/C03_laptop_screen_setup.png",
   "authorship": "Original Blender hard-surface model authored for Moonroom; no third-party mesh",
   "license": "Project-owned original asset; user-supplied crop used only for visual guidance",
@@ -21,6 +21,7 @@
   "collision": "Existing desk footprint remains authoritative; visible laptop mesh is not a player collider",
   "preview_files": ["previews/01_pbr_45deg.png", "previews/02_pbr_front.png", "previews/03_clay_45deg.png", "previews/04_moonroom_candidate.png", "previews/05_moonroom_close.png", "../C03_external_monitor/previews/04_moonroom_pair.png"],
   "validation": "GLB loaded in Moonroom without page errors; screen content and keyboard visible from room and close view.",
-  "known_gaps": ["No laptop-specific application or interaction was added", "C03 screen pair remains an opt-in candidate pending visual approval"],
-  "approval_required_before_default_replacement": true
+  "known_gaps": ["No laptop-specific application or interaction was added", "C03 screen pair is the approved default (2026-10-22)"],
+  "approval_required_before_default_replacement": false,
+  "activation_note": "User approved C01/C03/C05 as default workstation assets on 2026-10-22. Old procedural placeholders remain behind ?deskCandidate=0, ?laptopCandidate=0, ?midiCandidate=0."
 }

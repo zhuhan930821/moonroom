@@ -2,7 +2,7 @@
   "asset_id": "C01",
   "display_name": "Moonroom long oak workstation desk",
   "category": "C_WORKSTATION",
-  "status": "THREEJS_PREVIEW_AWAITING_APPROVAL",
+  "status": "ACTIVE_USER_APPROVED",
   "source_reference": "assets/reference/Moonroom_Asset_Reference_Pack.zip!/Workstation/C01_long_wood_desk.png",
   "authorship": "Original Blender hard-surface model authored for Moonroom; no third-party mesh",
   "license": "Project-owned original asset; user-supplied crop used for composition reference only",
@@ -29,5 +29,6 @@
   },
   "validation": "GLB loaded in Moonroom without page errors; E opened computer; Diary opened; Esc returned to explore. World coordinates, furniture collider and other assets unchanged.",
   "known_gaps": ["Reference scene density depends on separate C09 drawers, chair, books and desk props", "CRT monitor stand still appears slightly detached from the desktop and should be corrected in C02, not disguised by changing C01"],
-  "approval_required_before_default_replacement": true
+  "approval_required_before_default_replacement": false,
+  "activation_note": "User approved C01/C03/C05 as default workstation assets on 2026-10-22. Old procedural placeholders remain behind ?deskCandidate=0, ?laptopCandidate=0, ?midiCandidate=0."
 }
