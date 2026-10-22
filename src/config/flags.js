@@ -34,6 +34,8 @@ export function parseFlags(search = '') {
     decorSample: on('decorSample'),
     rugPileTest: on('rugPileTest'),
     rugMaterialTest: on('rugMaterialTest'),
+    // Mugo Moc (~/DrumApp) shown on the desk laptop/monitor; its dev server runs on 5173 by default
+    mugoUrl: q.get('mugoUrl') || import.meta.env?.VITE_MUGO_URL || 'http://localhost:5173/',
     // Curtains
     voile: notOff('voileSample'),
     curtainClosed: on('curtainClosed'),

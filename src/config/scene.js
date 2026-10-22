@@ -72,6 +72,8 @@ export const INTERACTIONS = {
   computer: { position: [-2.65, 0, -3.1], radius: 1.8, label: '使用电脑' },
   drums: { position: [-6.6, 0, -.15], radius: 1.95, label: '坐到鼓凳' },
   beanbag: { position: [1.3, 0, 3.0], radius: 2.25, label: '躺下' },
+  piano: { position: [-7.7, 0, 2.6], radius: 1.6, label: '弹钢琴' },
+  mugo: { position: [1.35, 0, -3.1], radius: 1.4, label: '打开 Mugo' },
 }
 
 export const FOX_HINTS = [
@@ -83,4 +85,6 @@ export const CAMERA_POSES = {
   computer: { position: [-2.65, 1.75, -2.6], lookAt: [-2.65, 1.45, -4.35] },
   drums: { position: [-7.05, 1.72, -.15], lookAt: [-7.05, 1.1, -2.85] },
   beanbag: { position: [1.3, 1.3, 3.2], lookAt: [.4, 3.0, -13] },
+  piano: { position: [-7.0, 2.4, 2.6], lookAt: [-8.9, 1.0, 2.6] },
+  mugo: { position: [1.35, 1.95, -2.35], lookAt: [1.35, 1.8, -4.5] },
 }

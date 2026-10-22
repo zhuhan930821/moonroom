@@ -5,6 +5,10 @@
 | `public/assets/audio/kick.m4a` | [Virtuosity Drums 声学 Kick，通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；[上游项目](https://github.com/sfzinstruments/virtuosity_drums) |
 | `public/assets/audio/snare.m4a` | [Virtuosity Drums 声学 Snare，通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；[上游项目](https://github.com/sfzinstruments/virtuosity_drums) |
 | `public/assets/audio/hihat.m4a` | [Virtuosity Drums 声学闭合 Hi-hat，通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；[上游项目](https://github.com/sfzinstruments/virtuosity_drums) |
+| `public/assets/audio/{hihat-open,crash,ride}.wav` | [Virtuosity Drums（mid mic）通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；转为单声道 WAV，长尾截短并淡出 |
+| `public/assets/audio/{tom-high,tom-low}.wav` | [Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums) `mid/htom`、`mid/ltom` center vl12 | CC0 1.0；Floor tom 由 low tom 降调得到 |
+| `public/assets/audio/{kick,snare,hihat}.wav` | 上面三行同源 m4a 转 WAV（原 m4a 保存在 `assets-source/audio/`） | CC0 1.0；改为 WAV 是因为部分 Chromium 无法解码 AAC |
+| `public/assets/audio/piano/{36..72}.mp3` | [University of Iowa Electronic Music Studios, Steinway grand（MIS）](https://theremin.music.uiowa.edu/MISpiano.html)，经 Keyboardia 整理的 mezzo-forte 采样 | “Free for any projects, without restrictions” |
 | `public/art/dream-sky.jpg` | OpenAI imagegen 根据用户参考图与文字要求生成的原创远景天空纹理 | 项目生成素材；没有第三方素材依赖。源图未作为纹理复制进游戏。 |
 | `public/assets/textures/moon-river-sky.png` | OpenAI imagegen 根据用户参考图重绘的月亮、云海、城堡与月亮河远景 | 项目生成素材；没有第三方模型或贴图依赖。与多层 3D 云及发光河流几何共同使用。 |
 | `public/assets/models/vintage-crt.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_core_assets.py` | 项目原创资产；可随本项目使用与修改。 |

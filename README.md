@@ -25,11 +25,13 @@ npm run preview
 | Shift | 加速行走 |
 | E | 使用附近物品；躺下时起身 |
 | Esc | 退出电脑或鼓组；探索时释放鼠标 |
-| J / K / L | 鼓手模式：Kick / Snare / Hi-hat |
+| J K L ; / U I O / Y H | 鼓手模式：Kick、Snare、闭镲、开镲 / 三个通鼓 / Crash、Ride（数字 1–9 同样可用，也可以用鼠标点鼓面） |
+| R 或 Enter / Space / M / [ ] | 鼓手和钢琴模式：录音开关 / 播放最近一段 / 节拍器（钢琴模式是 \\）/ 调速度 |
+| Z 行 + S D 行、Q 行 + 2 3 行 | 钢琴模式：两个八度的白键和黑键；- / = 换八度；Enter 录音 |
 | M | 沙发模式：环境音乐开关 |
 | C | 探索模式：拉开或合拢整面窗墙的纱帘 |
 
-靠近 CRT、鼓凳或懒人躺椅会出现提示。CRT 的 Diary、Music、Dreams 图标能打开和关闭窗口。右下角设置按钮可调音量和切换「精致 / 流畅」画质。
+靠近 CRT、鼓凳、钢琴、笔记本或沙发会出现提示。CRT 的 Diary、Music、Dreams、Studio 图标能打开窗口；**Studio** 列出所有录音工程，可播放、循环、量化、点格子编辑鼓点和钢琴音符、导出 WAV（工程保存在浏览器 localStorage）。书桌右侧的笔记本和副屏打开 **Mugo Moc**（`~/DrumApp`），默认地址 `http://localhost:5173/`，可用 `?mugoUrl=` 或环境变量 `VITE_MUGO_URL` 指向线上版本。右下角设置按钮可调音量和切换「精致 / 流畅」画质。
 
 ## 结构
 

@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FOX_HINTS, INTERACTIONS } from '../config/scene'
 import { nearestInteraction } from './collision'
-import { playDrum, prepareAudio, setAmbientPlaying, setMasterVolume } from '../audio/drums'
+import { playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startMetronome } from '../audio/drums'
+import { finishRecording, takeStore } from '../audio/takes'
+
+import { DRUM_KEYS } from './drumKeys'
+// Recording timeline uses the page clock: the audio clock can run unevenly when no output
+// device is active, and key-to-sound latency is the same either way.
+const clock = () => performance.now() / 1000
+import { DEFAULT_PIANO_BASE, PIANO_HIGH, PIANO_KEYS, PIANO_LOW } from './pianoKeys'
+export { DRUM_KEYS }
+const SESSIONS = ['drums', 'piano']
 
 export function useInteractionSystem(root) {
   const [started, setStarted] = useState(false)
@@ -13,9 +22,25 @@ export function useInteractionSystem(root) {
   const [ambient, setAmbient] = useState(false)
   const [volume, setVolume] = useState(.42)
   const [audioError, setAudioError] = useState('')
+  // Drum session recorder: R record, Space play last take, M metronome, [ ] tempo.
+  const [recording, setRecording] = useState(null) // { startedAt, hits } while recording
+  const [metronome, setMetronome] = useState(false)
+  const [bpm, setBpm] = useState(90)
+  const [playingTake, setPlayingTake] = useState(false)
+  const [lastTake, setLastTake] = useState(() => takeStore.getAll()[0] || null)
+  const recordingRef = useRef(null)
+  const stopMetronome = useRef(null)
+  const stopPlayback = useRef(null)
+  recordingRef.current = recording
   const modeRef = useRef(mode)
   const nearRef = useRef(near)
-  const lastHit = useRef(0)
+  const lastHit = useRef({}) // per pad, so kick + hi-hat together both sound
+  // Piano session: octave base, notes currently held (for the 3D keys), and their releases.
+  const [pianoBase, setPianoBase] = useState(DEFAULT_PIANO_BASE)
+  const [pianoNotes, setPianoNotes] = useState(() => new Set())
+  const heldKeys = useRef(new Map()) // key code / pointer id -> { note, release }
+  const pianoBaseRef = useRef(pianoBase)
+  pianoBaseRef.current = pianoBase
   modeRef.current = mode
   nearRef.current = near
 
@@ -44,25 +69,107 @@ export function useInteractionSystem(root) {
 
   const enter = useCallback(nextMode => {
     if(nextMode==='drums') setHit(old=>({name:null,id:old.id}))
+    if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
     setMode(nextMode)
     document.exitPointerLock?.()
   }, [])
 
+  const flashNote = useCallback((note, ms = 220) => {
+    setPianoNotes(old => new Set(old).add(note))
+    setTimeout(() => setPianoNotes(old => { const next = new Set(old); next.delete(note); return next }), ms)
+  }, [])
+  // Visual feedback for playback (Studio or Space): drums wobble, piano keys dip.
+  const pulse = useCallback((name, note) => {
+    if (name === 'piano') flashNote(note)
+    else setHit(old => ({ name, id: old.id + 1 }))
+  }, [flashNote])
+
+  const stopTake = useCallback(() => { stopPlayback.current?.(); stopPlayback.current = null; setPlayingTake(false) }, [])
+
+  const toggleMetronome = useCallback(() => setMetronome(on => !on), [])
+
+  useEffect(() => {
+    if (!metronome || !SESSIONS.includes(mode)) return
+    stopMetronome.current = startMetronome(bpm)
+    return () => { stopMetronome.current?.(); stopMetronome.current = null }
+  }, [metronome, bpm, mode])
+
+  const toggleRecording = useCallback(async () => {
+    const current = recordingRef.current
+    if (!current) {
+      // Start the timeline at the key press; samples may still be loading, and hits played
+      // meanwhile keep their key-press times.
+      setRecording({ startedAt: clock(), hits: [] })
+      stopTake()
+      ;(modeRef.current === 'piano' ? preparePiano() : prepareAudio()).catch(error => setAudioError(error.message))
+      return
+    }
+    setRecording(null)
+    if (!current.hits.length) return
+    const name = `${current.hits.some(hit => hit.pad === 'piano') ? 'Piano' : 'Drums'} ${takeStore.getAll().length + 1}`
+    const take = takeStore.add(finishRecording({ startedAt: current.startedAt, hits: current.hits, bpm, name, now: Date.now() }))
+    setLastTake(take)
+  }, [bpm, stopTake])
+
+  const togglePlayLast = useCallback(async () => {
+    if (stopPlayback.current) return stopTake()
+    const take = takeStore.getAll()[0]
+    if (!take) return
+    setLastTake(take)
+    setPlayingTake(true)
+    stopPlayback.current = await playTake(take, { onHit: pulse, onEnd: () => { stopPlayback.current = null; setPlayingTake(false) } })
+  }, [pulse, stopTake])
+
+  const changeBpm = useCallback(delta => setBpm(value => Math.max(50, Math.min(180, value + delta))), [])
+
+  const noteOn = useCallback(async (id, note) => {
+    if (modeRef.current !== 'piano' || heldKeys.current.has(id)) return
+    heldKeys.current.set(id, { note, release: null, at: clock() })
+    setPianoNotes(old => new Set(old).add(note))
+    try {
+      const voice = await playPiano(note)
+      const held = heldKeys.current.get(id)
+      if (!held) { voice.release(); return } // key already lifted while samples loaded
+      held.release = voice.release
+      setRecording(current => current && held.at >= current.startedAt ? { ...current, hits: [...current.hits, { pad: 'piano', note, at: held.at }] } : current)
+    } catch (error) { setAudioError(error.message) }
+  }, [])
+
+  const noteOff = useCallback(id => {
+    const held = heldKeys.current.get(id)
+    if (!held) return
+    heldKeys.current.delete(id)
+    setPianoNotes(old => { const next = new Set(old); next.delete(held.note); return next })
+    if (!held.release) return
+    held.release()
+    const until = clock()
+    setRecording(current => current ? { ...current, hits: current.hits.map(hit => hit.pad === 'piano' && hit.note === held.note && hit.at === held.at ? { ...hit, until } : hit) } : current)
+  }, [])
+
+  const releaseAllNotes = useCallback(() => { [...heldKeys.current.keys()].forEach(noteOff) }, [noteOff])
+  const shiftOctave = useCallback(delta => setPianoBase(base => Math.max(PIANO_LOW, Math.min(PIANO_HIGH - 24, base + delta * 12))), [])
+
   const leave = useCallback(() => {
+    releaseAllNotes()
+    if (recordingRef.current) toggleRecording()
+    stopTake()
+    setMetronome(false)
     setMode('explore')
     setNear(null)
-  }, [])
+  }, [toggleRecording, stopTake, releaseAllNotes])
 
   const strike = useCallback(async name => {
     if (modeRef.current !== 'drums') return
-    // Keep a very short guard against browser key-repeat flooding.
-    if (performance.now() - lastHit.current < 35) return
-    lastHit.current = performance.now()
+    // Short per-pad guard against double-fired input (key + click on the same pad).
+    if (performance.now() - (lastHit.current[name] || 0) < 35) return
+    lastHit.current[name] = performance.now()
     try {
+      const at = clock()
       await playDrum(name)
-      setHit(old => ({ name, id: old.id + 1 }))
+      setRecording(current => current && at >= current.startedAt ? { ...current, hits: [...current.hits, { pad: name, at }] } : current)
+      pulse(name)
     } catch (error) { setAudioError(error.message) }
-  }, [])
+  }, [pulse])
 
   const toggleAmbient = useCallback(() => {
     setAmbientPlaying(!ambient).then(setAmbient).catch(error => setAudioError(error.message))
@@ -88,8 +195,27 @@ export function useInteractionSystem(root) {
         return
       }
       if (current === 'drums') {
-        const note = { KeyJ: 'kick', Digit1: 'kick', KeyK: 'snare', Digit2: 'snare', KeyL: 'hihat', Digit3: 'hihat' }[event.code]
-        if (note) { event.preventDefault(); strike(note) }
+        const note = DRUM_KEYS[event.code]
+        if (note) { event.preventDefault(); if (!event.repeat) strike(note); return }
+        if (event.repeat) return
+        if (event.code === 'KeyR' || event.code === 'Enter') { event.preventDefault(); toggleRecording() }
+        if (event.code === 'Space') { event.preventDefault(); togglePlayLast() }
+        if (event.code === 'KeyM') { event.preventDefault(); toggleMetronome() }
+        if (event.code === 'BracketLeft') { event.preventDefault(); changeBpm(-5) }
+        if (event.code === 'BracketRight') { event.preventDefault(); changeBpm(5) }
+        return
+      }
+      if (current === 'piano') {
+        const offset = PIANO_KEYS[event.code]
+        if (offset != null && !event.metaKey && !event.ctrlKey) { event.preventDefault(); if (!event.repeat) noteOn(event.code, pianoBaseRef.current + offset); return }
+        if (event.repeat) return
+        if (event.code === 'Enter') { event.preventDefault(); toggleRecording() }
+        if (event.code === 'Space') { event.preventDefault(); togglePlayLast() }
+        if (event.code === 'Backslash') { event.preventDefault(); toggleMetronome() }
+        if (event.code === 'Minus') { event.preventDefault(); shiftOctave(-1) }
+        if (event.code === 'Equal') { event.preventDefault(); shiftOctave(1) }
+        if (event.code === 'BracketLeft') { event.preventDefault(); changeBpm(-5) }
+        if (event.code === 'BracketRight') { event.preventDefault(); changeBpm(5) }
         return
       }
       if (current === 'beanbag') {
@@ -103,9 +229,14 @@ export function useInteractionSystem(root) {
         enter(nearRef.current)
       }
     }
+    const onKeyUp = event => { if (modeRef.current === 'piano') noteOff(event.code) }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [enter, leave, strike, toggleAmbient, started])
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', releaseAllNotes)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', releaseAllNotes) }
+  }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave])
 
-  return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume }
+  return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume,
+    recording, metronome, bpm, playingTake, lastTake, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, pulse,
+    pianoBase, pianoNotes, noteOn, noteOff, shiftOctave }
 }

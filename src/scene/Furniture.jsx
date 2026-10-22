@@ -10,6 +10,7 @@ import Lounge from './Lounge'
 import Workstation from './Workstation'
 import DreamLoungeProps from './DreamLoungeProps'
 import GLBAsset from './AssetModel'
+import Piano from './Piano'
 import { FLAGS } from '../config/flags'
 
 function rugTexture() {
@@ -93,12 +94,6 @@ function Bookcase(){const p=FURNITURE.bookshelf.position;return <group position=
   })}
 </group>}
 
-function Keyboard(){const p=FURNITURE.keyboard.position;return <group position={p} rotation-y={Math.PI/2}>
-  <RoundedBox args={[3.1,.25,.95]} color="#393345" position-y={1.05}/>
-  {Array.from({length:20},(_,i)=><RoundedBox key={i} args={[.142,.055,.58]} color="#e6dace" position={[-1.42+i*.149,1.21,.09]}/>)}
-  {Array.from({length:14},(_,i)=><RoundedBox key={i} args={[.077,.085,.34]} color="#302c39" position={[-1.31+i*.204,1.26,-.05]}/>)}
-  {[-1.2,1.2].map(x=><mesh key={x} position={[x,.52,0]} rotation-z={x<0?-.13:.13}><cylinderGeometry args={[.035,.035,1.1,8]}/><meshStandardMaterial color="#cbb3aa" metalness={.6}/></mesh>)}
-</group>}
 
 function RecordPlayer(){const p=FURNITURE.record.position;return <group position={p}>
   <RoundedBox args={[1.5,.6,1.45]} color="#9f6b68" position-y={.38}/>
@@ -116,7 +111,7 @@ function Details(){return <>
   <GlowOrb position={[9.4,2.14,.7]} color="#ffc47b" size={.15} intensity={4}/>
 </>}
 
-export default function Furniture({hit}) {
+export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff}) {
   const candidateDrums = FLAGS.drumCandidate
-  return <><Details/><Bed/><Bookcase/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit}/> : <DrumKit hit={hit}/>}<Lounge/><DreamLoungeProps/><Keyboard/><RecordPlayer/><Foxes/></>
+  return <><Details/><Bed/><Bookcase/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer/><Foxes/></>
 }
