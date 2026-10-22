@@ -13,10 +13,10 @@ export function parseFlags(search = '') {
     captureName: q.get('captureName') || q.get('spawn') || 'room',
     whiteModel: on('whiteModel'),
     // Lighting
-    lightingPass: ['current', 'moon', 'warm', 'combined', 'bloom', 'golden'].includes(pass) ? pass : 'current',
+    lightingPass: ['current', 'moon', 'warm', 'combined', 'bloom', 'golden'].includes(pass) ? pass : 'golden',
     lightingDebug: on('lightingDebug'),
     // Fairy lights + candles default on with the golden pass; ?fairyLights=0/1 overrides
-    fairyLights: q.get('fairyLights') ? on('fairyLights') : pass === 'golden',
+    fairyLights: q.get('fairyLights') ? on('fairyLights') : !pass || pass === 'golden',
     visualBaseline: on('visualBaseline'),
     // Architecture shell: 'polyhaven' (default), 'phase1' or 'oakTest'; ?architecture=legacy uses the old Three.js shell
     legacyArchitecture: q.get('architecture') === 'legacy',
@@ -25,6 +25,8 @@ export function parseFlags(search = '') {
     desk: notOff('deskCandidate'),
     laptop: notOff('laptopCandidate'),
     midi: notOff('midiCandidate'),
+    // F01: approved cloud sofa (default); ?loungeLegacy=1 shows the old reclining lounge
+    loungeLegacy: on('loungeLegacy'),
     // Opt-in candidates, not default
     drumCandidate: on('drumCandidate'),
     decorSample: on('decorSample'),

@@ -54,7 +54,7 @@ export function preloadCoreAssets() {
   useGLTF.preload('/assets/models/candidates/C02-dream-crt-review.glb')
   useGLTF.preload('/assets/models/candidates/C04-studio-speaker-review.glb')
   useGLTF.preload('/assets/models/acoustic-drum-kit.glb')
-  useGLTF.preload('/assets/models/reclining-lounge.glb')
+  useGLTF.preload('/assets/models/lounge/cloud-sofa.glb')
   useGLTF.preload('/assets/models/drum-corner.glb')
   useGLTF.preload('/assets/models/candidates/art-katja-drum-kit-moonroom.glb')
   useGLTF.preload('/assets/models/lounge/moon-breathing-lamp.glb')

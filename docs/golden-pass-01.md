@@ -1,6 +1,6 @@
 # Moonroom — Golden Lighting Pass 01 (I04 fairy lights + I07 candles)
 
-Status: **review only**, opt-in with `?lightingPass=golden`. The default room still uses `current` lighting until the user approves.
+Status: **default since 2026-10-22** (user approved). `?lightingPass=current` shows the previous lighting; `?fairyLights=0` hides garlands and candles.
 
 ## What changes
 - `golden` preset in `src/lighting/CinematicLighting.jsx`: warm practicals lead (desk, lounge lamp, drum corner, bookshelf, bed, room fill); moonlight drops to a lavender rim (1.35); warm hemisphere; ACES exposure 1.15; bloom 0.38 / threshold 1.0.
@@ -12,6 +12,6 @@ Status: **review only**, opt-in with `?lightingPass=golden`. The default room st
 `node scripts/capture_golden_pass.mjs` (dev server on :5174) → `screenshots/golden-pass-01/{hero,drumCorner,bed,deskView}-{current,golden}.png`.
 
 ## Known issues
-- The ivory CRT bezel picks up slight bloom from the desk light in `deskView`.
+- CRT bezel bloom: desk light moved to `[-.6,3.2,-3.0]` at 0.8× and bloom threshold raised to 1.12.
 - Ceiling beams are still dark; the reference ceiling is warmer. Needs a loft (A01) / ceiling garland pass rather than more fill light.
 - FPS from headless capture is not representative; measure on target hardware before promoting to default.
