@@ -60,13 +60,91 @@ function MoonRiver({ hit }) {
   </group>
 }
 
+// The painted backdrop used to be a finite plane, so oblique views from the room's edges
+// (or looking up through an arch) ran past its border into empty background. It now sits on
+// an inward-facing cylinder arc with every edge faded into a gradient dome sampled from the
+// painting's own border colours, so no view direction can find an edge.
+const SKY_RADIUS = 36
+const SKY_IMAGE_ARC = 1.5            // radians covered by the painting (~ the old plane's apparent width)
+const SKY_TOTAL_ARC = 2 * Math.PI    // full ring: the dome colour continues all the way round
+const SKY_IMAGE_HEIGHT = SKY_RADIUS * SKY_IMAGE_ARC / (1672 / 941)
+const SKY_CENTER_ANGLE = Math.PI - .13 // aims the painting's centre at the old plane centre ([5, y, -38])
+const SKY_HEIGHT = 90
+
+const skyVertex = `
+varying vec2 vUv;
+varying vec3 vDir;
+void main() {
+  vUv = uv;
+  vDir = normalize((modelMatrix * vec4(position, 1.0)).xyz - cameraPosition);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`
+const skyFragment = `
+uniform sampler2D map;
+uniform vec3 zenith, upper, horizon, below;
+uniform float imageArc, totalArc, imageV0, imageV1;
+varying vec2 vUv;
+varying vec3 vDir;
+float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+void main() {
+  float h = normalize(vDir).y;
+  vec3 dome = h > 0.0
+    ? mix(mix(horizon, upper, smoothstep(0.0, 0.32, h)), zenith, smoothstep(0.32, 0.9, h))
+    : mix(horizon, below, smoothstep(0.0, -0.35, h));
+  vec3 cell = floor(normalize(vDir) * 260.0);
+  float star = step(0.9965, hash(cell)) * smoothstep(0.12, 0.45, h);
+  dome += star * vec3(1.0, 0.94, 0.82) * (0.5 + 0.5 * hash(cell + 7.0));
+  // Cylinder u runs against screen-right when seen from inside, so flip it.
+  float u = 0.5 - (vUv.x - 0.5) * totalArc / imageArc;
+  float v = (vUv.y - imageV0) / (imageV1 - imageV0);
+  float fadeU = smoothstep(0.0, 0.14, u) * smoothstep(1.0, 0.86, u);
+  float fadeV = smoothstep(0.0, 0.10, v) * smoothstep(1.0, 0.82, v);
+  vec3 painting = texture2D(map, clamp(vec2(u, v), 0.0, 1.0)).rgb;
+  gl_FragColor = vec4(mix(dome, painting, fadeU * fadeV), 1.0);
+  #include <colorspace_fragment>
+}`
+
+function SkyBackdrop({ sky }) {
+  const material = useMemo(() => {
+    const centre = 2, half = SKY_HEIGHT / 2
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        map: { value: sky },
+        zenith: { value: new THREE.Color('#0a1846') }, upper: { value: new THREE.Color('#143276') },
+        horizon: { value: new THREE.Color('#8a5f99') }, below: { value: new THREE.Color('#5a3d70') },
+        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC },
+        imageV0: { value: (centre - SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
+        imageV1: { value: (centre + SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
+      },
+      vertexShader: skyVertex, fragmentShader: skyFragment,
+      side: THREE.BackSide, depthWrite: false, fog: false, toneMapped: false,
+    })
+  }, [sky])
+  // Caps only show the dome gradient: push the painting band out of their UV range.
+  const capMaterial = useMemo(() => {
+    const cap = material.clone()
+    cap.uniforms.imageV0 = { value: 2 }; cap.uniforms.imageV1 = { value: 3 }
+    return cap
+  }, [material])
+  return <group>
+    <mesh material={material} renderOrder={-1}>
+      <cylinderGeometry args={[SKY_RADIUS, SKY_RADIUS, SKY_HEIGHT, 96, 1, true, SKY_CENTER_ANGLE - SKY_TOTAL_ARC / 2, SKY_TOTAL_ARC]} />
+    </mesh>
+    {[1, -1].map(side => <mesh key={side} material={capMaterial} position-y={side * SKY_HEIGHT / 2} rotation-x={-side * Math.PI / 2} renderOrder={-1}>
+      <circleGeometry args={[SKY_RADIUS, 96]} />
+    </mesh>)}
+  </group>
+}
+
 function Outside({ hit, quality, visualBaseline, cinematic }) {
   const clouds=useRef()
   const sky=useLoader(THREE.TextureLoader,'/assets/textures/moon-river-sky.png')
   sky.colorSpace=THREE.SRGBColorSpace
   useFrame(({clock})=>{if(clouds.current)clouds.current.position.x=Math.sin(clock.elapsedTime*.075)*.35})
   return <group>
-    <mesh position={visualBaseline?[0,7,-38]:[5,2,-38]}><planeGeometry args={visualBaseline?[86,48.4]:[65,36.6]} /><meshBasicMaterial map={sky} fog={false} toneMapped={false}/></mesh>
+    {visualBaseline
+      ? <mesh position={[0,7,-38]}><planeGeometry args={[86,48.4]} /><meshBasicMaterial map={sky} fog={false} toneMapped={false}/></mesh>
+      : <SkyBackdrop sky={sky}/>}
     <StarField hit={hit} />
     <group ref={clouds}>{Array.from({ length: quality==='low'?8:14 }, (_, i) => {
       const x = -18 + (i * 7.73) % 36

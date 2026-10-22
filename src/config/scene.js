@@ -23,6 +23,10 @@ export const QA_SPAWNS = {
   sofa: [1.3, 1.48, 6.35],
   bed: [3.55, PLAYER.height, 6.1],
   bedFrame: [4.8, PLAYER.height, 7.5],
+  // Window-edge views: oblique looks past the arches used to expose the sky backdrop's edges
+  edgeLeft: [-8.8, PLAYER.height, -5.6],
+  edgeRight: [8.0, PLAYER.height, -6.6],
+  edgeUp: [0, PLAYER.height, -6.2],
 }
 
 export const QA_LOOKS = {
@@ -39,6 +43,9 @@ export const QA_LOOKS = {
   drumHardware: [1.05, -.08],
   loungeProp: [2.43, -.15],
   loungePropWide: [-.32, -.10],
+  edgeLeft: [-.8, .12],
+  edgeRight: [.85, .1],
+  edgeUp: [0, .95],
 }
 
 export const FURNITURE = {
