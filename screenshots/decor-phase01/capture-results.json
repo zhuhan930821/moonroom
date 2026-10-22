@@ -1,0 +1,25 @@
+{
+  "results": {
+    "main-camera": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.11534956686142475,
+        "calls": 407,
+        "triangles": 378490,
+        "geometries": 422,
+        "textures": 21
+      }
+    },
+    "ceiling-close": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.4004485023149548,
+        "calls": 106,
+        "triangles": 42734,
+        "geometries": 259,
+        "textures": 10
+      }
+    }
+  },
+  "errors": []
+}

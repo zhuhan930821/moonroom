@@ -1,0 +1,40 @@
+# 素材来源与许可证
+
+| 文件或模块 | 来源 | 许可证 / 使用方式 |
+| --- | --- | --- |
+| `public/assets/audio/kick.m4a` | [Virtuosity Drums 声学 Kick，通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；[上游项目](https://github.com/sfzinstruments/virtuosity_drums) |
+| `public/assets/audio/snare.m4a` | [Virtuosity Drums 声学 Snare，通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；[上游项目](https://github.com/sfzinstruments/virtuosity_drums) |
+| `public/assets/audio/hihat.m4a` | [Virtuosity Drums 声学闭合 Hi-hat，通过 Keyboardia 的 CC0 素材库整理](https://github.com/adewale/keyboardia/blob/main/app/public/instruments/LICENSE.md) | CC0 1.0；[上游项目](https://github.com/sfzinstruments/virtuosity_drums) |
+| `public/art/dream-sky.jpg` | OpenAI imagegen 根据用户参考图与文字要求生成的原创远景天空纹理 | 项目生成素材；没有第三方素材依赖。源图未作为纹理复制进游戏。 |
+| `public/assets/textures/moon-river-sky.png` | OpenAI imagegen 根据用户参考图重绘的月亮、云海、城堡与月亮河远景 | 项目生成素材；没有第三方模型或贴图依赖。与多层 3D 云及发光河流几何共同使用。 |
+| `public/assets/models/vintage-crt.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_core_assets.py` | 项目原创资产；可随本项目使用与修改。 |
+| `public/assets/models/acoustic-drum-kit.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_core_assets.py` | 项目原创资产；可随本项目使用与修改。 |
+| `public/assets/models/reclining-lounge.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_core_assets.py` | 项目原创资产；可随本项目使用与修改。 |
+| `public/assets/models/drum-corner.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_drum_corner.py`；含星月地毯、落地灯、植物、窗帘/藤蔓、吊星、音乐书架与睡狐 | 项目原创资产；可随本项目使用与修改。没有第三方模型或贴图。 |
+| `public/assets/models/lounge/moon-breathing-lamp.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_dream_lounge_props.py` | Phase A2 原创资产；月球灯原型使用共享奶油、薰衣草与香槟金 PBR 材质，没有第三方模型或贴图。 |
+| `public/assets/models/architecture/moonroom-architecture-phase1.glb` | 项目内 Blender 原创建筑，源文件 `assets-source/architecture/moonroom-architecture-phase1.blend`，生成脚本 `scripts/build_moonroom_architecture.py` | 项目原创资产；Phase 1 建筑默认加载，旧建筑可用 `?architecture=legacy` 查看。详见 `docs/architecture-phase-1.md`。 |
+| `src/scene/**` 3D 家具、月亮、浮岛和植物 | 项目内程序化建模 | 项目原创代码与几何体；没有外部 GLTF。 |
+| `src/audio/drums.js` 环境音 | Web Audio 实时合成 | 项目原创；没有外部曲目或录音。 |
+
+新版远景生成提示强调 16:9 梦核云海、巨大青绿色纹理月球、右侧哥特漂浮城堡、发光轨道，以及从城堡穿过云海向前蜿蜒的青紫色“月亮河”。使用内置 imagegen 生成，配合实时 3D 云层、星光与鼓击发光反馈。
+
+## 架子鼓替换调研
+
+检查过两个许可清晰的完整鼓组候选：Heataker 的 Sketchfab “Standard Drum Set”（CC BY，约 439k 三角面）和 art.katja 的 Sketchfab “Drum Kit”（CC BY，约 86k 三角面）。两者下载均需要 Sketchfab 账户授权，本项目没有在未取得原始下载文件时声称导入。最终资产由本机 Blender 原创制作并导出；配置与比例参考标准五鼓原声套鼓照片，而未复制第三方网格或贴图。
+
+## 第三方鼓组候选（仅测试，尚未替换默认资产）
+
+| 文件 | 来源 | 许可证 / 署名 |
+| --- | --- | --- |
+| `assets-source/drums/art-katja/original/drum-kit.zip` | [“Drum Kit” by art.katja](https://skfb.ly/p9FOp)，由用户提供的原始下载包 | [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)；使用时必须保留作者署名 |
+| `public/assets/models/candidates/art-katja-drum-kit-moonroom.glb` | 上述模型的独立 Moonroom 视觉测试导出 | CC BY 4.0；网格作者 art.katja。项目仅调整朝向、比例、节点组织与酒红/奶油/黄铜材质 |
+
+可编辑比较文件为 `assets-source/drums/art-katja/working/drum-kit-comparison.blend`，测试版本为 `assets-source/drums/art-katja/working/candidate-moonroom-test.blend`。候选只在 URL 加入 `?drumCandidate=1` 时加载；默认仍使用项目原创的 `acoustic-drum-kit.glb`。完整署名文本：`“Drum Kit” (https://skfb.ly/p9FOp) by art.katja is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).`
+
+## Phase 1.5B 鼓角
+
+本阶段没有下载或混入第三方网格。`drum-corner.glb` 与更新后的 `acoustic-drum-kit.glb` 均由仓库内 Blender 脚本生成；参考图仅用于构图、配色与空间氛围判断。鼓角资产独立于可交互鼓组，便于在不破坏 Kick、Snare、Hi-hat 等节点的情况下迭代装饰和性能。
+
+## Phase A1.1 架子鼓精修
+
+架子鼓继续使用项目原创 Blender 资产，没有引入外部模型。A1.1 增加旋转曲面镲片、完整镲架与踏板五金、鼓圈/鼓耳/拉杆细节，以及内嵌 128×128 奶油鼓皮织理。生成脚本仍为 `scripts/build_core_assets.py`；`scripts/render_drum_review.py` 用于四机位离线几何审片。

@@ -1,0 +1,243 @@
+{
+  "source": "/Users/hanzhu/moonroom/assets-source/drums/art-katja/original/extracted/source/Drum Set_sketchfab.fbx",
+  "license": "CC BY 4.0",
+  "author": "art.katja",
+  "sourceUrl": "https://skfb.ly/p9FOp",
+  "existing": {
+    "objects": 36,
+    "meshObjects": 26,
+    "vertices": 79793,
+    "polygons": 100528,
+    "triangles": 100528,
+    "materials": [
+      "Brushed_Bronze",
+      "Dark_Chrome",
+      "Dusty_Plum_Lacquer",
+      "Moon_Logo",
+      "Pedal_Rubber",
+      "Throne_Leather",
+      "Warm_Cream_Heads"
+    ],
+    "materialCount": 7,
+    "images": [
+      [
+        "Cream_Head_Weave",
+        {
+          "size": [
+            128,
+            128
+          ],
+          "filepath": ""
+        }
+      ],
+      [
+        "Render Result",
+        {
+          "size": [
+            0,
+            0
+          ],
+          "filepath": ""
+        }
+      ],
+      [
+        "Viewer Node",
+        {
+          "size": [
+            256,
+            256
+          ],
+          "filepath": ""
+        }
+      ]
+    ],
+    "bboxMin": [
+      -5.882193565368652,
+      -0.19499993324279785,
+      -1.1399999856948853
+    ],
+    "bboxMax": [
+      -1.369999885559082,
+      2.1780002117156982,
+      1.8100000619888306
+    ],
+    "objectsByType": {
+      "EMPTY": 10,
+      "MESH": 26
+    },
+    "names": [
+      "Anchor_Drums",
+      "Collision_Drums",
+      "Crash",
+      "Crash_Dark_Chrome_Batch",
+      "Crash_Disc",
+      "Floor_Tom",
+      "Floor_Tom_Dark_Chrome_Batch",
+      "Floor_Tom_Shell",
+      "Floor_Tom_Warm_Cream_Heads_Batch",
+      "HiHat_Top",
+      "HiHat_Top_Brushed_Bronze_Batch",
+      "HiHat_Top_Dark_Chrome_Batch",
+      "Kick",
+      "Kick_Dark_Chrome_Batch",
+      "Kick_Shell",
+      "Kick_Warm_Cream_Heads_Batch",
+      "Ride",
+      "Ride_Dark_Chrome_Batch",
+      "Ride_Disc",
+      "Snare",
+      "Snare_Dark_Chrome_Batch",
+      "Snare_Shell",
+      "Snare_Warm_Cream_Heads_Batch",
+      "Static_Dark_Chrome_Batch",
+      "Static_Moon_Logo_Batch",
+      "Static_Pedal_Rubber_Batch",
+      "Static_Warm_Cream_Heads_Batch",
+      "Throne_Seat",
+      "Tom_One",
+      "Tom_One_Dark_Chrome_Batch",
+      "Tom_One_Shell",
+      "Tom_One_Warm_Cream_Heads_Batch",
+      "Tom_Two",
+      "Tom_Two_Dark_Chrome_Batch",
+      "Tom_Two_Shell",
+      "Tom_Two_Warm_Cream_Heads_Batch"
+    ]
+  },
+  "candidate": {
+    "objects": 71,
+    "meshObjects": 71,
+    "vertices": 43896,
+    "polygons": 39386,
+    "triangles": 86020,
+    "materials": [
+      "Beige",
+      "Black",
+      "Black Glossy",
+      "Black Glossy.001",
+      "Black transp",
+      "Main Color",
+      "Metal",
+      "Transparent"
+    ],
+    "materialCount": 8,
+    "images": [
+      [
+        "Cream_Head_Weave",
+        {
+          "size": [
+            128,
+            128
+          ],
+          "filepath": ""
+        }
+      ],
+      [
+        "Render Result",
+        {
+          "size": [
+            0,
+            0
+          ],
+          "filepath": ""
+        }
+      ],
+      [
+        "Viewer Node",
+        {
+          "size": [
+            256,
+            256
+          ],
+          "filepath": ""
+        }
+      ]
+    ],
+    "bboxMin": [
+      1.9507598876953125,
+      -0.8996431231498718,
+      -1.4844433069229126
+    ],
+    "bboxMax": [
+      5.448396682739258,
+      1.3248059749603271,
+      0.6894680857658386
+    ],
+    "objectsByType": {
+      "MESH": 71
+    },
+    "names": [
+      "Circle.003",
+      "Circle.005",
+      "Circle.006",
+      "Circle.007",
+      "Circle.009",
+      "Cube.012",
+      "Cube.013",
+      "Cube.016",
+      "Cube.017",
+      "Cube.019",
+      "Cylinder",
+      "Cylinder.001",
+      "Cylinder.002",
+      "Cylinder.003",
+      "Cylinder.004",
+      "Cylinder.006",
+      "Cylinder.008",
+      "Cylinder.009",
+      "Cylinder.010",
+      "Cylinder.013",
+      "Cylinder.014",
+      "Cylinder.015",
+      "Cylinder.016",
+      "Cylinder.017",
+      "Cylinder.018",
+      "Cylinder.019",
+      "Cylinder.020",
+      "Cylinder.021",
+      "Cylinder.022",
+      "Cylinder.023",
+      "Cylinder.025",
+      "Cylinder.027",
+      "Cylinder.028",
+      "Cylinder.029",
+      "Cylinder.030",
+      "Cylinder.031",
+      "Cylinder.033",
+      "Cylinder.034",
+      "Cylinder.035",
+      "Cylinder.036",
+      "Cylinder.037",
+      "Cylinder.038",
+      "Cylinder.039",
+      "Cylinder.040",
+      "Cylinder.041",
+      "Cylinder.042",
+      "Cylinder.043",
+      "Cylinder.044",
+      "Cylinder.045",
+      "Cylinder.046",
+      "Cylinder.047",
+      "Cylinder.048",
+      "Cylinder.049",
+      "Cylinder.050",
+      "Cylinder.051",
+      "Cylinder.052",
+      "Cylinder.053",
+      "Cylinder.054",
+      "Cylinder.055",
+      "Cylinder.056",
+      "Cylinder.057",
+      "Cylinder.058",
+      "Cylinder.059",
+      "Cylinder.063",
+      "Cylinder.064",
+      "Cylinder.065",
+      "Cylinder.066",
+      "Cylinder.067",
+      "Cylinder.068",
+      "Cylinder.069",
+      "Plane.001"
+    ]
+  }
+}

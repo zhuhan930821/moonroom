@@ -1,0 +1,45 @@
+{
+  "result": {
+    "before-hero": {
+      "mode": "explore",
+      "performance": {
+        "fps": 0.13701633234726335,
+        "calls": 380,
+        "triangles": 370962,
+        "geometries": 395,
+        "textures": 21
+      }
+    },
+    "after-hero": {
+      "mode": "explore",
+      "performance": {
+        "fps": 0.17807536149222777,
+        "calls": 380,
+        "triangles": 370962,
+        "geometries": 395,
+        "textures": 23
+      }
+    },
+    "before-close": {
+      "mode": "explore",
+      "performance": {
+        "fps": 0.27089259108763375,
+        "calls": 151,
+        "triangles": 225860,
+        "geometries": 241,
+        "textures": 12
+      }
+    },
+    "after-close": {
+      "mode": "explore",
+      "performance": {
+        "fps": 0.26822595353983425,
+        "calls": 151,
+        "triangles": 225860,
+        "geometries": 241,
+        "textures": 14
+      }
+    }
+  },
+  "errors": []
+}

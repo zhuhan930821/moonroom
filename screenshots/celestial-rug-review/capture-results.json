@@ -1,0 +1,25 @@
+{
+  "result": {
+    "candidate-hero": {
+      "mode": "explore",
+      "performance": {
+        "fps": 0.15397644160443452,
+        "calls": 381,
+        "triangles": 379248,
+        "geometries": 396,
+        "textures": 23
+      }
+    },
+    "candidate-close": {
+      "mode": "explore",
+      "performance": {
+        "fps": 0.2221383033111688,
+        "calls": 152,
+        "triangles": 234146,
+        "geometries": 242,
+        "textures": 14
+      }
+    }
+  },
+  "errors": []
+}

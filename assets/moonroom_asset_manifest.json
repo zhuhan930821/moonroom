@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Planning and audit only; no asset is automatically approved or swapped by this manifest.",
+  "inventory_csv": "assets/moonroom_asset_inventory.csv",
+  "reference_archive": "assets/reference/Moonroom_Asset_Reference_Pack.zip",
+  "reference_contact_sheet": "assets/reference/Moonroom_Asset_Contact_Sheet.jpg",
+  "reference_overview": "assets/reference/Moonroom_Annotated_Overview.png",
+  "coordinate_convention": {
+    "runtime": "Three.js right-handed Y-up; X right, Z toward room entrance, negative Z toward arched window wall; metres; asset local origin at floor footprint centre unless specified",
+    "blender": "Author in Blender Z-up in metres, export GLB with declared axis transform; verify in Three.js. Existing files have mixed axisCorrection true/false; do not infer from extension.",
+    "rotation": "Radian Euler XYZ in React Three Fiber; record authored forward axis and import correction per asset",
+    "scale": "1 Blender unit = 1 metre; target import scale [1,1,1] for new assets",
+    "naming": "ASSET_ID__descriptive_name for Blender Collection and stable top-level GLB node; child nodes may be batched except interactive roots"
+  },
+  "categories": {
+    "A_ARCHITECTURE": "assets/architecture",
+    "B_EXTERIOR_WORLD": "assets/exterior",
+    "C_WORKSTATION": "assets/workstation",
+    "D_MUSIC": "assets/music",
+    "E_BED": "assets/bed",
+    "F_SOFA": "assets/sofa",
+    "G_BOOKSHELF": "assets/bookshelf",
+    "H_BOTANICAL": "assets/botanical",
+    "I_LIGHTING": "assets/lighting",
+    "J_COLLECTIBLES": "assets/collectibles"
+  },
+  "per_asset_template": ["source.blend", "optimized.glb", "textures/", "previews/", "asset.json"],
+  "production_gate": ["reference_and_neighbor_scale", "base_geometry", "uv_and_pbr", "blender_closeup_preview", "reference_comparison", "optimized_glb", "threejs_material_and_performance", "user_visual_approval"],
+  "existing_runtime_assets": [
+    {
+      "asset_id": "C04",
+      "path": "public/assets/models/candidates/C04-studio-speaker-review.glb",
+      "source": "assets/workstation/C04_studio_speaker/source.blend",
+      "runtime_component": "src/scene/Workstation.jsx",
+      "world_positions_m": [[-0.95, 1.31, -4.44], [1.95, 1.31, -4.44]],
+      "status": "ACTIVE_USER_APPROVED",
+      "note": "Right speaker shifts to x=3.5 only in the opt-in C03 dual-screen preview."
+    },
+    {
+      "asset_id": "D01",
+      "path": "public/assets/models/acoustic-drum-kit.glb",
+      "runtime_component": "src/scene/DrumKit.jsx",
+      "world_position_m": [-7.1, 0, -2.8],
+      "collider_m": [4.2, 2.2, 3.8],
+      "interaction_id": "drums",
+      "interactive_nodes": ["Kick", "Snare", "HiHat_Top", "Tom_One", "Tom_Two", "Floor_Tom", "Crash", "Ride"],
+      "materials": ["Dark_Chrome", "Dusty_Plum_Lacquer", "Warm_Cream_Heads", "Brushed_Bronze", "Moon_Logo", "Pedal_Rubber", "Throne_Leather"],
+      "policy": "PROTECTED: do not modify model, transform, collider, throne anchor, or Drum Session. art-katja candidate is a separate opt-in preview, not the default asset."
+    },
+    {
+      "asset_id": "C02",
+      "path": "public/assets/models/candidates/C02-dream-crt-review.glb",
+      "runtime_component": "src/scene/Workstation.jsx",
+      "world_position_m": [-2.65, 1.22, -4.25],
+      "runtime_scale": 0.72,
+      "interaction_id": "computer",
+      "material_names": ["C02_AgedIvoryABS", "C02_SatinIvoryEdge", "C02_RecessShadow", "C02_DarkVentGraphite", "C02_BrushedChampagneMetal", "C02_KeycapWarmIvory", "C02_KeyLegendCharcoal", "C02_PowerMint"],
+      "dependency": "Dynamic screen is a separate Three.js plane; preserve that interface."
+    },
+    {
+      "asset_id": "A02_A03_A04",
+      "path": "public/assets/models/architecture/moonroom-architecture-phase1.glb",
+      "source": "assets-source/architecture/moonroom-architecture-phase1.blend",
+      "runtime_component": "src/scene/Environment.jsx",
+      "runtime_hidden_nodes": "Back piers/spandrels and floor inlay are hidden for the transparent-window composition; inspect component before edits."
+    },
+    {
+      "asset_id": "F01",
+      "path": "public/assets/models/reclining-lounge.glb",
+      "runtime_component": "src/scene/Lounge.jsx",
+      "world_position_m": [1.3, 0, 3.0],
+      "collider_m": [3.35, 1.2, 3.45],
+      "interaction_id": "beanbag",
+      "note": "Active model; cloud-sofa.glb exists as a non-active source/variant."
+    },
+    {
+      "asset_id": "E01",
+      "path": "public/assets/models/lounge/moon-nest-refinement-v2.glb",
+      "source": "assets-source/lounge/moon-nest-refinement-v2.blend",
+      "runtime_component": "src/scene/Furniture.jsx",
+      "world_position_m": [7.0, 0, 3.0],
+      "runtime_rotation_y_rad": -1.57079632679,
+      "runtime_scale": [2.0, 1.35, 2.5],
+      "collider_m": [5.8, 1.15, 4.55],
+      "note": "Active bed is not normalized to unit-scale import; retain until separately reviewed."
+    },
+    {
+      "asset_id": "D04",
+      "runtime_component": "src/scene/Furniture.jsx",
+      "world_position_m": [-7.6, 0, 5.5],
+      "status": "Three.js procedural placeholder"
+    },
+    {
+      "asset_id": "G02",
+      "runtime_component": "src/scene/Furniture.jsx",
+      "world_position_m": [9.05, 0, -3.1],
+      "status": "Three.js procedural placeholder"
+    }
+  ],
+  "additional_existing_files": [
+    "public/assets/models/drum-corner.glb",
+    "public/assets/models/lounge/cloud-sofa.glb",
+    "public/assets/models/lounge/moon-breathing-lamp.glb",
+    "public/assets/models/candidates/art-katja-drum-kit-moonroom.glb",
+    "public/assets/models/candidates/C02-dream-crt-review.glb",
+    "public/assets/models/candidates/C01-workstation-desk-review.glb",
+    "public/assets/models/candidates/C03-modern-laptop-review.glb",
+    "public/assets/models/candidates/C03-companion-monitor-review.glb",
+    "public/assets/models/candidates/C05-midi-keyboard-review.glb",
+    "public/assets/models/candidates/C04-studio-speaker-review.glb",
+    "public/assets/models/review/moonroom-reference-blockout.glb",
+    "public/assets/models/review/moon-nest-textile-sample.glb",
+    "assets-source/third-party/sketchfab-messy-bed-2/original.glb"
+  ],
+  "first_asset_recommendation": "C04",
+  "approval_state": "PLANNING_ONLY"
+}

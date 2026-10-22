@@ -1,0 +1,33 @@
+{
+  "asset_id": "C01",
+  "display_name": "Moonroom long oak workstation desk",
+  "category": "C_WORKSTATION",
+  "status": "THREEJS_PREVIEW_AWAITING_APPROVAL",
+  "source_reference": "assets/reference/Moonroom_Asset_Reference_Pack.zip!/Workstation/C01_long_wood_desk.png",
+  "authorship": "Original Blender hard-surface model authored for Moonroom; no third-party mesh",
+  "license": "Project-owned original asset; user-supplied crop used for composition reference only",
+  "source_file": "assets/workstation/C01_desk/source.blend",
+  "optimized_file": "assets/workstation/C01_desk/optimized.glb",
+  "staged_runtime_file": "public/assets/models/candidates/C01-workstation-desk-review.glb",
+  "preview_url_query": "?deskCandidate=1",
+  "coordinate_convention": "Blender Z-up metres exported to glTF Y-up; R3F axisCorrection=false",
+  "local_dimensions_m": [8.25, 1.8, 1.29],
+  "runtime_position_m": [0.1, 0, -4.25],
+  "materials": ["C01_WarmSmokedOak", "C01_EndGrainOak", "C01_UnderframeWalnut", "C01_SatinChampagneBrass", "C01_CharcoalCableTray"],
+  "geometry_components": ["soft-edged continuous desktop", "three subtly separated surface planks", "two paired trestles", "front/rear aprons", "lower crossrails", "rear cable channel", "brass foot and joint accents"],
+  "exclusions": ["C09 drawers", "chair", "CRT", "laptop", "decorative props"],
+  "collision": "Existing FURNITURE.desk footprint remains unchanged; visible mesh is not a player collider",
+  "interaction": "Existing computer interaction anchor, ID and camera pose remain unchanged",
+  "preview_files": ["previews/01_pbr_three_quarter.png", "previews/02_pbr_front.png", "previews/03_pbr_joinery.png", "previews/04_clay_three_quarter.png", "previews/05_moonroom_before.png", "previews/05_moonroom_candidate.png"],
+  "performance": {
+    "method": "1280x720 headless Chromium with software rendering, same deskView camera",
+    "before_draw_calls": 175,
+    "candidate_draw_calls": 174,
+    "before_triangles": 133840,
+    "candidate_triangles": 139524,
+    "fps_note": "Software renderer reading is not representative of a desktop GPU; no 60 FPS claim"
+  },
+  "validation": "GLB loaded in Moonroom without page errors; E opened computer; Diary opened; Esc returned to explore. World coordinates, furniture collider and other assets unchanged.",
+  "known_gaps": ["Reference scene density depends on separate C09 drawers, chair, books and desk props", "CRT monitor stand still appears slightly detached from the desktop and should be corrected in C02, not disguised by changing C01"],
+  "approval_required_before_default_replacement": true
+}

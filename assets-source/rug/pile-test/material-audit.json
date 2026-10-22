@@ -1,0 +1,68 @@
+{
+  "mesh": "RUG_StarMoon_Material_TEST",
+  "dimensions_m": [
+    8.5,
+    6.7
+  ],
+  "blender_location": [
+    -0.699999988079071,
+    -2.299999952316284,
+    0.02800000086426735
+  ],
+  "three_world_location_expected": [
+    -0.7,
+    0.028,
+    2.3
+  ],
+  "uv_layer_base_color": "RUG_FullImage_UV",
+  "uv_layer_fabric": "RUG_FabricTiled_UV",
+  "uv_corners": [
+    [
+      0,
+      0
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      0,
+      1
+    ]
+  ],
+  "fabric_uv_corners": [
+    [
+      0,
+      0
+    ],
+    [
+      16,
+      0
+    ],
+    [
+      16,
+      13
+    ],
+    [
+      0,
+      13
+    ]
+  ],
+  "material": "RUG_StarMoon_ImagePBR_Matte_TEST",
+  "image_nodes": {
+    "BaseColor": "//../material-test/textures/Rug_StarMoon_BaseColor.png",
+    "Normal": "//../material-test/textures/poly_wool_herringbone_nor_gl_2k.jpg",
+    "Roughness": "//../material-test/textures/poly_wool_herringbone_rough_2k.jpg"
+  },
+  "normal_strength": 0.6600000262260437,
+  "map_source": "https://polyhaven.com/a/poly_wool_herringbone",
+  "map_license": "CC0",
+  "pile_geometry": true,
+  "pile_surface_cells": 22780,
+  "pile_edge_yarns": 1216,
+  "pile_triangles": 46776
+}

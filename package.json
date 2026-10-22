@@ -1,0 +1,25 @@
+{
+  "name": "moonroom-phase-one",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "test": "node --test tests/*.test.js",
+    "test:browser": "playwright test tests/browser-candidate.spec.js tests/browser-lounge.spec.js --workers=1",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.4.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "vite": "^7.1.9"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "asset_id": "C02",
+  "display_name": "Moonroom Dream CRT computer candidate",
+  "status": "ACTIVE_USER_APPROVED",
+  "category": "C_WORKSTATION",
+  "source_reference": "assets/reference/Moonroom_Asset_Reference_Pack.zip!/Workstation/C02_retro_crt_computer.png",
+  "authorship": "Original Blender hard-surface model authored for Moonroom; no third-party mesh",
+  "license": "Project-owned original asset; reference crop supplied by user for visual guidance only",
+  "source_file": "assets/workstation/C02_crt_candidate/source.blend",
+  "optimized_file": "assets/workstation/C02_crt_candidate/optimized.glb",
+  "staged_runtime_file": "public/assets/models/candidates/C02-dream-crt-review.glb",
+  "preview_url_query": null,
+  "approximate_local_dimensions_m": [2.4, 2.0, 1.8],
+  "origin": "same local origin and numeric Y-up coordinates as current vintage-crt.glb",
+  "runtime_import": { "axisCorrection": true, "scale": 0.72, "position_m": [-2.65, 1.22, -4.25], "rotation_y_rad": 3.14159265359 },
+  "interaction_id": "computer",
+  "required_node": "CRT_Screen",
+  "dynamic_screen": "Existing Three.js material override and screen plane remain authoritative",
+  "candidate_screen_preview": "The staged model alone uses the existing moon-river-sky.png scene texture on the runtime screen; the interactive Moonroom 98 desktop overlay is unchanged.",
+  "collision": "Preserve existing CRT_COLLIDERS; no new visual mesh collider",
+  "geometry_components": ["deep tapered monitor housing", "rounded front frame", "recessed screen", "control chin", "side/top/rear ventilation", "stand", "desktop tower with drives", "individual keyboard keys"],
+  "material_requirements": ["micrograined aged ivory ABS", "satin ivory trim", "dark vent graphite", "subtle champagne metal", "warm ivory keycaps", "mint power LED"],
+  "optimized_metrics": { "meshes": 9, "materials": 9, "textures": 1, "triangles": 20156, "screen_node_preserved": true },
+  "validation": {
+    "same_view_runtime_stats": { "before": { "draw_calls": 250, "triangles": 130876 }, "candidate": { "draw_calls": 184, "triangles": 136548 } },
+    "browser": "Candidate GLB HTTP 200; no page errors; near-computer prompt appeared; E entered computer mode; Diary window opened and closed; Esc returned to explore.",
+    "fps": "Not reported: headless SwiftShader software rendering is not representative of a desktop GPU."
+  },
+  "approval_required_before_default_replacement": false,
+  "activation_note": "User approved replacing the computer/tower visual. The previous vintage-crt.glb remains on disk as a reversible fallback; computer interaction and collision are unchanged."
+}

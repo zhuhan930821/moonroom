@@ -1,0 +1,31 @@
+{
+  "asset_id": "C04",
+  "display_name": "Moonroom two-way studio speaker prototype",
+  "status": "ACTIVE_USER_APPROVED",
+  "category": "C_WORKSTATION",
+  "source_reference": "assets/reference/Moonroom_Asset_Reference_Pack.zip!/Workstation/C04_studio_speakers.png",
+  "authorship": "Original Blender hard-surface model made for Moonroom; no third-party mesh",
+  "license": "Project-owned original asset; reference image supplied by user and used only for visual guidance",
+  "source_file": "assets/workstation/C04_studio_speaker/source.blend",
+  "optimized_file": "assets/workstation/C04_studio_speaker/optimized.glb",
+  "staged_runtime_file": "public/assets/models/candidates/C04-studio-speaker-review.glb",
+  "preview_url_query": null,
+  "dimensions_m": [0.42, 0.38, 0.82],
+  "origin": "underside centre of one speaker",
+  "authored_front": "Blender -Y, maps to Three.js +Z after glTF export",
+  "runtime_import": { "axisCorrection": false, "scale": 1, "positions_m": [[-0.95, 1.31, -4.44], [1.95, 1.31, -4.44]] },
+  "geometry_components": ["bevelled cabinet", "dark front baffle", "deep-plum veneer side panels", "silk dome tweeter", "dished woofer cone and rubber surround", "front bass reflex port", "mount screws", "isolation feet", "rear binding plate"],
+  "materials": ["plum-charcoal cabinet", "near-black matte baffle", "brushed dark metal", "warm graphite woofer", "silk dome", "champagne trim", "plum veneer texture"],
+  "interaction_id": null,
+  "collision": "No new player collider; the speakers sit within the existing desk collision footprint",
+  "optimized_metrics_per_speaker": { "meshes": 10, "materials": 10, "textures": 1, "triangles": 8892, "glb_bytes": 375580 },
+  "validation": {
+    "build": "passed",
+    "existing_unit_tests": "3 passed",
+    "browser": "GLB HTTP 200, no page errors, desktop computer and drum modes enter successfully",
+    "same_view_runtime_stats": { "before": { "draw_calls": 250, "triangles": 130876, "textures": 8 }, "candidate": { "draw_calls": 268, "triangles": 148636, "textures": 9 } },
+    "fps": "Not reported: headless SwiftShader is software-rendered and not representative of target desktop hardware."
+  },
+  "approval_required_before_default_replacement": false,
+  "activation_note": "User requested switching the previously modeled C04 speakers into the default scene. Original procedural speaker placeholders remain available in source history; C04 positions and desk collider are unchanged."
+}
