@@ -23,6 +23,6 @@ function Fox({ position, scale = 1, rotation = 0, sleeping = false, phase = 0 })
 }
 
 export default function Foxes() { return <>
-  <Fox position={[7.9,0,5.7]} scale={.54} rotation={-1.4} sleeping phase={0} />
+  <Fox position={[6.0,0,6.7]} scale={.54} rotation={-1.4} sleeping phase={0} />
   <Fox position={[3.25,0,4.45]} scale={.54} rotation={-1.15} phase={1.8} />
 </> }

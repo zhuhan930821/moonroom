@@ -50,7 +50,7 @@ function Rug(){
 
 // E01: "Messy bed 2.0" by thethieme (Sketchfab, CC BY 4.0, credit in ASSETS.md), recoloured to the
 // Moonroom palette. Base maps are dropped (they bake the original grey/black look); normal and
-// roughness maps keep the fabric folds and wood grain. Scaled 1.7x so it reads as the room's big dream bed.
+// roughness maps keep the fabric folds and wood grain. Scaled 2.1x: the room's furniture is ~1.7x real scale, and the bed is deliberately oversized beyond that as the dream bed.
 const BED_TINTS = {
   Nordli_Cover: { color: new THREE.Color('#d98fae'), map: null },     // draped throw: rose knit
   Nordli_Comforter: { color: new THREE.Color('#f3e4dc'), map: null }, // folded duvet: cream
@@ -66,7 +66,7 @@ function Bed() {
     url="/assets/models/bed/messy-bed-2.glb"
     position={FURNITURE.bed.position}
     rotation={[0, -Math.PI / 2, 0]}
-    scale={1.7}
+    scale={2.1}
     axisCorrection={false}
     nodeOverrides={BED_TINTS}
     fallbackScale={1.5}
@@ -113,7 +113,7 @@ function Details(){return <>
   <Plant position={[-9.25,0,1.8]} scale={1.05}/><Plant position={[4.3,0,-5.45]} scale={.8}/>
   {[-6.4,-3.6,3.4,7.2].map((x,i)=><GlowOrb key={i} position={[x,1.2,4.9-i*.8]} color="#ffc08a" size={.1} intensity={2.4}/>)}
   {[-7,-4,3.5,7].map((x,i)=><group key={i} position={[x,7.2,-6.6]}>{Array.from({length:5},(_,j)=><mesh key={j} position={[Math.sin(j*2.4+i)*.18,-j*.28,0]} rotation-z={j*.7}><sphereGeometry args={[.19,.1,.08,8,6]}/><meshStandardMaterial color={j%2?'#63875e':'#536b55'}/></mesh>)}</group>)}
-  <GlowOrb position={[8.9,2.2,1.5]} color="#ffc47b" size={.2} intensity={4}/>
+  <GlowOrb position={[9.4,2.14,.7]} color="#ffc47b" size={.15} intensity={4}/>
 </>}
 
 export default function Furniture({hit}) {

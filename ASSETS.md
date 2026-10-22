@@ -22,7 +22,7 @@
 
 | 文件 | 来源 | 许可证 / 署名 |
 | --- | --- | --- |
-| `public/assets/models/bed/messy-bed-2.glb` | [“Messy bed 2.0 (with wall mounted backboard)” by thethieme](https://sketchfab.com/3d-models/messy-bed-20-with-wall-mounted-backboard-a2b2645701c94fa49e65661806219c6b)，用户提供的转换 GLB；原始文件保存在 `assets-source/third-party/sketchfab-messy-bed-2/original.glb` | [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)；分发时必须保留署名。项目只在运行时修改颜色（去掉原底色贴图、保留法线/粗糙度）、放大 1.7 倍并调整朝向，未改动网格 |
+| `public/assets/models/bed/messy-bed-2.glb` | [“Messy bed 2.0 (with wall mounted backboard)” by thethieme](https://sketchfab.com/3d-models/messy-bed-20-with-wall-mounted-backboard-a2b2645701c94fa49e65661806219c6b)，用户提供的转换 GLB；原始文件保存在 `assets-source/third-party/sketchfab-messy-bed-2/original.glb` | [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)；分发时必须保留署名。项目只在运行时修改颜色（去掉原底色贴图、保留法线/粗糙度）、放大 2.1 倍并调整朝向，未改动网格 |
 
 完整署名文本：`“Messy bed 2.0 (with wall mounted backboard)” (https://sketchfab.com/3d-models/messy-bed-20-with-wall-mounted-backboard-a2b2645701c94fa49e65661806219c6b) by thethieme is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).`
 

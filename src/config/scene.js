@@ -49,7 +49,7 @@ export const QA_LOOKS = {
 }
 
 export const FURNITURE = {
-  bed: { position: [7.9, 0, 3.0], size: [4.1, 1.15, 4.6] },
+  bed: { position: [7.6, 0, 3.0], size: [4.5, 1.2, 5.7] },
   bookshelf: { position: [9.05, 0, -3.1], size: [1.25, 4.8, 5.1] },
   desk: { position: [0.1, 0, -4.25], size: [8.2, 1.25, 1.7] },
   drums: { position: [-7.1, 0, -2.8], size: [4.2, 2.2, 3.8] },
@@ -75,7 +75,7 @@ export const INTERACTIONS = {
 }
 
 export const FOX_HINTS = [
-  { name: '眠眠', position: [7.9, 0, 5.7], radius: 1.4 },
+  { name: '眠眠', position: [6.0, 0, 6.7], radius: 1.4 },
   { name: '云团', position: [3.25, 0, 4.45], radius: 1.5 },
 ]
 

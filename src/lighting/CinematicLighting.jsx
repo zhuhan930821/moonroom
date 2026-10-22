@@ -21,7 +21,7 @@ function GoldenLights({ settings, quality }) {
     <pointLight position={[4.15, 2.05, .55]} color="#ffbd78" intensity={w * .7} distance={5} decay={2}/>
     <pointLight position={[-8.2, 3.0, -1.6]} color="#ffa95c" intensity={w * .45} distance={5.4} decay={2}/>
     <pointLight position={[6.6, 3.6, -2.8]} color="#ffbf80" intensity={w * .45} distance={5.5} decay={2}/>
-    <pointLight position={[7.4, 2.6, 4.4]} color="#ffb877" intensity={w * .5} distance={5.5} decay={2}/>
+    <pointLight position={[6.0, 4.2, 3.0]} color="#ffb877" intensity={w * .6} distance={6.5} decay={2}/>
     <pointLight position={[0, 5.4, 1.5]} color="#ffc995" intensity={w * .7} distance={12} decay={2}/>
   </>
 }
