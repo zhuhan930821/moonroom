@@ -48,10 +48,35 @@ function Rug(){
   return <mesh rotation-x={-Math.PI/2} position={baseline?[-.8,.025,1.5]:[-.7,.028,2.3]} receiveShadow><planeGeometry args={baseline?[7.2,5.1]:[8.5,6.7]} /><meshStandardMaterial map={texture} roughness={1} side={THREE.DoubleSide}/></mesh>
 }
 
+// E01: "Messy bed 2.0" by thethieme (Sketchfab, CC BY 4.0, credit in ASSETS.md), recoloured to the
+// Moonroom palette. Base maps are dropped (they bake the original grey/black look); normal and
+// roughness maps keep the fabric folds and wood grain. Scaled 1.35x so it holds its own in the 20 m room.
+const BED_TINTS = {
+  Nordli_Cover: { color: new THREE.Color('#d98fae'), map: null },     // draped throw: rose knit
+  Nordli_Comforter: { color: new THREE.Color('#f3e4dc'), map: null }, // folded duvet: cream
+  Nordli_Sheet: { color: new THREE.Color('#efe2e6'), map: null },
+  Nordli_Pillows: { color: new THREE.Color('#c8b4e2'), map: null },   // lilac pillows
+  Nordli_Frame: { color: new THREE.Color('#b98a6c'), map: null },     // warm honey wood
+  Nordli_Shelves: { color: new THREE.Color('#b98a6c'), map: null },
+}
+
 function Bed() {
+  if (FLAGS.bedLegacy) return <LegacyBed/>
+  return <GLBAsset
+    url="/assets/models/bed/messy-bed-2.glb"
+    position={FURNITURE.bed.position}
+    rotation={[0, -Math.PI / 2, 0]}
+    scale={1.35}
+    axisCorrection={false}
+    nodeOverrides={BED_TINTS}
+    fallbackScale={1.5}
+  />
+}
+
+function LegacyBed() {
   return <GLBAsset
     url="/assets/models/lounge/moon-nest-refinement-v2.glb"
-    position={FURNITURE.bed.position}
+    position={[7.0, 0, 3.0]}
     rotation={[0, -Math.PI / 2, 0]}
     scale={[2.0, 1.35, 2.5]}
     axisCorrection={false}

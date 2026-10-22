@@ -27,6 +27,8 @@ export function parseFlags(search = '') {
     midi: notOff('midiCandidate'),
     // F01: approved cloud sofa (default); ?loungeLegacy=1 shows the old reclining lounge
     loungeLegacy: on('loungeLegacy'),
+    // E01: recoloured Messy bed 2.0 (default); ?bedLegacy=1 shows the old Moon Nest bed
+    bedLegacy: on('bedLegacy'),
     // Opt-in candidates, not default
     drumCandidate: on('drumCandidate'),
     decorSample: on('decorSample'),

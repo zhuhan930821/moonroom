@@ -18,6 +18,16 @@
 
 新版远景生成提示强调 16:9 梦核云海、巨大青绿色纹理月球、右侧哥特漂浮城堡、发光轨道，以及从城堡穿过云海向前蜿蜒的青紫色“月亮河”。使用内置 imagegen 生成，配合实时 3D 云层、星光与鼓击发光反馈。
 
+## 床（E01，2026-10-22 起默认）
+
+| 文件 | 来源 | 许可证 / 署名 |
+| --- | --- | --- |
+| `public/assets/models/bed/messy-bed-2.glb` | [“Messy bed 2.0 (with wall mounted backboard)” by thethieme](https://sketchfab.com/3d-models/messy-bed-20-with-wall-mounted-backboard-a2b2645701c94fa49e65661806219c6b)，用户提供的转换 GLB；原始文件保存在 `assets-source/third-party/sketchfab-messy-bed-2/original.glb` | [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)；分发时必须保留署名。项目只在运行时修改颜色（去掉原底色贴图、保留法线/粗糙度）、放大 1.35 倍并调整朝向，未改动网格 |
+
+完整署名文本：`“Messy bed 2.0 (with wall mounted backboard)” (https://sketchfab.com/3d-models/messy-bed-20-with-wall-mounted-backboard-a2b2645701c94fa49e65661806219c6b) by thethieme is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).`
+
+旧床 Moon Nest（项目原创）仍可用 `?bedLegacy=1` 查看。
+
 ## 架子鼓替换调研
 
 检查过两个许可清晰的完整鼓组候选：Heataker 的 Sketchfab “Standard Drum Set”（CC BY，约 439k 三角面）和 art.katja 的 Sketchfab “Drum Kit”（CC BY，约 86k 三角面）。两者下载均需要 Sketchfab 账户授权，本项目没有在未取得原始下载文件时声称导入。最终资产由本机 Blender 原创制作并导出；配置与比例参考标准五鼓原声套鼓照片，而未复制第三方网格或贴图。

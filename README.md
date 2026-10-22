@@ -76,13 +76,15 @@ Phase 1 Blender 房屋建筑现为默认场景；可用 `?architecture=legacy` �
 | `?floorMaterialTest=legacy` / `=1` | 回看 Phase 1 原地板 / 橡木测试地板 |
 | `?lightingPass=current` | 回看旧灯光；默认已是暖金灯光 + 灯串 + 蜡烛（`docs/golden-pass-01.md`），`?fairyLights=0` 隐藏灯串 |
 | `?loungeLegacy=1` | 回看旧的薰衣草躺椅；默认为低矮云朵沙发（F01） |
+| `?bedLegacy=1` | 回看旧的 Moon Nest 床；默认为重新配色的 Messy bed 2.0（E01，CC BY 4.0，署名见 `ASSETS.md`） |
+| `?spawn=edgeLeft|edgeRight|edgeUp` | 窗边斜视和仰视，用于检查窗外远景是否露边 |
 | `?lightingPass=moon|warm|combined|bloom|golden`、`?lightingDebug=1` | 灯光分层与调参面板 |
 | `?drumCandidate=1`、`?decorSample=1`、`?rugMaterialTest=1`、`?rugPileTest=1` | 未确认候选（默认不加载） |
 | `?voileSample=0`、`?curtainClosed=1`、`?architecture=legacy`、`?whiteModel=1`、`?visualBaseline=1` | 帘子、旧建筑、白模与旧灯光对比 |
 
 ## 已知边界
 
-- 已确认的默认 GLB：鼓组（D01）、CRT（C02）、工作长桌（C01）、笔记本与副屏（C03）、音箱（C04）、MIDI（C05）、云朵沙发（F01）、床与 Phase 1 建筑（Poly Haven 木地板）。书架、唱片机、侧墙键盘、狐狸及次要装饰仍是程序化模型。
+- 已确认的默认 GLB：鼓组（D01）、CRT（C02）、工作长桌（C01）、笔记本与副屏（C03）、音箱（C04）、MIDI（C05）、云朵沙发（F01）、床（E01）与 Phase 1 建筑（Poly Haven 木地板）。书架、唱片机、侧墙键盘、狐狸及次要装饰仍是程序化模型。
 - 环境音乐是浏览器合成的安静持续音，不是完整曲目。
 - 暂无手柄、移动端触控、AI 狐狸对话或房间外可行走地图。
 - 画质开关提供低分辨率和较少云层；60 FPS 仍需在目标中端硬件上实测。

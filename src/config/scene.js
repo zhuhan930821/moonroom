@@ -49,7 +49,7 @@ export const QA_LOOKS = {
 }
 
 export const FURNITURE = {
-  bed: { position: [7.0, 0, 3.0], size: [5.8, 1.15, 4.55] },
+  bed: { position: [8.45, 0, 3.0], size: [3.3, 1.15, 3.75] },
   bookshelf: { position: [9.05, 0, -3.1], size: [1.25, 4.8, 5.1] },
   desk: { position: [0.1, 0, -4.25], size: [8.2, 1.25, 1.7] },
   drums: { position: [-7.1, 0, -2.8], size: [4.2, 2.2, 3.8] },
