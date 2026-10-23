@@ -53,3 +53,5 @@
 .rhythm-result dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:10px 0;font-size:12.5px;text-align:left}.rhythm-result dd{margin:0;font-variant-numeric:tabular-nums}.rhythm-actions{display:flex;gap:8px;justify-content:center}.rhythm-actions button{background:#695175;color:#fff2df;border:1px solid #d3abc1;padding:7px 12px;cursor:pointer}
 .studio-import{position:relative;text-align:center;font-size:11px;padding:5px 4px;cursor:pointer}.studio-import input{position:absolute;inset:0;opacity:0;cursor:pointer}.studio-import:focus-within{outline:2px solid #3e4c91}
 .studio-notice{margin:0;font-size:11px;line-height:1.5;color:#3e4c91;background:#fffaf3;border:1px solid #d3c6d8;padding:6px}
+.milo-hint{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);padding:7px 14px;background:rgba(237,137,109,.18);border:1px solid rgba(237,137,109,.55);border-radius:999px;color:#ffe2d4;font-size:12px;letter-spacing:.06em;pointer-events:none;backdrop-filter:blur(8px)}
+.mugo-bar .milo-invite{margin-left:auto;background:#ed896d;border-color:#ffd3c0;color:#2a1a22}.mugo-bar .milo-invite+a{margin-left:0}

@@ -102,6 +102,27 @@ export async function playDrum(name, when) {
 
 export function audioNow() { return getContext().currentTime }
 
+// Milo's Tiny Band groove (same pattern as Mugo: hi-hat eighths, kick on 1 & 3, snare on 2 & 4),
+// scheduled ahead on the audio clock. `onHit(pad, delaySeconds)` lets the caller show and record
+// each hit. Returns stop().
+export function startGroove(bpm, onHit) {
+  const audio = getContext()
+  const step = 60 / bpm / 2
+  let next = audio.currentTime + .1, n = 0
+  const tick = async () => {
+    const samples = await prepareAudio()
+    while (next < audio.currentTime + .2) {
+      const position = n % 8
+      const pads = ['hihat', ...(position === 0 || position === 4 ? ['kick'] : []), ...(position === 2 || position === 6 ? ['snare'] : [])]
+      for (const pad of pads) { voice(master, audio, samples[pad], next, .85, pad); onHit?.(pad, next - audio.currentTime) }
+      next += step; n++
+    }
+  }
+  tick()
+  const timer = setInterval(tick, 40)
+  return () => clearInterval(timer)
+}
+
 // Wind chime: struck metal tubes (inharmonic partials, long decay) for MIDI `notes`, spread
 // over ~2 s like a breeze moving through them.
 export function playChime(notes) {

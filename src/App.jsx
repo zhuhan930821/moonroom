@@ -20,6 +20,7 @@ import { LightingProvider } from './lighting/LightingContext'
 import { BLOOM_PASSES, CINEMATIC_DEFAULTS, GOLDEN_DEFAULTS, CinematicLights, CinematicPostFX } from './lighting/CinematicLighting'
 import FairyLights from './scene/FairyLights'
 import TimeOfDay from './scene/TimeOfDay'
+import Milo from './scene/Milo'
 import { FLAGS } from './config/flags'
 
 preloadCoreAssets()
@@ -108,6 +109,7 @@ export default function App() {
           records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
         <TimeOfDay resting={game.mode === 'beanbag'}/>
+        {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
         {cinematic && <CinematicPostFX enabled={BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>} 
       </LightingProvider>}
       <PlayerController locked={game.locked} mode={game.mode} onPosition={game.updatePosition}/>
@@ -121,12 +123,13 @@ export default function App() {
       {inExplore && <div className="reticle"/>}
       {!whiteModel && <div className={`prompt ${prompt ? 'show' : ''}`} data-testid="interaction-prompt">{prompt && <><kbd>E</kbd><span>{prompt}</span></>}</div>}
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
+      {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
       {inExplore && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
       {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse}/><div className="mode-exit">Esc · 返回房间</div></>}
       {game.mode === 'drums' && <DrumPanel game={game}/>}
       {game.mode === 'drums' && game.challenge && <RhythmOverlay challenge={game.challenge} subscribeStrikes={game.subscribeStrikes} onRetry={() => game.startChallenge(game.challenge.take.id)} onClose={game.endChallenge}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}
-      {game.mode === 'mugo' && <MugoScreen onExit={game.leave}/>}
+      {game.mode === 'mugo' && <MugoScreen onExit={game.leave} milo={game.milo} onInviteMilo={game.inviteMilo}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
       {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}

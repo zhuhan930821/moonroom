@@ -13,6 +13,7 @@ export default function PianoPanel({ game }) {
       <button className={game.recording ? 'rec on' : 'rec'} onClick={game.toggleRecording} data-testid="piano-record">{game.recording ? `● REC · ${game.recording.hits.length} notes (Enter)` : '● Record (Enter)'}</button>
       <button onClick={game.togglePlayLast} disabled={!game.lastTake && !game.playingTake}>{game.playingTake ? '■ Stop' : `▶ ${game.lastTake ? game.lastTake.name : 'No takes yet'} (Space)`}</button>
       <button className={game.metronome ? 'on' : ''} onClick={game.toggleMetronome}>♩ {game.bpm} BPM (\)</button>
+      {game.milo.visiting && <button className={game.milo.jam ? 'on' : ''} onClick={game.toggleMiloJam} data-testid="milo-jam">🥁 Milo 伴奏 {game.milo.jam ? '开' : '关'}</button>}
       <span className="bpm"><button onClick={() => game.shiftOctave(-1)} aria-label="Octave down">− 8va</button><button onClick={() => game.shiftOctave(1)} aria-label="Octave up">+ 8va</button></span>
     </div>
     <small>- / = 换八度 · [ ] 调速度 · 录音会保存到电脑的 Studio · Esc 离开</small>

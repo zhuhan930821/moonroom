@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { FOX_HINTS, INTERACTIONS } from '../config/scene'
 import { nearestInteraction } from './collision'
-import { countIn, playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startCrackle, startMetronome } from '../audio/drums'
+import { countIn, startGroove, playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startCrackle, startMetronome } from '../audio/drums'
 import { finishRecording, takeStore } from '../audio/takes'
 import { emitMusic } from '../audio/musicBus'
 import { roomState } from './roomState'
@@ -46,6 +46,10 @@ export function useInteractionSystem(root) {
   const strikeListeners = useRef(new Set())
   const subscribeStrikes = useCallback(listener => { strikeListeners.current.add(listener); return () => strikeListeners.current.delete(listener) }, [])
   const [challenge, setChallenge] = useState(null) // { take, startAt }
+  // Milo (Mugo's drummer) visiting: he sits at the kit and jams while you play piano.
+  const [milo, setMilo] = useState({ visiting: false, jam: true })
+  const inviteMilo = useCallback(() => setMilo(old => ({ ...old, visiting: !old.visiting })), [])
+  const toggleMiloJam = useCallback(() => setMilo(old => ({ ...old, jam: !old.jam })), [])
   const challengeRef = useRef(null)
   challengeRef.current = challenge
   // Piano session: octave base, notes currently held (for the 3D keys), and their releases.
@@ -175,6 +179,16 @@ export function useInteractionSystem(root) {
     setChallenge({ take, startAt: clock() + .05 + 4 * beat })
   }, [stopTake])
   const endChallenge = useCallback(() => setChallenge(null), [])
+
+  useEffect(() => {
+    if (!milo.visiting || !milo.jam || mode !== 'piano') return
+    const stop = startGroove(bpm, (pad, delay) => {
+      const at = clock() + delay
+      setTimeout(() => pulse(pad), delay * 1000)
+      setRecording(current => current && at >= current.startedAt ? { ...current, hits: [...current.hits, { pad, at }] } : current)
+    })
+    return stop
+  }, [milo.visiting, milo.jam, mode, bpm, pulse])
 
   const changeBpm = useCallback(delta => setBpm(value => Math.max(50, Math.min(180, value + delta))), [])
 
@@ -306,6 +320,7 @@ export function useInteractionSystem(root) {
   return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume,
     records, vinyl, playVinyl, stopVinyl, book, pullBook,
     drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
+    milo, inviteMilo, toggleMiloJam,
     recording, metronome, bpm, playingTake, lastTake, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, pulse,
     pianoBase, pianoNotes, noteOn, noteOff, shiftOctave }
 }
