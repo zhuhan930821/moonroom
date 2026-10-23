@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import { PADS, PIANO, beatLength, makeTake, noteName, quantize, takeLength, takeStore, toggleStep } from '../audio/takes'
 import { playTake, playDrum, playPiano, renderTakeWav } from '../audio/drums'
 import { isBlackKey } from '../game/pianoKeys'
+import { midiToTake, takeToMidi } from '../audio/midi'
 
 const STEPS_PER_BEAT = 4 // grid resolution: 1/16 notes
 
@@ -63,34 +64,48 @@ export default function Studio({ onHit }) {
     const created = takeStore.add({ ...makeTake({ name: `${kind === 'piano' ? 'Piano' : 'Drums'} ${takes.length + 1}`, bpm: 90, bars: 2 }), kind })
     setSelectedId(created.id)
   }
+  const download = (blob, extension) => {
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${take.name.replace(/[^\w\- \u4e00-\u9fa5]+/g, '').trim() || 'moonroom-take'}.${extension}`
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 5000)
+  }
+  const [notice, setNotice] = useState('')
+  const exportMidi = () => { download(new Blob([takeToMidi(take)], { type: 'audio/midi' }), 'mid'); setNotice('已导出 MIDI。在 Mugo 的「乐谱库 → 导入 MIDI 文件…」里打开它。') }
+  const importMidi = async file => {
+    try {
+      const created = takeStore.add(midiToTake(await file.arrayBuffer(), file.name.replace(/\.(mid|midi)$/i, '')))
+      setSelectedId(created.id)
+      setNotice(`已导入「${created.name}」：${created.events.length} 个音符，${created.bpm} BPM。`)
+    } catch (error) { setNotice(error.message || '无法读取这个 MIDI 文件。') }
+  }
   const exportWav = async () => {
     setBusy('Rendering…')
     try {
-      const blob = await renderTakeWav(take)
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.download = `${take.name.replace(/[^\w\- ]+/g, '').trim() || 'moonroom-take'}.wav`
-      link.click()
-      setTimeout(() => URL.revokeObjectURL(link.href), 5000)
+      download(await renderTakeWav(take), 'wav')
     } finally { setBusy('') }
   }
 
-  return <section className="desktop-window studio" role="dialog" aria-label="Studio" data-testid="studio-window">
+  return <section className="desktop-window studio" role="dialog" aria-label="Studio" data-testid="studio-window"
+    onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const file = event.dataTransfer.files[0]; if (file) importMidi(file) }}>
     <aside className="studio-list">
       <div className="studio-new"><button className="win-button" onClick={() => newProject('drums')}>+ Drums</button><button className="win-button" onClick={() => newProject('piano')}>+ Piano</button></div>
+      <label className="win-button studio-import">⤒ 导入 MIDI<input id="studio-midi" type="file" accept=".mid,.midi,audio/midi" onChange={event => { const file = event.target.files[0]; if (file) importMidi(file); event.target.value = '' }}/></label>
+      {notice && <p className="studio-notice" role="status">{notice}</p>}
       {takes.length === 0 && <p className="studio-empty">还没有工程。<br/>坐到鼓凳按 R 录一段，或点上面新建。</p>}
       {takes.map(item => <button key={item.id} className={`studio-item ${item.id === take?.id ? 'active' : ''}`} onClick={() => setSelectedId(item.id)}>
         <strong>{item.name}</strong><small>{item.bpm} BPM · {Math.round(takeLength(item) / (4 * beatLength(item.bpm)))} bars · {item.events.length} hits</small>
       </button>)}
     </aside>
     {take ? <ProjectView key={take.id} take={take} playing={playing} playheadRef={playheadRef} loop={loop} busy={busy}
-      onPlay={play} onLoop={() => setLoop(value => !value)} onEdit={edit} onExport={exportWav}
+      onPlay={play} onLoop={() => setLoop(value => !value)} onEdit={edit} onExport={exportWav} onExportMidi={exportMidi}
       onDelete={() => { stop(); takeStore.remove(take.id); setSelectedId(null) }}/>
       : <div className="studio-main studio-empty">选择或新建一个工程</div>}
   </section>
 }
 
-function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, onEdit, onExport, onDelete }) {
+function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, onEdit, onExport, onExportMidi, onDelete }) {
   const length = takeLength(take)
   const step = beatLength(take.bpm) / STEPS_PER_BEAT
   const steps = Math.round(length / step)
@@ -125,6 +140,7 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
       <button className="win-button" onClick={() => onEdit(quantize(take, STEPS_PER_BEAT))} disabled={!take.events.length}>Quantize 1/16</button>
       {take.original && <button className="win-button" onClick={() => onEdit({ events: take.original, original: undefined })}>Undo quantize</button>}
       <button className="win-button" onClick={onExport} disabled={!take.events.length || Boolean(busy)}>{busy || '⤓ Export WAV'}</button>
+      <button className="win-button" onClick={onExportMidi} disabled={!take.events.length} data-testid="studio-midi-export">⤓ MIDI → Mugo</button>
       <button className={`win-button ${take.pressed ? 'pressed' : ''}`} onClick={() => onEdit({ pressed: !take.pressed })} disabled={!take.events.length} data-testid="studio-press">{take.pressed ? '◉ 已压成唱片' : '◎ 压成唱片'}</button>
       <button className="win-button danger" onClick={onDelete}>Delete</button>
     </div>
