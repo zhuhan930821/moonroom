@@ -7,6 +7,7 @@ import { playerRig } from '../game/PlayerController'
 import SouvenirMesh from './SouvenirMesh'
 import { DoorModel } from './AnywhereDoor'
 import IdSea from './IdSea'
+import StrollWorld from '../stroll/StrollWorld'
 import { Hero, Landmark, Scatter } from './landmarks'
 import { startWorldMusic } from './worldAudio'
 
@@ -68,7 +69,7 @@ void main(){
 }`,
 }
 
-function Sky({ spec, sunDir }) {
+export function Sky({ spec, sunDir }) {
   const p = spec.palette
   const material = useMemo(() => new THREE.ShaderMaterial({
     ...skyShader, side: THREE.BackSide, depthWrite: false, fog: false,
@@ -183,7 +184,7 @@ function Creatures({ spec, ground }) {
   </instancedMesh>
 }
 
-function Weather({ spec }) {
+export function Weather({ spec }) {
   const { kind, intensity } = spec.weather
   const ref = useRef()
   const count = kind === 'none' ? 0 : Math.round(300 + intensity * 1500)
@@ -193,8 +194,9 @@ function Weather({ spec }) {
     return { positions, speeds }
   }, [count, spec.seed])
   const style = { rain: ['#cfe3ff', .06, -14], snow: ['#ffffff', .12, -1.2], petals: ['#ffc2d6', .16, -.9], embers: ['#ffab5c', .1, 1.4], bubbles: ['#bff6ff', .22, 1.1] }[kind] || ['#fff', .1, -1]
-  useFrame(({ clock }, dt) => {
+  useFrame(({ clock, camera }, dt) => {
     if (!ref.current) return
+    ref.current.position.set(camera.position.x, 0, camera.position.z) // weather travels with you
     const attr = ref.current.geometry.attributes.position, t = clock.elapsedTime
     for (let i = 0; i < count; i++) {
       let y = attr.getY(i) + style[2] * speeds[i] * dt
@@ -306,5 +308,5 @@ export default function WorldScene({ world }) {
     return () => { gl.toneMapping = prev[0]; gl.toneMappingExposure = prev[1] }
   }, [gl, world])
   useEffect(() => startWorldMusic(world.music), [world])
-  return world.kind === 'idsea' ? <IdSea world={world}/> : <GeneratedWorld spec={world}/>
+  return world.kind === 'idsea' ? <IdSea world={world}/> : world.kind === 'stroll' ? <StrollWorld world={world}/> : <GeneratedWorld spec={world}/>
 }

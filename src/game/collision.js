@@ -4,6 +4,7 @@ import { worldPhysics } from '../worlds/worldState.js'
 export function isBlocked(x, z) {
   const r = PLAYER.radius
   // Behind the Anywhere Door: a round walkable area with round obstacles.
+  if (worldPhysics.active && worldPhysics.walkable) return !worldPhysics.walkable(x, z)
   if (worldPhysics.active) return Math.hypot(x, z) > worldPhysics.radius - r || worldPhysics.blockers.some(b => Math.hypot(x - b.x, z - b.z) < b.r + r)
   if (x < -ROOM.width / 2 + r || x > ROOM.width / 2 - r || z < -ROOM.depth / 2 + r || z > ROOM.depth / 2 - r) return true
   return COLLIDERS.some(c => x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ)

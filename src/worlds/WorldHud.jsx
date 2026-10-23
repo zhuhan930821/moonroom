@@ -1,9 +1,20 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { worldPhysics, worldState } from './worldState'
+import StrollHud from '../stroll/StrollHud'
 
 // In-world overlay: arrival title card, "pick up" / "go home" prompts, and the E key handling
 // for both (the room's interaction system stands down while you're away).
-export default function WorldHud({ playerPosition, mode }) {
+export default function WorldHud(props) {
+  const kind = useSyncExternalStore(worldState.subscribe, () => worldState.get().world?.kind)
+  return kind === 'stroll' ? <><OpeningVeil/><StrollHud {...props}/></> : <RoamHud {...props}/>
+}
+
+function OpeningVeil() {
+  const status = useSyncExternalStore(worldState.subscribe, () => worldState.get().status)
+  return status === 'opening' ? <div className="world-veil"><div><small>ANYWHERE DOOR</small><p>门后的世界正在成形……</p></div></div> : null
+}
+
+function RoamHud({ playerPosition, mode }) {
   const state = useSyncExternalStore(worldState.subscribe, worldState.get)
   const [near, setNear] = useState(null)
   const [toast, setToast] = useState('')

@@ -24,12 +24,13 @@ export default function PortalPanel({ onDone }) {
   }
   return <div className="mode-panel portal-panel" data-testid="portal-panel" onClick={event => event.stopPropagation()}>
     <span>ANYWHERE DOOR</span>
-    <p>门后是一个只存在一次的世界。你想去什么样的地方？</p>
-    <textarea id="portal-wish" value={wish} onChange={event => setWish(event.target.value)} placeholder="可以不写。比如：下着橘子味雨的海边小镇" rows={2} maxLength={200} disabled={busy}/>
+    <p>门后是一条只存在一次的街。你想去什么样的地方散步？</p>
+    <textarea id="portal-wish" value={wish} onChange={event => setWish(event.target.value)} placeholder="可以不写。比如：下雪的小镇、樱花糖果街、沙漠里的夜市" rows={2} maxLength={200} disabled={busy}/>
     <div className="transport">
-      <button onClick={() => go('new')} disabled={busy} data-testid="portal-go">{busy ? '正在开门……' : '推开门'}</button>
+      <button onClick={() => go('stroll')} disabled={busy} data-testid="portal-go">{busy ? '正在开门……' : '推开门去散步'}</button>
+      <button onClick={() => go('new')} disabled={busy} data-testid="portal-wild">去野外</button>
       <button onClick={() => go('idsea')} disabled={busy} data-testid="portal-idsea">去 Id 之海{visitedSea ? '' : ' ✦'}</button>
     </div>
-    <small>每次推门都会生成一个新世界 · 找到发光的纪念品带回来 · Esc 关上门</small>
+    <small>沿街走走，看看房子，捡月光币，在小店里买纪念品带回来 · Esc 关上门</small>
   </div>
 }
