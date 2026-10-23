@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { grade, judge, startRun, sweep, WINDOW } from '../game/rhythm'
+import { grade, judge, startRun, sweep } from '../game/rhythm'
+import { celebrate } from '../game/celebrate'
 
 // Lanes follow keyboard columns (Y/H, U/J, I/K, O/L, ;) so screen position matches the hand.
 const LANE_ORDER = ['crash', 'ride', 'tom1', 'kick', 'tom2', 'snare', 'floor', 'hihat', 'hihatOpen']
@@ -70,7 +71,11 @@ export default function RhythmOverlay({ challenge, subscribeStrikes, onRetry, on
         } else { ctx.fillStyle = 'rgba(120,90,140,.6)'; ctx.fillRect(x - laneW / 2 + 3, hitY - 8, laneW - 6, 16) }
         ctx.globalAlpha = 1
       }
-      if (t > run.current.end) { setResult({ ...grade(run.current), counts: { ...run.current.counts }, maxCombo: run.current.maxCombo, score: Math.round(run.current.score) }); return }
+      if (t > run.current.end) {
+        const final = grade(run.current)
+        if (final.stars === 3) celebrate(`《${challenge.take.name}》三星通关`)
+        setResult({ ...final, counts: { ...run.current.counts }, maxCombo: run.current.maxCombo, score: Math.round(run.current.score) }); return
+      }
       frame = requestAnimationFrame(draw)
     }
     frame = requestAnimationFrame(draw)

@@ -55,3 +55,5 @@
 .studio-notice{margin:0;font-size:11px;line-height:1.5;color:#3e4c91;background:#fffaf3;border:1px solid #d3c6d8;padding:6px}
 .milo-hint{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);padding:7px 14px;background:rgba(237,137,109,.18);border:1px solid rgba(237,137,109,.55);border-radius:999px;color:#ffe2d4;font-size:12px;letter-spacing:.06em;pointer-events:none;backdrop-filter:blur(8px)}
 .mugo-bar .milo-invite{margin-left:auto;background:#ed896d;border-color:#ffd3c0;color:#2a1a22}.mugo-bar .milo-invite+a{margin-left:0}
+.castle-toast{position:absolute;left:50%;top:76px;transform:translateX(-50%);padding:9px 18px;border-radius:999px;background:rgba(40,28,56,.82);border:1px solid #ffd78a99;color:#ffe9c2;font:13px Georgia,"Songti SC",serif;letter-spacing:.06em;box-shadow:0 0 30px #ffc46a55;pointer-events:none;animation:toastIn .6s ease,toastOut .8s ease 6.2s forwards;z-index:5}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-8px)}}@keyframes toastOut{to{opacity:0}}@media(prefers-reduced-motion:reduce){.castle-toast{animation:none}}

@@ -335,12 +335,12 @@ function buildWildlife(audio, target) {
   }, 650)
 }
 
-export function setTimeOfDayAudio(dawn) {
-  dawnLevel = dawn
+export function setTimeOfDayAudio(dawn, day = 0) {
+  dawnLevel = Math.max(dawn, day)
   if (!crickets) return
   const now = getContext().currentTime
   crickets.gain.setTargetAtTime(.5 * (1 - dawn), now, .5)
-  birds.gain.setTargetAtTime(dawn, now, .5)
+  birds.gain.setTargetAtTime(dawn * (1 - day * .35), now, .5) // a dawn chorus, calmer by day
 }
 
 function buildAmbient(audio, target) {

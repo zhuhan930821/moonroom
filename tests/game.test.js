@@ -43,3 +43,12 @@ test('URL flags default to the approved room and only QA params override it', as
   const qa = parseFlags('?deskCandidate=0&floorMaterialTest=legacy&lightingPass=bloom&spawn=bed')
   assert.equal(qa.desk, false); assert.equal(qa.floor, 'phase1'); assert.equal(qa.lightingPass, 'bloom'); assert.equal(qa.captureName, 'bed')
 })
+
+test('the sofa day cycle runs night → dawn → day → dusk → night and loops', async () => {
+  const { timeAt, CYCLE } = await import('../src/game/dayCycle.js')
+  assert.equal(timeAt(0), 0); assert.equal(timeAt(9), 0, 'starts with a stretch of night')
+  assert.equal(timeAt(35), 1, 'sunrise after 35 s'); assert.equal(timeAt(60), 2, 'full day at 60 s')
+  assert.equal(timeAt(75), 2, 'day holds'); assert.ok(Math.abs(timeAt(105) - 1) < 1e-9, 'dusk'); assert.ok(timeAt(130) < 1e-9, 'night again')
+  assert.equal(timeAt(CYCLE + 60), 2, 'loops')
+  for (let t = 0; t < CYCLE; t += .5) { const v = timeAt(t); assert.ok(v >= 0 && v <= 2) }
+})

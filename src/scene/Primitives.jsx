@@ -33,7 +33,7 @@ export function StarField({ hit }) {
   useFrame(({clock})=>{
     // Cymbals light up the sky; any note gives a faint shimmer.
     flash.current=energy('cymbal',1.2)*.45+energy('any',2)*.12
-    if(material.current){material.current.opacity=Math.min(1,.55+Math.sin(clock.elapsedTime*.7)*.08+flash.current)*(1-roomState.get().dawn*.9);material.current.size=.09+energy('cymbal',1.2)*.05}
+    if(material.current){material.current.opacity=Math.min(1,.55+Math.sin(clock.elapsedTime*.7)*.08+flash.current)*(1-roomState.get().dawn*.9)*(1-roomState.get().day);material.current.size=.09+energy('cymbal',1.2)*.05}
   })
   return <points geometry={geometry}><pointsMaterial ref={material} size={.09} color="#fff1ce" sizeAttenuation transparent opacity={.6}/></points>
 }

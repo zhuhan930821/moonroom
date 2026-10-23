@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { age, energy, pianoColor } from '../audio/musicBus'
+import { roomState } from '../game/roomState'
 
 // I04 fairy-light garlands + I07 candle glows as one instanced pass.
 // Bulbs are HDR (>1) unlit colours so bloom picks them up; only a few real
@@ -70,6 +71,7 @@ export default function FairyLights({ quality = 'high' }) {
     // running out from each garland's middle, cymbal sparkle, and a piano-pitch tint.
     const kick = energy('kick', 7), cymbal = energy('cymbal', 2.5), piano = energy('piano', 1.6)
     const wave = age('snare') * 2.2
+    const daylightDim = 1 - roomState.get().day * .65 // garlands read faint in daylight
     const waveOn = wave < 1.4
     points.forEach((_, i) => {
       let k = 3.2 + Math.sin(t * 1.3 + i * 1.7) * .7 + Math.sin(t * 3.1 + i * .37) * .3
@@ -78,7 +80,7 @@ export default function FairyLights({ quality = 'high' }) {
       if (cymbal > .02) k += cymbal * 3 * (Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1 > .55 ? 1 : 0)
       color.copy(BULB)
       if (piano > .02) color.lerp(pianoColor, piano * .6)
-      bulbs.current.setColorAt(i, color.multiplyScalar(k))
+      bulbs.current.setColorAt(i, color.multiplyScalar(k * daylightDim))
       // Bulbs swell on the beat (already at full brightness, so size is what reads).
       const swell = 1 + kick * .9 + (k - 3.9) * .08
       bulbs.current.setMatrixAt(i, matrix.makeScale(swell, swell, swell).setPosition(points[i]))

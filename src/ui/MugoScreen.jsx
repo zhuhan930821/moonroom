@@ -3,6 +3,7 @@ import { FLAGS } from '../config/flags'
 import { HELLO, OPEN_MIDI, READY, SONG_MIDI, mugoFrameUrl, mugoOutbox } from '../game/mugoBridge'
 import { midiToTake, takeToMidi } from '../audio/midi'
 import { takeStore } from '../audio/takes'
+import { celebrate } from '../game/celebrate'
 
 // The desk laptop + companion monitor open Mugo Moc (the DrumApp music-block studio) in a
 // framed "monitor". Keyboard focus moves into the iframe, so exit is an on-screen button.
@@ -32,6 +33,7 @@ export default function MugoScreen({ onExit, milo, onInviteMilo }) {
         try {
           const take = takeStore.add({ ...midiToTake(data.midi, String(data.name || 'Mugo').slice(0, 80)), pressed: true })
           setNotice(`收到《${take.name}》，已压成唱片放进唱片箱`)
+          celebrate(`Mugo 送来了《${take.name}》`)
         } catch (error) { setNotice(error.message || 'Mugo 送来的 MIDI 打不开') }
       }
     }

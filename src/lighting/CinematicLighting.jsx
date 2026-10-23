@@ -16,8 +16,8 @@ export const BLOOM_PASSES = ['bloom', 'golden']
 function GoldenLights({ settings, quality }) {
   const w = settings.warm
   const moon = useRef(), sky = useRef(), lounge = useRef(), floor = useRef()
-  const night = useMemo(() => new THREE.Color('#b9b4ff'), []), sunrise = useMemo(() => new THREE.Color('#ffc392'), [])
-  const skyNight = useMemo(() => new THREE.Color('#b496cc'), []), skyDawn = useMemo(() => new THREE.Color('#f2b9b0'), [])
+  const night = useMemo(() => new THREE.Color('#b9b4ff'), []), sunrise = useMemo(() => new THREE.Color('#ffc392'), []), noon = useMemo(() => new THREE.Color('#fff3e0'), [])
+  const skyNight = useMemo(() => new THREE.Color('#b496cc'), []), skyDawn = useMemo(() => new THREE.Color('#f2b9b0'), []), skyDay = useMemo(() => new THREE.Color('#d4e6ff'), [])
   // Lamps fade rather than snap; with lamps off the moonlight grows and the fill turns bluer.
   useFrame((_, dt) => {
     const k = 1 - Math.exp(-dt * 4)
@@ -25,9 +25,10 @@ function GoldenLights({ settings, quality }) {
     const dark = darkness()
     if (lounge.current) lounge.current.intensity += ((lamps.moon ? w * .7 : 0) - lounge.current.intensity) * k
     if (floor.current) floor.current.intensity += ((lamps.floor ? w * .45 : 0) - floor.current.intensity) * k
-    const { dawn } = roomState.get()
-    if (moon.current) { moon.current.intensity += (settings.moonlight * (1 + dark * 1.1 + dawn * 1.2) - moon.current.intensity) * k; moon.current.color.copy(night).lerp(sunrise, dawn) }
-    if (sky.current) { sky.current.intensity += (settings.ambient * (1 - dark * .25 + dawn * .35) - sky.current.intensity) * k; sky.current.color.copy(skyNight).lerp(skyDawn, dawn) }
+    const { dawn, day } = roomState.get()
+    // Moonlight becomes sunrise, then a bright white sun through the arches.
+    if (moon.current) { moon.current.intensity += (settings.moonlight * (1 + dark * 1.1 + dawn * 1.2 + day * 1.9) - moon.current.intensity) * k; moon.current.color.copy(night).lerp(sunrise, dawn).lerp(noon, day) }
+    if (sky.current) { sky.current.intensity += (settings.ambient * (1 - dark * .25 + dawn * .35 + day * .55) - sky.current.intensity) * k; sky.current.color.copy(skyNight).lerp(skyDawn, dawn).lerp(skyDay, day) }
   })
   return <>
     <directionalLight ref={moon} position={[1.5, 7.8, -10.5]} color="#b9b4ff" intensity={settings.moonlight} castShadow shadow-mapSize-width={quality === 'high' ? 2048 : 1024} shadow-mapSize-height={quality === 'high' ? 2048 : 1024} shadow-camera-left={-11} shadow-camera-right={11} shadow-camera-top={9} shadow-camera-bottom={-9} shadow-camera-near={1} shadow-camera-far={32} shadow-bias={-0.00025} shadow-normalBias={0.035}/>

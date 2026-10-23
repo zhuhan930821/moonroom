@@ -2,27 +2,27 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import { roomState } from '../game/roomState'
 import { setTimeOfDayAudio } from '../audio/drums'
+import { timeAt } from '../game/dayCycle'
 
-// Rest on the sofa and the night turns: ~40 s to sunrise, linger, ~40 s back to night, repeat.
-// Getting up lets dawn ebb back to night over a few seconds.
-const RISE = 40, HOLD = 16, CYCLE = 2 * RISE + 2 * HOLD
+const FIXED = { night: 0, dawn: 1, day: 2 }
+
+// Rest on the sofa and the day turns: night → dawn → day, a long day, dusk → night, repeat.
+// Getting up stops the clock where it is, so you can walk around a daytime room. The settings
+// panel can pin night / dawn / day instead.
 
 export default function TimeOfDay({ resting }) {
-  const restingFor = useRef(0), lastAudio = useRef(-1)
+  const phase = useRef(0), lastAudio = useRef(-1)
   useFrame((_, dt) => {
     const state = roomState.get()
-    if (state.forceDawn != null) { state.dawn = state.forceDawn; return } // demo/QA capture only
     let target
-    if (resting) {
-      restingFor.current += dt
-      const t = restingFor.current % CYCLE
-      target = t < HOLD ? 0 : t < HOLD + RISE ? (t - HOLD) / RISE : t < 2 * HOLD + RISE ? 1 : 1 - (t - 2 * HOLD - RISE) / RISE
-      state.dawn = target * target * (3 - 2 * target) // ease
-    } else {
-      restingFor.current = 0
-      state.dawn = Math.max(0, state.dawn - dt / 6)
-    }
-    if (Math.abs(state.dawn - lastAudio.current) > .01) { lastAudio.current = state.dawn; setTimeOfDayAudio(state.dawn) }
+    if (state.forceTime != null) target = state.forceTime // demo/QA capture only
+    else if (state.timeMode !== 'auto') target = FIXED[state.timeMode]
+    else { if (resting) phase.current += dt; target = timeAt(phase.current) }
+    // Pinned modes glide rather than jump.
+    state.time += (target - state.time) * (state.timeMode === 'auto' && state.forceTime == null ? 1 : 1 - Math.exp(-dt * 1.5))
+    state.dawn = Math.min(1, state.time)
+    state.day = Math.max(0, state.time - 1)
+    if (Math.abs(state.time - lastAudio.current) > .01) { lastAudio.current = state.time; setTimeOfDayAudio(state.dawn, state.day) }
   })
   return null
 }

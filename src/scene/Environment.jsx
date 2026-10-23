@@ -88,14 +88,14 @@ void main() {
 const skyFragment = `
 uniform sampler2D map;
 uniform vec3 zenith, upper, horizon, below;
-uniform float imageArc, totalArc, imageV0, imageV1, dawn;
-uniform vec3 dawnZenith, dawnUpper, dawnHorizon;
+uniform float imageArc, totalArc, imageV0, imageV1, dawn, day, castleRise, castleGlow, time;
+uniform vec3 dawnZenith, dawnUpper, dawnHorizon, dayZenith, dayUpper, dayHorizon;
 varying vec2 vUv;
 varying vec3 vDir;
 float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
 void main() {
   float h = normalize(vDir).y;
-  vec3 hz = mix(horizon, dawnHorizon, dawn), up = mix(upper, dawnUpper, dawn), zn = mix(zenith, dawnZenith, dawn);
+  vec3 hz = mix(mix(horizon, dawnHorizon, dawn), dayHorizon, day), up = mix(mix(upper, dawnUpper, dawn), dayUpper, day), zn = mix(mix(zenith, dawnZenith, dawn), dayZenith, day);
   vec3 dome = h > 0.0
     ? mix(mix(hz, up, smoothstep(0.0, 0.32, h)), zn, smoothstep(0.32, 0.9, h))
     : mix(hz, below, smoothstep(0.0, -0.35, h));
@@ -111,6 +111,24 @@ void main() {
   // Sunrise grades the painted night: warmer, lifted shadows, a low peach glow near the horizon.
   vec3 sunrise = painting * vec3(1.18, 1.0, .82) + vec3(.10, .05, .02) + vec3(.22, .10, .03) * smoothstep(.55, .1, v);
   painting = mix(painting, sunrise, dawn);
+  // Daylight: lift and cool the grade back to neutral, and calm the night's saturation.
+  vec3 daylit = painting * vec3(1.05, 1.1, 1.12) + vec3(.13, .15, .18);
+  daylit = mix(daylit, vec3(dot(daylit, vec3(.3, .55, .15))), .22);
+  painting = mix(painting, daylit, day);
+  // Castle lights (painting coords: castle spans u .62–.90, v .68–.96; tallest spire at .725, .94).
+  if (castleGlow > 0.0) {
+    float inCastle = smoothstep(.60, .63, u) * smoothstep(.92, .89, u) * smoothstep(.66, .70, v) * smoothstep(.985, .96, v);
+    float front = .965 - castleRise * .31;               // lights come on from the top down
+    float lit = smoothstep(front, front + .025, v);
+    float lum = dot(painting, vec3(.3, .55, .15));
+    float windows = smoothstep(.32, .72, lum);
+    float twinkle = .7 + .3 * sin(time * 7.0 + u * 97.0 + v * 61.0);
+    // Warm window light plus a gold wash over the lit part of the castle.
+    painting = mix(painting, painting * vec3(1.25, 1.0, .7), castleGlow * inCastle * lit * .6);
+    painting += castleGlow * inCastle * lit * (windows * vec3(1.0, .74, .36) * 2.6 * twinkle + vec3(.16, .10, .03));
+    float spire = distance(vec2(u * 1.777, v), vec2(.725 * 1.777, .94));
+    painting += castleGlow * smoothstep(.07, .0, spire) * vec3(1.0, .86, .56) * (1.2 + (1.0 - castleRise) * 2.0);
+  }
   gl_FragColor = vec4(mix(dome, painting, fadeU * fadeV), 1.0);
   #include <colorspace_fragment>
 }`
@@ -123,8 +141,9 @@ function SkyBackdrop({ sky }) {
         map: { value: sky },
         zenith: { value: new THREE.Color('#0a1846') }, upper: { value: new THREE.Color('#143276') },
         horizon: { value: new THREE.Color('#8a5f99') }, below: { value: new THREE.Color('#5a3d70') },
-        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC }, dawn: { value: 0 },
+        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC }, dawn: { value: 0 }, day: { value: 0 }, castleRise: { value: 0 }, castleGlow: { value: 0 }, time: { value: 0 },
         dawnZenith: { value: new THREE.Color('#5d7fd0') }, dawnUpper: { value: new THREE.Color('#e9a3b8') }, dawnHorizon: { value: new THREE.Color('#ffc58c') },
+        dayZenith: { value: new THREE.Color('#6fa8ec') }, dayUpper: { value: new THREE.Color('#a9d1f5') }, dayHorizon: { value: new THREE.Color('#f6e9d6') },
         imageV0: { value: (centre - SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
         imageV1: { value: (centre + SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
       },
@@ -138,7 +157,16 @@ function SkyBackdrop({ sky }) {
     cap.uniforms.imageV0 = { value: 2 }; cap.uniforms.imageV1 = { value: 3 }
     return cap
   }, [material])
-  useFrame(() => { material.uniforms.dawn.value = capMaterial.uniforms.dawn.value = roomState.get().dawn })
+  useFrame(({ clock }) => {
+    const state = roomState.get()
+    material.uniforms.dawn.value = capMaterial.uniforms.dawn.value = state.dawn
+    material.uniforms.day.value = capMaterial.uniforms.day.value = state.day
+    // Celebration: spire flares, lights travel down over 3.5 s, hold, fade out by 16 s.
+    const age = performance.now() / 1000 - state.celebrateAt
+    material.uniforms.castleRise.value = Math.min(1, Math.max(0, age / 3.5))
+    material.uniforms.castleGlow.value = age < 0 || age > 16 ? 0 : Math.min(1, age * 3) * Math.min(1, (16 - age) / 2.5)
+    material.uniforms.time.value = clock.elapsedTime
+  })
   return <group>
     <mesh material={material} renderOrder={-1}>
       <cylinderGeometry args={[SKY_RADIUS, SKY_RADIUS, SKY_HEIGHT, 96, 1, true, SKY_CENTER_ANGLE - SKY_TOTAL_ARC / 2, SKY_TOTAL_ARC]} />

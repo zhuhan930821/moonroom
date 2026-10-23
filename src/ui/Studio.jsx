@@ -4,6 +4,7 @@ import { playTake, playDrum, playPiano, renderTakeWav } from '../audio/drums'
 import { isBlackKey } from '../game/pianoKeys'
 import { midiToTake, takeToMidi } from '../audio/midi'
 import { mugoOutbox } from '../game/mugoBridge'
+import { celebrate } from '../game/celebrate'
 
 const STEPS_PER_BEAT = 4 // grid resolution: 1/16 notes
 
@@ -143,7 +144,7 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
       <button className="win-button" onClick={onExport} disabled={!take.events.length || Boolean(busy)}>{busy || '⤓ Export WAV'}</button>
       <button className="win-button" onClick={onOpenInMugo} disabled={!take.events.length} data-testid="studio-open-mugo">↗ 在 Mugo 打开</button>
       <button className="win-button" onClick={onExportMidi} disabled={!take.events.length} data-testid="studio-midi-export">⤓ MIDI</button>
-      <button className={`win-button ${take.pressed ? 'pressed' : ''}`} onClick={() => onEdit({ pressed: !take.pressed })} disabled={!take.events.length} data-testid="studio-press">{take.pressed ? '◉ 已压成唱片' : '◎ 压成唱片'}</button>
+      <button className={`win-button ${take.pressed ? 'pressed' : ''}`} onClick={() => { if (!take.pressed) celebrate(`《${take.name}》压成了唱片`); onEdit({ pressed: !take.pressed }) }} disabled={!take.events.length} data-testid="studio-press">{take.pressed ? '◉ 已压成唱片' : '◎ 压成唱片'}</button>
       <button className="win-button danger" onClick={onDelete}>Delete</button>
     </div>
     <div className="studio-grid" style={{ '--steps': steps, '--beats': steps / STEPS_PER_BEAT, '--bars': bars }}>
