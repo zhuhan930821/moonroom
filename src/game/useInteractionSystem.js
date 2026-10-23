@@ -5,6 +5,7 @@ import { countIn, startGroove, playDrum, playPiano, playTake, prepareAudio, prep
 import { finishRecording, takeStore } from '../audio/takes'
 import { emitMusic } from '../audio/musicBus'
 import { roomState } from './roomState'
+import { worldPhysics } from '../worlds/worldState'
 
 import { DRUM_KEYS } from './drumKeys'
 // Recording timeline uses the page clock: the audio clock can run unevenly when no output
@@ -39,6 +40,8 @@ export function useInteractionSystem(root) {
   const stopMetronome = useRef(null)
   const stopPlayback = useRef(null)
   recordingRef.current = recording
+  const playerPositionRef = useRef(null)
+  const playerPosition = useCallback(() => playerPositionRef.current, [])
   const modeRef = useRef(mode)
   const nearRef = useRef(near)
   const lastHit = useRef({}) // per pad, so kick + hi-hat together both sound
@@ -77,6 +80,8 @@ export function useInteractionSystem(root) {
   const startPreview = useCallback(() => setStarted(true), [])
 
   const updatePosition = useCallback(position => {
+    playerPositionRef.current = position
+    if (worldPhysics.active) { setNear(old => old === null ? old : null); return } // away behind the Anywhere Door
     if (modeRef.current !== 'explore') return
     const closest = nearestInteraction(position, INTERACTIONS)
     setNear(old => old === closest ? old : closest)
@@ -263,6 +268,7 @@ export function useInteractionSystem(root) {
   useEffect(() => {
     const onKey = event => {
       if (!started || (event.repeat && event.code === 'KeyE')) return
+      if (event.target?.closest?.('input, textarea')) return // typing in a panel isn't playing
       const current = modeRef.current
       if (event.code === 'Escape') {
         if (current !== 'explore') { event.preventDefault(); leave() }
@@ -321,6 +327,7 @@ export function useInteractionSystem(root) {
     records, vinyl, playVinyl, stopVinyl, book, pullBook,
     drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
     milo, inviteMilo, toggleMiloJam,
+    playerPosition,
     recording, metronome, bpm, playingTake, lastTake, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, pulse,
     pianoBase, pianoNotes, noteOn, noteOff, shiftOctave }
 }

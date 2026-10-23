@@ -4,6 +4,9 @@ import * as THREE from 'three'
 import { CAMERA_POSES, PLAYER, QA_LOOKS, QA_SPAWNS, START, START_LOOK } from '../config/scene'
 import { movePlayer } from './collision'
 import { FLAGS } from '../config/flags'
+import { worldPhysics } from '../worlds/worldState'
+
+export const playerRig = { teleport: null }
 
 const keys = new Set()
 
@@ -17,6 +20,17 @@ export default function PlayerController({ locked, mode, onPosition }) {
   const target = useRef(new THREE.Vector3())
   const desired = useRef(new THREE.Quaternion())
   const returning = useRef(false)
+
+  // Anywhere Door: worlds place the player at their spawn and back at the door on return.
+  useEffect(() => {
+    playerRig.teleport = ({ position: p, yaw: y, pitch: x }) => {
+      if (p) position.current.set(...p)
+      if (y != null) yaw.current = y
+      if (x != null) pitch.current = x
+      returning.current = false
+    }
+    return () => { playerRig.teleport = null }
+  }, [])
 
   // Demo capture: a script places the explore camera directly (no pointer lock needed).
   useEffect(() => {
@@ -69,6 +83,7 @@ export default function PlayerController({ locked, mode, onPosition }) {
         position.current.z = next.z
       }
     }
+    if (worldPhysics.active) position.current.y = PLAYER.height + worldPhysics.ground(position.current.x, position.current.z)
     desired.current.setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'))
     if (returning.current) {
       camera.position.lerp(position.current, 1 - Math.exp(-dt * 4.3))

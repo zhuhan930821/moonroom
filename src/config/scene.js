@@ -79,6 +79,8 @@ export const INTERACTIONS = {
   moonLamp: { position: [4.1, 0, .55], radius: 1.15, label: '开关月球灯', lamp: 'moon' },
   floorLamp: { position: [-8.85, 0, -.45], radius: 1.0, label: '开关落地灯', lamp: 'floor' },
   books: { position: [7.7, 0, -3.1], radius: 1.3, label: '抽一本书' },
+  portal: { position: [-4.5, 0, 6.85], radius: 1.3, label: '打开任意门' },
+  souvenirs: { position: [-6.6, 0, 6.95], radius: 1.0, label: '看看纪念品' },
 }
 
 export const FOX_HINTS = [
@@ -94,4 +96,6 @@ export const CAMERA_POSES = {
   mugo: { position: [1.35, 1.95, -2.35], lookAt: [1.35, 1.8, -4.5] },
   record: { position: [-6.15, 2.0, 5.75], lookAt: [-7.55, .7, 5.65] },
   books: { position: [5.6, 2.15, -2.7], lookAt: [9.0, 1.8, -3.1] },
+  portal: { position: [-4.5, 1.75, 5.2], lookAt: [-4.5, 1.6, 7.9] },
+  souvenirs: { position: [-6.6, 1.75, 5.8], lookAt: [-6.6, 1.5, 7.85] },
 }

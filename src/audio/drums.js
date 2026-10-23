@@ -102,6 +102,9 @@ export async function playDrum(name, when) {
 
 export function audioNow() { return getContext().currentTime }
 
+// Shared graph for other sound sources (world music) so they follow the master volume.
+export function audioGraph() { return { ctx: getContext(), master } }
+
 // Milo's Tiny Band groove (same pattern as Mugo: hi-hat eighths, kick on 1 & 3, snare on 2 & 4),
 // scheduled ahead on the audio clock. `onHit(pad, delaySeconds)` lets the caller show and record
 // each hit. Returns stop().

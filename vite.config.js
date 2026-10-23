@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
+import { worldGenPlugin } from './server/worldGen.js'
 import react from '@vitejs/plugin-react'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -29,4 +30,4 @@ function localCapture() {
   }
 }
 
-export default defineConfig({ plugins: [react(), localCapture()] })
+export default defineConfig(({ mode }) => ({ plugins: [react(), localCapture(), worldGenPlugin(loadEnv(mode, projectRoot, ''))] }))

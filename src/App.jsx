@@ -14,6 +14,13 @@ import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import DiaryPage from './ui/DiaryPage'
+import WorldScene from './worlds/WorldScene'
+import AnywhereDoor from './worlds/AnywhereDoor'
+import SouvenirShelf from './worlds/SouvenirShelf'
+import WorldHud from './worlds/WorldHud'
+import PortalPanel from './worlds/PortalPanel'
+import SouvenirPanel from './worlds/SouvenirPanel'
+import { worldState } from './worlds/worldState'
 import { preloadCoreAssets } from './scene/AssetModel'
 import GLBAsset from './scene/AssetModel'
 import { LightingProvider } from './lighting/LightingContext'
@@ -97,12 +104,13 @@ export default function App() {
   const [, rerender] = useState(0)
   useEffect(() => { const timer = setTimeout(() => rerender(n => n + 1), 7000); return () => clearTimeout(timer) }, [celebrateAt])
   const celebrating = performance.now() / 1000 - celebrateAt < 7
+  const world = useSyncExternalStore(worldState.subscribe, () => worldState.get().world) // Anywhere Door
   const inExplore = game.mode === 'explore'
   const prompt = game.mode === 'beanbag' ? '起身' : inExplore && game.near ? INTERACTIONS[game.near].label : null
 
   return <main ref={root} onClick={() => game.started && inExplore && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
     <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state}}>
-      {whiteModel ? <>
+      {world ? <WorldScene world={world}/> : whiteModel ? <>
         <color attach="background" args={['#44444a']}/>
         <ambientLight intensity={1.8}/>
         <directionalLight position={[-5,9,4]} intensity={2.2}/>
@@ -115,6 +123,7 @@ export default function App() {
           records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
         <TimeOfDay resting={game.mode === 'beanbag'}/>
+        <AnywhereDoor/><SouvenirShelf/>
         {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
         {cinematic && <CinematicPostFX enabled={BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>} 
       </LightingProvider>}
@@ -138,6 +147,9 @@ export default function App() {
       {game.mode === 'piano' && <PianoPanel game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave} milo={game.milo} onInviteMilo={game.inviteMilo}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
+      {game.mode === 'portal' && <PortalPanel onDone={game.leave}/>}
+      {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
+      <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
       {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
