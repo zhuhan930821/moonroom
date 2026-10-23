@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { worldPhysics, worldState } from '../worlds/worldState'
 import { LENGTH } from './constants'
-import { get } from './registry'
+import { get, renderer } from './registry'
+import { seat } from './seat'
+import { playerRig } from '../game/PlayerController'
+import './content/render'
 import { playChime } from '../audio/drums'
 import './content/index.js'
 
@@ -12,7 +15,7 @@ export default function StrollHud({ playerPosition, mode }) {
   const state = useSyncExternalStore(worldState.subscribe, worldState.get)
   const world = state.world
   const [near, setNear] = useState(null)
-  const [open, setOpen] = useState(null) // { kind: 'good', item } | { kind: 'shop', shop }
+  const [open, setOpen] = useState(null) // { kind: a registered panel id, data }
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState('')
   const ctxRef = useRef(null)
@@ -33,12 +36,12 @@ export default function StrollHud({ playerPosition, mode }) {
     return () => clearInterval(timer)
   }, [playerPosition])
 
-  const shopOf = item => world.shops[item.shop]
   // What content interactions get to work with (see content/interactions.js).
   const ctx = {
     world, coins: state.coins, shop: i => world.shops[i], owns: good => worldState.owns(world, good),
-    buy: (seller, good) => buy(seller, good), panel: (kind, data) => { setOpen(kind === 'good' ? { kind, item: data } : { kind, shop: data }); document.exitPointerLock?.() },
+    buy: (seller, good) => buy(seller, good), panel: (kind, data) => { setOpen({ kind, data }); document.exitPointerLock?.() },
     toast: setToast, addCoins: n => worldState.addCoins(n), chime: notes => playChime(notes), home: () => worldState.close(),
+    sit: ({ x, z, yaw, drop = .6 }) => { const p = playerPosition(); seat.current = { x, z, drop }; playerRig.teleport?.({ position: [x, p?.y ?? 1.68, z], yaw, pitch: -.05 }) },
   }
   ctxRef.current = ctx
   const buy = (shop, good) => {
@@ -51,8 +54,9 @@ export default function StrollHud({ playerPosition, mode }) {
     const onKey = event => {
       if (mode !== 'explore' || event.repeat || event.target?.closest?.('input, textarea')) return
       if (open) {
-        if (event.code === 'Escape' || event.code === 'KeyE') { event.preventDefault(); setOpen(null) }
-        if (event.code === 'Enter' && open.kind === 'good') { event.preventDefault(); if (buy(shopOf(open.item), open.item.good)) setOpen(null) }
+        if (event.code === 'Escape' || (event.code === 'KeyE' && !event.target?.closest?.('textarea'))) { event.preventDefault(); setOpen(null) }
+        const Panel = renderer('panel', open.kind)
+        if (event.code === 'Enter' && Panel?.onEnter) { event.preventDefault(); Panel.onEnter(open.data, ctx, () => setOpen(null)) }
         return
       }
       if (event.code !== 'KeyE' || !near) return
@@ -77,24 +81,6 @@ export default function StrollHud({ playerPosition, mode }) {
     </div>
     <div className={`prompt ${prompt ? 'show' : ''}`} data-testid="stroll-prompt">{prompt && <><kbd>E</kbd><span>{prompt}</span></>}</div>
     {toast && <div className="world-toast" role="status">{toast}</div>}
-    {open?.kind === 'good' && (() => { const { good } = open.item, shop = shopOf(open.item), owned = worldState.owns(world, good)
-      return <div className="shop-panel good-card" data-testid="good-card" onClick={event => event.stopPropagation()} style={{ '--sign': shop.sign }}>
-        <header><strong>{good.name}</strong><small>{shop.name} · {shop.keeper}</small><button onClick={() => setOpen(null)} aria-label="放下">×</button></header>
-        {good.story && <p className="good-story">“{good.story}”</p>}
-        <footer className="good-actions">
-          <span>你有 ◉ {state.coins}</span>
-          <button disabled={owned || state.coins < good.price} onClick={() => { if (buy(shop, good)) setOpen(null) }} data-testid="good-buy">{owned ? '已经买过了' : `◉ ${good.price} 买下 (Enter)`}</button>
-        </footer>
-      </div> })()}
-    {open?.kind === 'shop' && <div className="shop-panel" data-testid="shop-panel" onClick={event => event.stopPropagation()} style={{ '--sign': open.shop.sign }}>
-      <header><strong>{open.shop.name}</strong><small>店主：{open.shop.keeper}</small><button onClick={() => setOpen(null)} aria-label="离开">×</button></header>
-      <div className="goods">{open.shop.goods.map(g => { const owned = worldState.owns(world, g)
-        return <article key={g.id}>
-          <i style={{ background: g.color }}/>
-          <div><b>{g.name}</b>{g.story && <p>{g.story}</p>}</div>
-          <button disabled={owned || state.coins < g.price} onClick={() => buy(open.shop, g)} data-testid="shop-buy">{owned ? '已买' : `◉ ${g.price}`}</button>
-        </article> })}</div>
-      <footer>你有 ◉ {state.coins} 月光币 · 街上和别人家里都有月光币 · Esc 离开</footer>
-    </div>}
+    {open && (() => { const Panel = renderer('panel', open.kind); return Panel ? <Panel data={open.data} ctx={ctx} close={() => setOpen(null)}/> : null })()}
   </>
 }

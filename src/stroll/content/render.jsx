@@ -82,3 +82,30 @@ render('prop', 'fountain', function Fountain({ x, z, world, night }) {
     <pointLight position-y={1.6} color={p.accent} intensity={night ? 6 : 2} distance={6} decay={2}/>
   </group>
 })
+
+// ---------- HUD panels: render('panel', id, Panel({ data, ctx, close })); Panel.onEnter optional ----------
+function GoodCard({ data, ctx, close }) {
+  const { good } = data, shop = ctx.shop(data.shop), owned = ctx.owns(good)
+  return <div className="shop-panel good-card" data-testid="good-card" onClick={event => event.stopPropagation()} style={{ '--sign': shop.sign }}>
+    <header><strong>{good.name}</strong><small>{shop.name} · {shop.keeper}</small><button onClick={close} aria-label="放下">×</button></header>
+    {good.story && <p className="good-story">“{good.story}”</p>}
+    <footer className="good-actions">
+      <span>你有 ◉ {ctx.coins}</span>
+      <button disabled={owned || ctx.coins < good.price} onClick={() => { if (ctx.buy(shop, good)) close() }} data-testid="good-buy">{owned ? '已经买过了' : `◉ ${good.price} 买下 (Enter)`}</button>
+    </footer>
+  </div>
+}
+GoodCard.onEnter = (data, ctx, close) => { if (ctx.buy(ctx.shop(data.shop), data.good)) close() }
+render('panel', 'good', GoodCard)
+
+render('panel', 'shop', ({ data: shop, ctx, close }) => <div className="shop-panel" data-testid="shop-panel" onClick={event => event.stopPropagation()} style={{ '--sign': shop.sign }}>
+  <header><strong>{shop.name}</strong><small>店主：{shop.keeper}</small><button onClick={close} aria-label="离开">×</button></header>
+  <div className="goods">{shop.goods.map(g => { const owned = ctx.owns(g)
+    return <article key={g.id}>
+      <i style={{ background: g.color }}/>
+      <div><b>{g.name}</b>{g.story && <p>{g.story}</p>}</div>
+      <button disabled={owned || ctx.coins < g.price} onClick={() => ctx.buy(shop, g)} data-testid="shop-buy">{owned ? '已买' : `◉ ${g.price}`}</button>
+    </article> })}</div>
+  <footer>你有 ◉ {ctx.coins} 月光币 · 街上和别人家里都有月光币 · Esc 离开</footer>
+</div>)
+import './more.render.jsx'

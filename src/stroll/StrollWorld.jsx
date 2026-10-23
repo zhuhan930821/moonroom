@@ -18,6 +18,7 @@ import { RoofDeck } from './interiors'
 
 import { GEO, canvasTexture, roadTexture } from './geometry'
 import { renderer } from './registry'
+import { seatOffset } from './seat'
 import './content/render'
 
 // A building: its roof style and (if it's a room) its interior come from the content registry.
@@ -162,7 +163,7 @@ export default function StrollWorld({ world }) {
   }, [world])
   useEffect(() => {
     const physics = makePhysics(layout)
-    worldPhysics.active = true; worldPhysics.ground = physics.ground; worldPhysics.blockers = []
+    worldPhysics.active = true; worldPhysics.ground = (x, z) => physics.ground(x, z) + seatOffset(x, z); worldPhysics.blockers = []
     worldPhysics.walkable = physics.walkable
     worldPhysics.spots = { door: START_DOOR, doors: [START_DOOR, END_DOOR], shops: layout.shops, interact: layout.interact }
     playerRig.teleport?.({ position: [0, 1.68, 6], yaw: 0, pitch: 0 })

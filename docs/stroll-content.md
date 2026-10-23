@@ -14,7 +14,11 @@ All content lives in `src/stroll/content/`:
 | `props.js` | `prop` | Things placed on the street (`fountain`). Each defines placement, obstacle and interactions. The renderer is in `render.jsx`. |
 | `interactions.js` | `interaction` | What E does: `label(item, ctx)` is the prompt (return `null` to hide), and `use(item, ctx)` acts. |
 | `species.js` | `species` | How a shopkeeper looks, matched by regex against the keeper's description. |
-| `render.jsx` | — | React renderers, registered with `render(kind, id, Component)`. |
+| `cafe.js` | room + interactions | Café: order from the menu (`order`), sit at a window table (`sit`) |
+| `library.js` + `guestbook.js` | room + interaction | Library with shelf aisles; the guestbook (`guestbook`) remembers what you wrote on every street |
+| `musician.js` | prop + interaction | A street musician you can hear when you're nearby; tipping (`tip`) makes them play brighter, and the third tip earns a souvenir |
+| `cat.js` | prop + interaction | 小满 wanders the street (it has a moving `pos`); petting (`pet`) is remembered across streets and leads to gifts |
+| `render.jsx`, `more.render.jsx` | — | React renderers registered with `render(kind, id, Component)`, including HUD panels: `render('panel', id, Panel)` |
 | `index.js` | — | Imports every data file, so a new file needs one line here. |
 
 Data files are plain JS, so the node tests can lay out a street and check that it can be walked.

@@ -11,7 +11,7 @@ import { DEFAULT_LOOK } from './content/species'
 // ---------- shared bits ----------
 const BOX = new THREE.BoxGeometry(1, 1, 1)
 // A box in building-local coordinates: u = depth from the front wall, z along the street.
-function Part({ side, u0, u1, y0, y1, z0, z1, color, children, ...props }) {
+export function Part({ side, u0, u1, y0, y1, z0, z1, color, children, ...props }) {
   return <mesh geometry={BOX} position={[side * ((u0 + u1) / 2 - DEPTH / 2), (y0 + y1) / 2, (z0 + z1) / 2]} scale={[u1 - u0, y1 - y0, z1 - z0]} castShadow receiveShadow {...props}>
     {children || <meshStandardMaterial color={color} roughness={.85}/>}
   </mesh>
@@ -38,7 +38,7 @@ function FrontWall({ side, w, holes, color, glass }) {
 }
 
 // Ground floor shell (floor, walls, ceiling) + the solid storeys above.
-function Shell({ b, holes, palette, floorColor, children }) {
+export function Shell({ b, holes, palette, floorColor, children }) {
   const H = b.floors * FLOOR_H, s = b.side, w = b.w
   const inner = useMemo(() => new THREE.Color(b.wall).lerp(new THREE.Color('#fff8ee'), .45).getStyle(), [b.wall])
   return <group position={[s * (FRONT + DEPTH / 2), 0, b.z]}>
@@ -54,7 +54,7 @@ function Shell({ b, holes, palette, floorColor, children }) {
 }
 
 // Wall shelves full of little jars and books: one instanced mesh per shelf unit.
-function ShelfUnit({ side, u, z0, z1, rows = 3, seed, palette, wood }) {
+export function ShelfUnit({ side, u, z0, z1, rows = 3, seed, palette, wood }) {
   const ref = useRef()
   const items = useMemo(() => {
     const r = rng(seed), out = [], colors = [palette.accent, palette.wallB, palette.wallC, palette.light, palette.roof]
@@ -73,7 +73,7 @@ function ShelfUnit({ side, u, z0, z1, rows = 3, seed, palette, wood }) {
   </>
 }
 
-function HangingLamp({ side, u, z, color, intensity }) {
+export function HangingLamp({ side, u, z, color, intensity }) {
   return <group position={[side * (u - DEPTH / 2), FLOOR_H - .1, z]}>
     <mesh position-y={-.3}><cylinderGeometry args={[.01, .01, .6, 6]}/><meshStandardMaterial color="#2a2228"/></mesh>
     <mesh position-y={-.7}><sphereGeometry args={[.2, 16, 12]}/><meshBasicMaterial color={new THREE.Color(color).multiplyScalar(1.8)} toneMapped={false}/></mesh>
