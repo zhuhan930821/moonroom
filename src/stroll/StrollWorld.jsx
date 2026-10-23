@@ -14,99 +14,28 @@ import { playChime } from '../audio/drums'
 // Buildings line both sides with their fronts at |x| = FRONT; the walkable strip is |x| < WALK.
 export { LENGTH, START_DOOR, END_DOOR } from './layout'
 import { DEPTH, END_DOOR, FRONT, LENGTH, START_DOOR, layoutStreet, makePhysics } from './layout'
-import { HomeInterior, RoofDeck, ShopInterior } from './interiors'
+import { RoofDeck } from './interiors'
 
-// ---------- textures ----------
-function canvasTexture(w, h, draw, repeat) {
-  const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h
-  draw(canvas.getContext('2d'), w, h)
-  const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8
-  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat) }
-  return t
-}
-function roadTexture(kind, base, seed) {
-  const r = rng(seed), c = new THREE.Color(base)
-  const shade = k => `#${c.clone().multiplyScalar(k).getHexString()}`
-  return canvasTexture(256, 256, (ctx, w, h) => {
-    ctx.fillStyle = shade(.8); ctx.fillRect(0, 0, w, h)
-    if (kind === 'cobble') for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
-      ctx.fillStyle = shade(.9 + r() * .35); ctx.beginPath(); ctx.ellipse(x * 32 + 16 + (y % 2) * 8, y * 32 + 16, 13, 12, r(), 0, Math.PI * 2); ctx.fill()
-    }
-    if (kind === 'boardwalk') for (let x = 0; x < 8; x++) { ctx.fillStyle = shade(.85 + r() * .3); ctx.fillRect(x * 32 + 1, 0, 30, h); ctx.fillStyle = shade(.6); ctx.fillRect(x * 32 + 14, (r() * h) | 0, 3, 3) }
-    if (kind === 'sand' || kind === 'moss') for (let i = 0; i < 2500; i++) { ctx.fillStyle = shade(.75 + r() * .45); ctx.fillRect(r() * w, r() * h, 2 + r() * 3, 2 + r() * 3) }
-    if (kind === 'moss') for (let i = 0; i < 60; i++) { ctx.fillStyle = 'rgba(120,170,110,.35)'; ctx.beginPath(); ctx.arc(r() * w, r() * h, 6 + r() * 14, 0, 7); ctx.fill() }
-    if (kind === 'glass') for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { ctx.fillStyle = shade(.9 + r() * .4); ctx.fillRect(x * 64 + 2, y * 64 + 2, 60, 60); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x * 64 + 6, y * 64 + 6, 20, 4) }
-  }, [5, LENGTH / 3])
-}
-function signTexture(name, color) {
-  return canvasTexture(512, 224, (ctx, w, h) => {
-    ctx.fillStyle = color; ctx.fillRect(0, 0, w, h)
-    ctx.strokeStyle = 'rgba(40,24,30,.55)'; ctx.lineWidth = 14; ctx.strokeRect(10, 10, w - 20, h - 20)
-    ctx.fillStyle = '#2a1a22'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.font = `600 ${name.length > 4 ? 76 : 96}px "Songti SC","Noto Serif SC",Georgia,serif`; ctx.fillText(name, w / 2, h / 2 + 4)
-  })
-}
+import { GEO, canvasTexture, roadTexture } from './geometry'
+import { renderer } from './registry'
+import './content/render'
 
-// ---------- roof geometries (unit size, scaled per building) ----------
-function prism() { // gable: triangle in x–y, extruded along z
-  const shape = new THREE.Shape(); shape.moveTo(-.5, 0); shape.lineTo(.5, 0); shape.lineTo(0, 1); shape.closePath()
-  const g = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false }); g.translate(0, 0, -.5); return g
-}
-const GEO = { prism: prism(), box: new THREE.BoxGeometry(1, 1, 1), cone4: new THREE.ConeGeometry(.71, 1, 4, 1).rotateY(Math.PI / 4), dome: new THREE.SphereGeometry(.5, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), cone: new THREE.ConeGeometry(.5, 1, 16) }
-
-function Roof({ style, w, top, roof, roll, accent }) {
-  const mat = <meshStandardMaterial color={roof} roughness={.75}/>
-  const d = DEPTH
-  if (style === 'cottage' || style === 'candy') return <mesh geometry={GEO.prism} position-y={top} scale={[d + .6, 2.2 + roll * 1.2, w + .3]} castShadow>{mat}</mesh>
-  if (style === 'gothic') return <group>
-    <mesh geometry={GEO.prism} position-y={top} scale={[d + .4, 4 + roll * 2, w + .2]} castShadow>{mat}</mesh>
-    {roll > .55 && <mesh geometry={GEO.cone4} position={[-.5, top + 3 + roll * 3, 0]} scale={[1.6, 7, 1.6]} castShadow>{mat}</mesh>}
-  </group>
-  if (style === 'pagoda') return <group>
-    {[0, 1, 2].slice(0, 1 + Math.round(roll * 2)).map(i => <mesh key={i} geometry={GEO.cone4} position-y={top + .6 + i * 1.5} scale={[d + 2 - i * 1.6, 1.3, w + 1.6 - i * 1.6]} castShadow>{mat}</mesh>)}
-  </group>
-  if (style === 'seaside') return <group>
-    <mesh geometry={GEO.box} position-y={top + .2} scale={[d + .3, .4, w + .3]}>{mat}</mesh>
-    {roll > .5 && <mesh geometry={GEO.box} position={[-1, top + 1.2, 0]} scale={[2, 1.6, 2]}><meshStandardMaterial color={accent} roughness={.6}/></mesh>}
-  </group>
-  if (style === 'desert') return <group>
-    <mesh geometry={GEO.box} position-y={top + .2} scale={[d + .2, .4, w + .2]}>{mat}</mesh>
-    {roll > .45 && <mesh geometry={GEO.dome} position-y={top + .4} scale={Math.min(d, w) * .8} castShadow>{mat}</mesh>}
-  </group>
-  if (style === 'crystal') return <mesh geometry={GEO.cone4} position-y={top + 2} scale={[d, 4 + roll * 3, w]}>
-    <meshStandardMaterial color={roof} emissive={roof} emissiveIntensity={.35} roughness={.1} transparent opacity={.85}/></mesh>
-  if (style === 'mushroom') return <mesh geometry={GEO.dome} position-y={top - .3} scale={[d + 3, 3 + roll * 2, w + 3]} castShadow>{mat}</mesh>
-  return null
-}
-
+// A building: its roof style and (if it's a room) its interior come from the content registry.
 function Building({ b, world, night, layout }) {
-  const x = b.side * (FRONT + DEPTH / 2), H = b.floors * 3.1
-  const shop = b.shop != null ? world.shops[b.shop] : null
-  const sign = useMemo(() => shop && signTexture(shop.name, shop.sign), [shop])
-  const front = -b.side * DEPTH / 2 // local x of the street-facing wall
-  const roof = b.roof ? null : <Roof style={world.street.style} w={b.w} top={H} roof={world.palette.roof} roll={b.roll} accent={world.palette.accent}/>
-  if (shop) return <>
-    <ShopInterior b={b} shop={shop} world={world} night={night}/>
+  const x = b.side * (FRONT + DEPTH / 2), H = b.floors * 3.1, front = -b.side * DEPTH / 2
+  const Roof = b.roof ? null : renderer('style', world.street.style)
+  const Room = b.room ? renderer('room', b.room) : null
+  return <>
+    {Room && <Room b={b} world={world} night={night} layout={layout}/>}
     <group position={[x, 0, b.z]}>
-      {roof}
-      {/* awning + blade sign over the pavement */}
-      <mesh position={[front - b.side * .9, 3.0, 0]} rotation-z={b.side * .35} scale={[2, .08, b.w - .6]} geometry={GEO.box}><meshStandardMaterial color={shop.sign} roughness={.7}/></mesh>
-      <group position={[front - b.side * 1.2, 3.9, b.w / 2 - .4]}>
-        <mesh geometry={GEO.box} position-x={b.side * .55} scale={[1.2, .06, .06]}><meshStandardMaterial color="#3a3036" metalness={.6}/></mesh>
-        {[0, Math.PI].map(r => <mesh key={r} position={[0, -.55, 0]} rotation-y={r}><planeGeometry args={[1.8, .8]}/><meshStandardMaterial map={sign} emissive="#ffffff" emissiveMap={sign} emissiveIntensity={night ? .55 : .15}/></mesh>)}
-      </group>
+      {!Room && <>
+        <mesh geometry={GEO.box} position-y={H / 2} scale={[DEPTH, H, b.w]} castShadow receiveShadow><meshStandardMaterial color={b.wall} roughness={.85}/></mesh>
+        <mesh geometry={GEO.box} position={[front - b.side * .05, .25, 0]} scale={[.2, .5, b.w + .1]}><meshStandardMaterial color={world.palette.roof} roughness={.9}/></mesh>
+        <mesh geometry={GEO.box} position={[front - b.side * .04, 1.15, (b.roll - .5) * (b.w - 2)]} scale={[.1, 2.3, 1.2]}><meshStandardMaterial color="#4a3a40" roughness={.6}/></mesh>
+      </>}
+      {Roof && <Roof w={b.w} top={H} roof={world.palette.roof} roll={b.roll} accent={world.palette.accent} depth={DEPTH}/>}
     </group>
   </>
-  if (b.home) return <>
-    <HomeInterior b={b} world={world} night={night} found={layout.interact.find(i => i.kind === 'found' && i.building === b.id)}/>
-    <group position={[x, 0, b.z]}>{roof}</group>
-  </>
-  return <group position={[x, 0, b.z]}>
-    <mesh geometry={GEO.box} position-y={H / 2} scale={[DEPTH, H, b.w]} castShadow receiveShadow><meshStandardMaterial color={b.wall} roughness={.85}/></mesh>
-    <mesh geometry={GEO.box} position={[front - b.side * .05, .25, 0]} scale={[.2, .5, b.w + .1]}><meshStandardMaterial color={world.palette.roof} roughness={.9}/></mesh>
-    <mesh geometry={GEO.box} position={[front - b.side * .04, 1.15, (b.roll - .5) * (b.w - 2)]} scale={[.1, 2.3, 1.2]}><meshStandardMaterial color="#4a3a40" roughness={.6}/></mesh>
-    {roof}
-  </group>
 }
 
 // All windows of the street in one instanced mesh.
@@ -116,7 +45,7 @@ function Windows({ buildings, world, night }) {
     const r = rng(world.seed + 5), out = []
     for (const b of buildings) {
       const per = Math.max(1, Math.floor((b.w - 1.5) / 2.1)), x = b.side * (FRONT - .02)
-      for (let f = b.shop != null || b.home ? 1 : 0; f < b.floors; f++) for (let i = 0; i < per; i++) {
+      for (let f = b.room ? 1 : 0; f < b.floors; f++) for (let i = 0; i < per; i++) {
         const z = b.z + (i - (per - 1) / 2) * 2.1
         if (f === 0 && Math.abs(z - (b.z + (b.roll - .5) * (b.w - 2))) < 1.1) continue // the door
         out.push({ x, y: 1.6 + f * 3.1, z, lit: r() < (night ? .6 : .15) })
@@ -257,6 +186,7 @@ export default function StrollWorld({ world }) {
     <mesh rotation-x={-Math.PI / 2} position={[0, 0, -LENGTH / 2 + 4]} receiveShadow><planeGeometry args={[12.4, LENGTH + 20]}/><meshStandardMaterial map={road} roughness={.9}/></mesh>
     <mesh rotation-x={-Math.PI / 2} position={[0, -.02, -LENGTH / 2]}><planeGeometry args={[220, LENGTH + 260]}/><meshStandardMaterial color={new THREE.Color(p.road).multiplyScalar(.55)} roughness={1}/></mesh>
     {layout.buildings.map((b, i) => <Building key={i} b={b} world={world} night={night} layout={layout}/>)}
+    {layout.props.map((inst, i) => { const Prop = renderer('prop', inst.prop); return Prop ? <Prop key={`p${i}`} {...inst} world={world} night={night}/> : null })}
     {layout.stairs.map((st, i) => <RoofDeck key={`r${i}`} stair={st} b={layout.buildings[st.building]} world={world} night={night}/>)}
     <Windows buildings={layout.buildings} world={world} night={night}/>
     <StreetLights world={world} night={night}/>

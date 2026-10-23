@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { generateStrollOffline, PRESETS, normalizeStroll } from '../src/stroll/spec.js'
+import { PRESETS, normalizeStroll } from '../src/stroll/spec.js'
 import { DEPTH, FRONT, layoutStreet, makePhysics, wx } from '../src/stroll/layout.js'
 
 const worlds = [1, 2, 3, 4, 5].flatMap(seed => PRESETS.map(p => normalizeStroll({ ...p, seed: seed * 7919 })))
@@ -53,7 +53,8 @@ test('roof stairs climb smoothly from the street to a walkable roof', () => {
 test('the street stays walkable end to end and the found item sits in a home', () => {
   for (const world of worlds) {
     const layout = layoutStreet(world), { walkable } = makePhysics(layout)
-    for (let z = 6; z > -200; z -= .5) assert.ok(walkable(0, z), `${world.name} centre at ${z}`)
+    for (let z = 6; z > -200; z -= .5) assert.ok([0, -3, 3].some(x => walkable(x, z)), `${world.name} no way through at ${z}`)
+    for (const o of layout.obstacles) assert.equal(walkable(o.x, o.z), false, 'props block')
     const found = layout.interact.find(i => i.kind === 'found')
     if (layout.homes.length) assert.ok(found && found.good.price === 0)
   }

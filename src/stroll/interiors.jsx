@@ -4,7 +4,9 @@ import * as THREE from 'three'
 import { rng } from '../worlds/spec'
 import { worldState } from '../worlds/worldState'
 import SouvenirMesh from '../worlds/SouvenirMesh'
-import { DEPTH, FLOOR_H, FRONT } from './layout'
+import { DEPTH, FLOOR_H, FRONT } from './constants'
+import { all } from './registry'
+import { DEFAULT_LOOK } from './content/species'
 
 // ---------- shared bits ----------
 const BOX = new THREE.BoxGeometry(1, 1, 1)
@@ -80,15 +82,7 @@ function HangingLamp({ side, u, z, color, intensity }) {
 }
 
 // ---------- shopkeepers: little animals picked from the keeper's description ----------
-const SPECIES = [
-  [/北极熊|白熊/, { ears: 'round', color: '#f4f0e8', snout: '#e8e0d4' }], [/熊/, { ears: 'round', color: '#8a5a3a', snout: '#d8b890' }],
-  [/狐/, { ears: 'pointy', color: '#e0783a', snout: '#fff4e8' }], [/兔/, { ears: 'long', color: '#f4e8ec', snout: '#ffffff' }],
-  [/猫头鹰|鹰|燕|鸥|鸟|雀/, { ears: 'none', beak: true, color: '#9a8070', snout: '#e8d8c0' }], [/猫|貂|鼬|獴/, { ears: 'pointy', color: '#a8a0a8', snout: '#f0e8e8' }],
-  [/鹿/, { ears: 'pointy', antlers: true, color: '#b07a50', snout: '#e8d0b0' }], [/骆驼/, { ears: 'small', color: '#d8b080', snout: '#e8d0a8' }],
-  [/龟|蜥蜴|蟹/, { ears: 'none', color: '#7aa870', snout: '#c8e0b0' }], [/獭|狗|犬/, { ears: 'small', color: '#8a6a50', snout: '#d8c0a0' }],
-  [/刺猬/, { ears: 'small', spikes: true, color: '#c8a888', snout: '#f0e0d0' }], [/萤火虫/, { ears: 'none', glow: true, color: '#c8d870', snout: '#f0f0c0' }],
-]
-function speciesOf(text) { return (SPECIES.find(([re]) => re.test(text)) || [null, { ears: 'small', color: '#c8b8d8', snout: '#f4ecf8' }])[1] }
+function speciesOf(text) { return all('species').find(sp => sp.match.test(text)) || DEFAULT_LOOK }
 
 export function Keeper({ text, apron, position, facing }) {
   const sp = useMemo(() => speciesOf(text), [text])

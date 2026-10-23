@@ -1,6 +1,9 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { worldPhysics, worldState } from '../worlds/worldState'
-import { LENGTH } from './layout'
+import { LENGTH } from './constants'
+import { get } from './registry'
+import { playChime } from '../audio/drums'
+import './content/index.js'
 
 // Street overlay: title card, purse + walk progress, and what you can do where you stand:
 // look at a good on a shop counter (and buy it), talk to the keeper (the whole shop's list),
@@ -12,6 +15,7 @@ export default function StrollHud({ playerPosition, mode }) {
   const [open, setOpen] = useState(null) // { kind: 'good', item } | { kind: 'shop', shop }
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState('')
+  const ctxRef = useRef(null)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,7 +25,7 @@ export default function StrollHud({ playerPosition, mode }) {
       let best = null, bestD = Infinity
       for (const it of spots.interact) {
         const d = Math.hypot(p.x - it.pos[0], p.z - it.pos[1])
-        if (d < it.radius && d < bestD && !(it.kind === 'found' && worldState.owns(worldState.get().world, it.good))) { best = it; bestD = d }
+        if (d < it.radius && d < bestD && get('interaction', it.kind)?.label(it, ctxRef.current) != null) { best = it; bestD = d }
       }
       if (!best && spots.doors.some(([x, , z]) => Math.hypot(p.x - x, p.z - z) < 2.4)) best = { kind: 'door' }
       setNear(old => old === best || (old?.kind === 'door' && best?.kind === 'door') ? old : best)
@@ -30,6 +34,13 @@ export default function StrollHud({ playerPosition, mode }) {
   }, [playerPosition])
 
   const shopOf = item => world.shops[item.shop]
+  // What content interactions get to work with (see content/interactions.js).
+  const ctx = {
+    world, coins: state.coins, shop: i => world.shops[i], owns: good => worldState.owns(world, good),
+    buy: (seller, good) => buy(seller, good), panel: (kind, data) => { setOpen(kind === 'good' ? { kind, item: data } : { kind, shop: data }); document.exitPointerLock?.() },
+    toast: setToast, addCoins: n => worldState.addCoins(n), chime: notes => playChime(notes), home: () => worldState.close(),
+  }
+  ctxRef.current = ctx
   const buy = (shop, good) => {
     const result = worldState.buy(world, shop, good)
     setToast(result.ok ? (good.price ? `买下了「${good.name}」 · 回家后它会出现在纪念品架上` : `收下了「${good.name}」 · 它会出现在纪念品架上`) : result.reason)
@@ -45,10 +56,7 @@ export default function StrollHud({ playerPosition, mode }) {
         return
       }
       if (event.code !== 'KeyE' || !near) return
-      if (near.kind === 'good') { setOpen({ kind: 'good', item: near }); document.exitPointerLock?.() }
-      if (near.kind === 'keeper') { setOpen({ kind: 'shop', shop: shopOf(near) }); document.exitPointerLock?.() }
-      if (near.kind === 'found') buy({ name: '别人的家' }, near.good)
-      if (near.kind === 'door') worldState.close()
+      get('interaction', near.kind)?.use(near, ctx)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -56,13 +64,7 @@ export default function StrollHud({ playerPosition, mode }) {
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(''), 4500); return () => clearTimeout(t) }, [toast])
   if (!world) return null
 
-  const label = it => {
-    if (it.kind === 'good') return `看看「${it.good.name}」 · ${worldState.owns(world, it.good) ? '已买' : `◉ ${it.good.price}`}`
-    if (it.kind === 'keeper') return `和${shopOf(it).keeper}说话`
-    if (it.kind === 'found') return `拿起「${it.good.name}」`
-    return '回到房间'
-  }
-  const prompt = !open && near ? label(near) : null
+  const prompt = !open && near ? get('interaction', near.kind)?.label(near, ctx) : null
   const bought = state.souvenirs.filter(s => s.worldId === `w${world.seed}`).length
   return <>
     <div className="world-card" key={state.visits} data-testid="world-card">
