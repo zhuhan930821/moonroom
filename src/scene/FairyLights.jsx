@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { age, energy, pianoColor } from '../audio/musicBus'
 
 // I04 fairy-light garlands + I07 candle glows as one instanced pass.
 // Bulbs are HDR (>1) unlit colours so bloom picks them up; only a few real
@@ -39,12 +40,14 @@ function catenary({ from, to, sag }) {
 }
 
 export default function FairyLights({ quality = 'high' }) {
-  const bulbs = useRef(), flames = useRef()
-  const { points, wire, glows } = useMemo(() => {
+  const bulbs = useRef(), flames = useRef(), strandLights = useRef([])
+  const { points, along, wire, glows } = useMemo(() => {
     const strands = STRANDS.map(catenary)
     const wire = new THREE.BufferGeometry().setFromPoints(strands.flatMap(p => p.slice(1).flatMap((q, i) => [p[i], q])))
     const glows = STRANDS.map((s, i) => s.glow || strands[i][Math.floor(strands[i].length / 2)].toArray())
-    return { points: strands.flat(), wire, glows }
+    // 0 at a strand's middle, 1 at its ends: snare hits travel outward along each garland.
+    const along = strands.flatMap(p => p.map((_, i) => Math.abs(i / (p.length - 1) - .5) * 2))
+    return { points: strands.flat(), along, wire, glows }
   }, [])
   const candles = useMemo(() => CANDLES.flatMap(([[x, y, z], n], g) => Array.from({ length: n }, (_, i) => ({
     x: x + Math.cos(i * 2.3 + g) * .09 * (i > 0), z: z + Math.sin(i * 2.3 + g) * .09 * (i > 0), h: .16 - i * .035,
@@ -60,13 +63,29 @@ export default function FairyLights({ quality = 'high' }) {
   }, [points, candles])
 
   const color = useMemo(() => new THREE.Color(), [])
+  const matrix = useMemo(() => new THREE.Matrix4(), [])
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
-    // Slow twinkle on bulbs, quicker flicker on flames.
+    // Slow twinkle on bulbs, quicker flicker on flames; music adds kick swells, a snare wave
+    // running out from each garland's middle, cymbal sparkle, and a piano-pitch tint.
+    const kick = energy('kick', 7), cymbal = energy('cymbal', 2.5), piano = energy('piano', 1.6)
+    const wave = age('snare') * 2.2
+    const waveOn = wave < 1.4
     points.forEach((_, i) => {
-      const k = 3.2 + Math.sin(t * 1.3 + i * 1.7) * .7 + Math.sin(t * 3.1 + i * .37) * .3
-      bulbs.current.setColorAt(i, color.copy(BULB).multiplyScalar(k))
+      let k = 3.2 + Math.sin(t * 1.3 + i * 1.7) * .7 + Math.sin(t * 3.1 + i * .37) * .3
+      k += kick * 2.4
+      if (waveOn) k += 3.2 * Math.exp(-((wave - along[i]) ** 2) / .012) * (1 - wave / 1.4)
+      if (cymbal > .02) k += cymbal * 3 * (Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1 > .55 ? 1 : 0)
+      color.copy(BULB)
+      if (piano > .02) color.lerp(pianoColor, piano * .6)
+      bulbs.current.setColorAt(i, color.multiplyScalar(k))
+      // Bulbs swell on the beat (already at full brightness, so size is what reads).
+      const swell = 1 + kick * .9 + (k - 3.9) * .08
+      bulbs.current.setMatrixAt(i, matrix.makeScale(swell, swell, swell).setPosition(points[i]))
     })
+    bulbs.current.instanceMatrix.needsUpdate = true
+    // Strand lights wash the walls on kicks and cymbals.
+    strandLights.current.forEach(light => { if (light) { light.intensity = 2.2 + kick * 5 + cymbal * 3.5; light.color.copy(BULB).lerp(pianoColor, piano * .6) } })
     bulbs.current.instanceColor.needsUpdate = true
     candles.forEach((c, i) => {
       const k = 3.4 + Math.sin(t * 9 + c.seed * 5) * .4 + Math.sin(t * 23 + c.seed) * .25
@@ -86,7 +105,7 @@ export default function FairyLights({ quality = 'high' }) {
     <instancedMesh ref={flames} args={[null, null, candles.length]} frustumCulled={false}>
       <sphereGeometry args={[.018, 8, 6]} /><meshBasicMaterial toneMapped={false} />
     </instancedMesh>
-    {quality === 'high' && glows.map((p, i) => <pointLight key={i} position={p} color="#ffb769" intensity={2.2} distance={3.4} decay={2} />)}
+    {quality === 'high' && glows.map((p, i) => <pointLight key={i} ref={light => { strandLights.current[i] = light }} position={p} color="#ffb769" intensity={2.2} distance={3.4} decay={2} />)}
     {CANDLES.map(([[x, y, z]], i) => <pointLight key={`c${i}`} position={[x, y + .35, z]} color="#ff9f52" intensity={.8} distance={2.2} decay={2} />)}
   </group>
 }

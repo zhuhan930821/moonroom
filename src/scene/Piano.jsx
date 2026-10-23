@@ -1,4 +1,8 @@
+import { useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 import { FURNITURE } from '../config/scene'
+import { energy, pianoColor } from '../audio/musicBus'
 import { KEYBOARD_FIRST, KEYBOARD_LAST, isBlackKey } from '../game/pianoKeys'
 import { RoundedBox } from './Primitives'
 
@@ -29,11 +33,36 @@ function Key({ note, down, onNoteOn, onNoteOff }) {
   </mesh>
 }
 
+// Each note blooms on the floor and the wall around the piano in the note's colour.
+function PianoGlow() {
+  const light = useRef(), disc = useRef()
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 128
+    const ctx = canvas.getContext('2d'); const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128)
+    return new THREE.CanvasTexture(canvas)
+  }, [])
+  useFrame(() => {
+    const e = energy('piano', 1.4)
+    if (light.current) { light.current.intensity = e * 9; light.current.color.copy(pianoColor) }
+    if (disc.current) { disc.current.material.opacity = e * .55; disc.current.material.color.copy(pianoColor) }
+  })
+  return <>
+    <pointLight ref={light} position={[0, 1.7, .7]} intensity={0} distance={4.5} decay={2}/>
+    <mesh ref={disc} position={[0, .03, .9]} rotation-x={-Math.PI / 2}>
+      <circleGeometry args={[1.7, 40]}/>
+      <meshBasicMaterial map={texture} transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false}/>
+    </mesh>
+  </>
+}
+
 export default function Piano({ notes, onNoteOn, onNoteOff }) {
   const p = FURNITURE.keyboard.position
   return <group position={p} rotation-y={Math.PI / 2}>
     <RoundedBox args={[SPAN + .2, .22, .95]} color="#393345" position-y={1.07}/>
     <RoundedBox args={[SPAN + .2, .16, .2]} color="#2f2a3a" position={[0, 1.24, -.37]}/>
+    <PianoGlow/>
     {NOTES.map(note => <Key key={note} note={note} down={notes.has(note)} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/>)}
     {[-1.2, 1.2].map(x => <mesh key={x} position={[x, .52, 0]} rotation-z={x < 0 ? -.13 : .13}><cylinderGeometry args={[.035, .035, 1.1, 8]}/><meshStandardMaterial color="#cbb3aa" metalness={.6}/></mesh>)}
   </group>

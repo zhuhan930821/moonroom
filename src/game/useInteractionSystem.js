@@ -3,6 +3,7 @@ import { FOX_HINTS, INTERACTIONS } from '../config/scene'
 import { nearestInteraction } from './collision'
 import { playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startMetronome } from '../audio/drums'
 import { finishRecording, takeStore } from '../audio/takes'
+import { emitMusic } from '../audio/musicBus'
 
 import { DRUM_KEYS } from './drumKeys'
 // Recording timeline uses the page clock: the audio clock can run unevenly when no output
@@ -80,6 +81,7 @@ export function useInteractionSystem(root) {
   }, [])
   // Visual feedback for playback (Studio or Space): drums wobble, piano keys dip.
   const pulse = useCallback((name, note) => {
+    emitMusic(name, note)
     if (name === 'piano') flashNote(note)
     else setHit(old => ({ name, id: old.id + 1 }))
   }, [flashNote])
@@ -126,6 +128,7 @@ export function useInteractionSystem(root) {
     if (modeRef.current !== 'piano' || heldKeys.current.has(id)) return
     heldKeys.current.set(id, { note, release: null, at: clock() })
     setPianoNotes(old => new Set(old).add(note))
+    emitMusic('piano', note)
     try {
       const voice = await playPiano(note)
       const held = heldKeys.current.get(id)

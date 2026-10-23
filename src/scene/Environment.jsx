@@ -6,6 +6,7 @@ import SheerCurtainSample from './SheerCurtainSample'
 import GLBAsset from './AssetModel'
 import { GlowOrb, RoundedBox, StarField } from './Primitives'
 import { FLAGS } from '../config/flags'
+import { energy, pianoColor } from '../audio/musicBus'
 
 const ARCHITECTURE_URLS = {
   phase1: '/assets/models/architecture/moonroom-architecture-phase1.glb',
@@ -46,12 +47,16 @@ function MoonRiver({ hit }) {
     new THREE.CatmullRomCurve3([new THREE.Vector3(6.9,3.5,-27),new THREE.Vector3(5,2.3,-23),new THREE.Vector3(7,1.25,-19),new THREE.Vector3(3.5,.65,-15),new THREE.Vector3(1.1,.25,-11)]),
     new THREE.CatmullRomCurve3([new THREE.Vector3(7.2,3.45,-27),new THREE.Vector3(5.3,2.25,-23),new THREE.Vector3(7.3,1.2,-19),new THREE.Vector3(3.8,.62,-15),new THREE.Vector3(1.3,.23,-11)]),
   ], [])
-  useFrame((_, dt) => {
-    if (hit?.id !== lastId.current) { lastId.current = hit?.id; pulse.current = 1 }
-    pulse.current = Math.max(0, pulse.current - dt * 2.2)
+  const tint = useMemo(() => new THREE.Color(), [])
+  const base = useMemo(() => [new THREE.Color('#69dfe8'), new THREE.Color('#ff9ed6')], [])
+  useFrame(() => {
+    // Kick and toms surge the river; piano notes wash it in the note's colour.
+    pulse.current = Math.max(energy('kick', 2.4), energy('snare', 3) * .8, energy('tom', 2.4) * .9, energy('piano', 2) * .55)
+    const piano = energy('piano', 1.2)
     if (river.current) river.current.children.forEach((child, i) => {
       child.material.opacity = (i ? .24 : .34) + pulse.current * .22
       child.material.emissiveIntensity = 1.1 + pulse.current * 2
+      child.material.emissive.copy(tint.copy(base[i]).lerp(pianoColor, piano * .7))
     })
   })
   return <group ref={river}>

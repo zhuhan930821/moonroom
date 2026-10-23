@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { energy } from '../audio/musicBus'
 
 export const CINEMATIC_DEFAULTS = { moonlight: 3.2, warm: 105, ambient: 0.52, exposure: 1.0, bloomStrength: 0.28, bloomThreshold: 1.08 }
 // Golden pass: warm practicals lead, moonlight only rims the window side (reference: amber, lived-in).
@@ -56,8 +57,12 @@ export function CinematicPostFX({ enabled, settings }) {
   }, [gl, settings.exposure])
   useEffect(() => { composer.setSize(size.width, size.height) }, [composer, size])
   useEffect(() => () => composer.dispose(), [composer])
-  bloom.strength = settings.bloomStrength
   bloom.threshold = settings.bloomThreshold
-  useFrame(() => { if (enabled) composer.render() }, enabled ? 1 : 0)
+  useFrame(() => {
+    if (!enabled) return
+    // The whole room's glow breathes with kicks and cymbals.
+    bloom.strength = settings.bloomStrength + energy('kick', 5) * .18 + energy('cymbal', 1.8) * .28 + energy('piano', 2) * .1
+    composer.render()
+  }, enabled ? 1 : 0)
   return null
 }
