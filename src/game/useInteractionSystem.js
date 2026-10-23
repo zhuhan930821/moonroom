@@ -4,6 +4,7 @@ import { nearestInteraction } from './collision'
 import { playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startCrackle, startMetronome } from '../audio/drums'
 import { finishRecording, takeStore } from '../audio/takes'
 import { emitMusic } from '../audio/musicBus'
+import { roomState } from './roomState'
 
 import { DRUM_KEYS } from './drumKeys'
 // Recording timeline uses the page clock: the audio clock can run unevenly when no output
@@ -76,6 +77,7 @@ export function useInteractionSystem(root) {
   const enter = useCallback(nextMode => {
     if(nextMode==='drums') setHit(old=>({name:null,id:old.id}))
     if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
+    if(nextMode==='books') pullBook()
     setMode(nextMode)
     document.exitPointerLock?.()
   }, [])
@@ -127,6 +129,14 @@ export function useInteractionSystem(root) {
     stopPlayback.current = await playTake(take, { onHit: pulse, onEnd: () => { stopPlayback.current = null; setPlayingTake(false) } })
   }, [pulse, stopTake])
 
+  // Bookshelf: which book is pulled out and which diary page it holds.
+  const [book, setBook] = useState(null) // { index, page }
+  const pullBook = useCallback(() => setBook(old => {
+    // Eye-height shelves (rows 1–2), never the same book twice in a row.
+    let index
+    do index = 9 + Math.floor(Math.random() * 18); while (index === old?.index)
+    return { index, page: ((old?.page ?? Math.floor(Math.random() * 8)) + 1) % 8 }
+  }), [])
   const vinylToken = useRef(0)
   const stopVinyl = useCallback(() => { vinylToken.current++; stopVinylRef.current?.(); stopVinylRef.current = null; setVinyl(null) }, [])
   const playVinyl = useCallback(async id => {
@@ -182,6 +192,7 @@ export function useInteractionSystem(root) {
     if (recordingRef.current) toggleRecording()
     stopTake()
     setMetronome(false)
+    setBook(null)
     setMode('explore')
     setNear(null)
   }, [toggleRecording, stopTake, releaseAllNotes])
@@ -246,6 +257,10 @@ export function useInteractionSystem(root) {
         if (event.code === 'BracketRight') { event.preventDefault(); changeBpm(5) }
         return
       }
+      if (current === 'books') {
+        if (event.code === 'Space' || event.code === 'KeyE') { event.preventDefault(); if (!event.repeat) pullBook() }
+        return
+      }
       if (current === 'beanbag') {
         if (event.code === 'KeyE') { event.preventDefault(); leave() }
         if (event.code === 'KeyM') { event.preventDefault(); toggleAmbient() }
@@ -254,7 +269,9 @@ export function useInteractionSystem(root) {
       if (current === 'computer') return
       if (event.code === 'KeyE' && nearRef.current) {
         event.preventDefault()
-        enter(nearRef.current)
+        const lamp = INTERACTIONS[nearRef.current].lamp
+        if (lamp) roomState.toggleLamp(lamp) // switches act in place, no mode change
+        else enter(nearRef.current)
       }
     }
     const onKeyUp = event => { if (modeRef.current === 'piano') noteOff(event.code) }
@@ -262,10 +279,10 @@ export function useInteractionSystem(root) {
     window.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', releaseAllNotes)
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', releaseAllNotes) }
-  }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave])
+  }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook])
 
   return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume,
-    records, vinyl, playVinyl, stopVinyl,
+    records, vinyl, playVinyl, stopVinyl, book, pullBook,
     recording, metronome, bpm, playingTake, lastTake, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, pulse,
     pianoBase, pianoNotes, noteOn, noteOff, shiftOctave }
 }

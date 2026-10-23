@@ -76,6 +76,9 @@ export const INTERACTIONS = {
   piano: { position: [-7.7, 0, 2.6], radius: 1.6, label: '弹钢琴' },
   mugo: { position: [1.35, 0, -3.1], radius: 1.4, label: '打开 Mugo' },
   record: { position: [-6.3, 0, 5.5], radius: 1.35, label: '放唱片' },
+  moonLamp: { position: [4.1, 0, .55], radius: 1.15, label: '开关月球灯', lamp: 'moon' },
+  floorLamp: { position: [-8.85, 0, -.45], radius: 1.0, label: '开关落地灯', lamp: 'floor' },
+  books: { position: [7.7, 0, -3.1], radius: 1.3, label: '抽一本书' },
 }
 
 export const FOX_HINTS = [
@@ -90,4 +93,5 @@ export const CAMERA_POSES = {
   piano: { position: [-7.0, 2.4, 2.6], lookAt: [-8.9, 1.0, 2.6] },
   mugo: { position: [1.35, 1.95, -2.35], lookAt: [1.35, 1.8, -4.5] },
   record: { position: [-6.15, 2.0, 5.75], lookAt: [-7.55, .7, 5.65] },
+  books: { position: [5.6, 2.15, -2.7], lookAt: [9.0, 1.8, -3.1] },
 }

@@ -2,6 +2,17 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { FLAGS } from '../config/flags'
+import { playChime } from '../audio/drums'
+import { projectKey, takeStore } from '../audio/takes'
+
+// Moving the curtains brushes a wind chime tuned to the major pentatonic of your latest
+// piano take's key (C when there is none).
+function ringChime() {
+  const root = projectKey(takeStore.getAll()) ?? 0
+  const scale = [0, 2, 4, 7, 9].map(step => 84 + ((root + step) % 12))
+  const notes = Array.from({ length: 5 + Math.floor(Math.random() * 3) }, () => scale[Math.floor(Math.random() * scale.length)])
+  playChime(notes)
+}
 
 // One track serves the entire transparent front wall, not three arch-sized curtains.
 const WALL_SPAN = 19.6
@@ -97,6 +108,7 @@ export default function SheerCurtainSample() {
     const onKey = event => {
       if (event.code !== 'KeyC' || event.repeat || document.querySelector('main')?.dataset.mode !== 'explore') return
       target.current = target.current > 0.5 ? 0 : 0.86
+      ringChime()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)

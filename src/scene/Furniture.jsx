@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { FURNITURE } from '../config/scene'
 import { GlowOrb, Plant, RoundedBox } from './Primitives'
@@ -86,13 +87,19 @@ function LegacyBed() {
   />
 }
 
-function Bookcase(){const p=FURNITURE.bookshelf.position;return <group position={p}>
+// G02 right-wall bookcase. In the `books` mode one book slides out toward you (`pulled`).
+function Book({ i, pulled }) {
+  const ref = useRef()
+  const shelf = Math.floor(i / 9), slot = i % 9
+  useFrame((_, dt) => { if (ref.current) ref.current.position.x += ((pulled ? -.62 : -.15) - ref.current.position.x) * (1 - Math.exp(-dt * 6)) })
+  return <RoundedBox ref={ref} args={[.47, .58 + .11 * (i % 3), .13 + .08 * (i % 2)]} color={BOOK_COLORS[i % 4]} position={[-.15, .65 + shelf * 1.1, -2.08 + slot * .52]} rotation-x={(i % 3 - 1) * .04}/>
+}
+export const BOOK_COLORS = ['#c88b88', '#7778a7', '#e2aa79', '#a075a7']
+
+function Bookcase({ pulledBook }){const p=FURNITURE.bookshelf.position;return <group position={p}>
   {[-2.4,2.4].map(z=><RoundedBox key={z} args={[.22,4.7,.18]} color="#6e4d5d" position={[0,2.35,z]}/>)}
   {[.25,1.35,2.45,3.55,4.65].map(y=><RoundedBox key={y} args={[1.05,.16,5]} color="#966677" position={[0,y,0]}/>)}
-  {Array.from({length:36},(_,i)=>{
-    const shelf=Math.floor(i/9), slot=i%9
-    return <RoundedBox key={i} args={[.47,.58+.11*(i%3),.13+.08*(i%2)]} color={['#c88b88','#7778a7','#e2aa79','#a075a7'][i%4]} position={[-.15, .65+shelf*1.1, -2.08+slot*.52]} rotation-x={(i%3-1)*.04}/>
-  })}
+  {Array.from({length:36},(_,i)=><Book key={i} i={i} pulled={pulledBook === i}/>)}
 </group>}
 
 
@@ -106,7 +113,7 @@ function Details(){return <>
   <GlowOrb position={[9.4,2.14,.7]} color="#ffc47b" size={.15} intensity={4}/>
 </>}
 
-export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId}) {
+export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook}) {
   const candidateDrums = FLAGS.drumCandidate
-  return <><Details/><Bed/><Bookcase/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/></>
+  return <><Details/><Bed/><Bookcase pulledBook={pulledBook}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/></>
 }

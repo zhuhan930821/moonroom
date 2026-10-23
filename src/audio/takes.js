@@ -75,6 +75,29 @@ export function toggleStep(take, pad, step, division = 4, note) {
   return { ...take, events }
 }
 
+// Key of the music you've been making: Krumhansl–Schmuckler major-key profile correlated with
+// the most recent piano take's pitch classes (weighted by held length). Returns 0–11 or null.
+const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
+function correlation(a, b) {
+  const mean = list => list.reduce((x, y) => x + y, 0) / list.length
+  const ma = mean(a), mb = mean(b)
+  let num = 0, da = 0, db = 0
+  for (let i = 0; i < a.length; i++) { num += (a[i] - ma) * (b[i] - mb); da += (a[i] - ma) ** 2; db += (b[i] - mb) ** 2 }
+  return num / Math.sqrt(da * db || 1)
+}
+export function projectKey(takes) {
+  const piano = takes.find(take => take.events.some(event => event.pad === PIANO))
+  if (!piano) return null
+  const weight = Array(12).fill(0)
+  piano.events.filter(event => event.pad === PIANO).forEach(event => { weight[event.note % 12] += event.d || .25 })
+  let best = 0, bestScore = -Infinity
+  for (let root = 0; root < 12; root++) {
+    const score = correlation(weight, weight.map((_, pc) => MAJOR_PROFILE[(pc - root + 12) % 12]))
+    if (score > bestScore) { bestScore = score; best = root }
+  }
+  return best
+}
+
 const STORAGE_KEY = 'moonroom.takes.v1'
 
 function load() {

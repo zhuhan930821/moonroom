@@ -11,6 +11,7 @@ import DrumPanel from './ui/DrumPanel'
 import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
+import DiaryPage from './ui/DiaryPage'
 import { preloadCoreAssets } from './scene/AssetModel'
 import GLBAsset from './scene/AssetModel'
 import { LightingProvider } from './lighting/LightingContext'
@@ -72,7 +73,7 @@ export default function App() {
   useEffect(() => {
     if (!captureEnabled || game.started) return
     game.startPreview()
-    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record'].includes(captureMode)) game.enter(captureMode)
+    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books'].includes(captureMode)) game.enter(captureMode)
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (!captureEnabled) return
@@ -100,7 +101,7 @@ export default function App() {
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
         <Furniture hit={game.hit} onStrike={game.mode === 'drums' ? game.strike : null}
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
-          records={game.records} vinylId={game.vinyl?.id}/>
+          records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
         {cinematic && <CinematicPostFX enabled={BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>} 
       </LightingProvider>}
@@ -121,6 +122,7 @@ export default function App() {
       {game.mode === 'piano' && <PianoPanel game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
+      {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}

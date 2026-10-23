@@ -102,6 +102,26 @@ export async function playDrum(name, when) {
 
 export function audioNow() { return getContext().currentTime }
 
+// Wind chime: struck metal tubes (inharmonic partials, long decay) for MIDI `notes`, spread
+// over ~2 s like a breeze moving through them.
+export function playChime(notes) {
+  const audio = getContext()
+  const now = audio.currentTime
+  notes.forEach((note, i) => {
+    const at = now + i * (.18 + Math.random() * .32)
+    const f = 440 * 2 ** ((note - 69) / 12)
+    ;[[1, .2], [2.76, .08], [5.4, .04]].forEach(([ratio, level]) => {
+      const osc = audio.createOscillator(), gain = audio.createGain()
+      osc.frequency.value = f * ratio
+      gain.gain.setValueAtTime(0, at)
+      gain.gain.linearRampToValueAtTime(level, at + .004)
+      gain.gain.exponentialRampToValueAtTime(.0001, at + 2.8 / ratio ** .4)
+      osc.connect(gain).connect(master)
+      osc.start(at); osc.stop(at + 3)
+    })
+  })
+}
+
 // Soft vinyl surface noise (hiss + sparse pops) under a playing record. Returns stop().
 export function startCrackle() {
   const audio = getContext()

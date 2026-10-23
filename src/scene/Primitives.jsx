@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { forwardRef, useMemo, useRef } from 'react'
 import { useLighting } from '../lighting/LightingContext'
 import { energy } from '../audio/musicBus'
 
-export function RoundedBox({ args, color, ...props }) {
-  return <mesh castShadow receiveShadow {...props}><boxGeometry args={args} /><meshStandardMaterial color={color} roughness={0.72} /></mesh>
-}
+export const RoundedBox = forwardRef(function RoundedBox({ args, color, ...props }, ref) {
+  return <mesh ref={ref} castShadow receiveShadow {...props}><boxGeometry args={args} /><meshStandardMaterial color={color} roughness={0.72} /></mesh>
+})
 
 export function GlowOrb({ position, color = '#ffd68a', size = 0.12, intensity = 2, light = true }) {
   const { decorationLights } = useLighting()

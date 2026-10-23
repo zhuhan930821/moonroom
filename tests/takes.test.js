@@ -48,3 +48,11 @@ test('piano notes keep pitch and held length through recording, quantize, and st
   assert.equal(toggleStep(edited, 'piano', 3, 4, 64).events.length, 0, 'clicking inside the held note removes it')
   assert.equal(toggleStep(edited, 'piano', 3, 4, 65).events.length, 2, 'another pitch is a new note')
 })
+
+test('project key follows the latest piano take', async () => {
+  const { projectKey } = await import('../src/audio/takes.js')
+  const notes = (list) => list.map((note, i) => ({ t: i * .5, pad: 'piano', note, d: .5 }))
+  assert.equal(projectKey([]), null)
+  assert.equal(projectKey([makeTake({ name: 'g', events: notes([67, 71, 74, 66, 67, 62]) })]), 7, 'G major (F# present)')
+  assert.equal(projectKey([makeTake({ name: 'f', events: notes([65, 69, 72, 70, 65]) }), makeTake({ name: 'c', events: notes([60, 64, 67]) })]), 5, 'latest take first wins: F major (Bb)')
+})
