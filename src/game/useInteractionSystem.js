@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { FOX_HINTS, INTERACTIONS } from '../config/scene'
 import { nearestInteraction } from './collision'
-import { playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startMetronome } from '../audio/drums'
+import { playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startCrackle, startMetronome } from '../audio/drums'
 import { finishRecording, takeStore } from '../audio/takes'
 import { emitMusic } from '../audio/musicBus'
 
@@ -30,6 +30,11 @@ export function useInteractionSystem(root) {
   const [playingTake, setPlayingTake] = useState(false)
   const [lastTake, setLastTake] = useState(() => takeStore.getAll()[0] || null)
   const recordingRef = useRef(null)
+  // Turntable: records are takes pressed in Studio; one can play (looping) while you roam.
+  const takes = useSyncExternalStore(takeStore.subscribe, takeStore.getAll)
+  const records = takes.filter(take => take.pressed)
+  const [vinyl, setVinyl] = useState(null) // { id } while a record spins
+  const stopVinylRef = useRef(null)
   const stopMetronome = useRef(null)
   const stopPlayback = useRef(null)
   recordingRef.current = recording
@@ -121,6 +126,26 @@ export function useInteractionSystem(root) {
     setPlayingTake(true)
     stopPlayback.current = await playTake(take, { onHit: pulse, onEnd: () => { stopPlayback.current = null; setPlayingTake(false) } })
   }, [pulse, stopTake])
+
+  const vinylToken = useRef(0)
+  const stopVinyl = useCallback(() => { vinylToken.current++; stopVinylRef.current?.(); stopVinylRef.current = null; setVinyl(null) }, [])
+  const playVinyl = useCallback(async id => {
+    stopVinyl()
+    const take = takeStore.getAll().find(item => item.id === id)
+    if (!take?.events.length) return
+    const token = vinylToken.current
+    setVinyl({ id })
+    // Let the arm swing over before the needle drops; a stop or another record in the
+    // meantime cancels this one.
+    await new Promise(resolve => setTimeout(resolve, 900))
+    if (token !== vinylToken.current) return
+    const stopCrackle = startCrackle()
+    const stopTakeLoop = await playTake(take, { loop: true, onHit: pulse })
+    if (token !== vinylToken.current) { stopTakeLoop(); stopCrackle(); return }
+    stopVinylRef.current = () => { stopTakeLoop(); stopCrackle() }
+  }, [pulse, stopVinyl])
+  // A record deleted or un-pressed in Studio stops spinning.
+  useEffect(() => { if (vinyl && !records.some(take => take.id === vinyl.id)) stopVinyl() }, [vinyl, records, stopVinyl])
 
   const changeBpm = useCallback(delta => setBpm(value => Math.max(50, Math.min(180, value + delta))), [])
 
@@ -240,6 +265,7 @@ export function useInteractionSystem(root) {
   }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave])
 
   return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume,
+    records, vinyl, playVinyl, stopVinyl,
     recording, metronome, bpm, playingTake, lastTake, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, pulse,
     pianoBase, pianoNotes, noteOn, noteOff, shiftOctave }
 }

@@ -125,6 +125,7 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
       <button className="win-button" onClick={() => onEdit(quantize(take, STEPS_PER_BEAT))} disabled={!take.events.length}>Quantize 1/16</button>
       {take.original && <button className="win-button" onClick={() => onEdit({ events: take.original, original: undefined })}>Undo quantize</button>}
       <button className="win-button" onClick={onExport} disabled={!take.events.length || Boolean(busy)}>{busy || '⤓ Export WAV'}</button>
+      <button className={`win-button ${take.pressed ? 'pressed' : ''}`} onClick={() => onEdit({ pressed: !take.pressed })} disabled={!take.events.length} data-testid="studio-press">{take.pressed ? '◉ 已压成唱片' : '◎ 压成唱片'}</button>
       <button className="win-button danger" onClick={onDelete}>Delete</button>
     </div>
     <div className="studio-grid" style={{ '--steps': steps, '--beats': steps / STEPS_PER_BEAT, '--bars': bars }}>

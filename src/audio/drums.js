@@ -102,6 +102,23 @@ export async function playDrum(name, when) {
 
 export function audioNow() { return getContext().currentTime }
 
+// Soft vinyl surface noise (hiss + sparse pops) under a playing record. Returns stop().
+export function startCrackle() {
+  const audio = getContext()
+  const seconds = 3, buffer = audio.createBuffer(1, audio.sampleRate * seconds, audio.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * .012
+    if (Math.random() < .00012) data[i] += (Math.random() < .5 ? -1 : 1) * (.25 + Math.random() * .35)
+  }
+  const source = audio.createBufferSource(), filter = audio.createBiquadFilter(), gain = audio.createGain()
+  source.buffer = buffer; source.loop = true
+  filter.type = 'bandpass'; filter.frequency.value = 2400; filter.Q.value = .5
+  gain.gain.value = 0; gain.gain.setTargetAtTime(.5, audio.currentTime, .4)
+  source.connect(filter).connect(gain).connect(master); source.start()
+  return () => { gain.gain.setTargetAtTime(0, audio.currentTime, .15); setTimeout(() => source.stop(), 800) }
+}
+
 
 
 export async function preparePiano() {

@@ -66,6 +66,7 @@ export const COLLIDERS = Object.values(FURNITURE).map(({ position, size }) => ({
 })).concat([
   { minX: -10, maxX: -9.22, minZ: -6.25, maxZ: -4.95 },
   { minX: -9.92, maxX: -9.18, minZ: -3.45, maxZ: -2.55 },
+  { minX: -7.9, maxX: -7.0, minZ: 6.3, maxZ: 6.9 }, // record crate beside the turntable
 ])
 
 export const INTERACTIONS = {
@@ -74,6 +75,7 @@ export const INTERACTIONS = {
   beanbag: { position: [1.3, 0, 3.0], radius: 2.25, label: '躺下' },
   piano: { position: [-7.7, 0, 2.6], radius: 1.6, label: '弹钢琴' },
   mugo: { position: [1.35, 0, -3.1], radius: 1.4, label: '打开 Mugo' },
+  record: { position: [-6.3, 0, 5.5], radius: 1.35, label: '放唱片' },
 }
 
 export const FOX_HINTS = [
@@ -87,4 +89,5 @@ export const CAMERA_POSES = {
   beanbag: { position: [1.3, 1.3, 3.2], lookAt: [.4, 3.0, -13] },
   piano: { position: [-7.0, 2.4, 2.6], lookAt: [-8.9, 1.0, 2.6] },
   mugo: { position: [1.35, 1.95, -2.35], lookAt: [1.35, 1.8, -4.5] },
+  record: { position: [-6.15, 2.0, 5.75], lookAt: [-7.55, .7, 5.65] },
 }
