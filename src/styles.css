@@ -75,3 +75,4 @@
 .shop-panel article i{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 3px #00000010}.shop-panel article b{font-size:15px}.shop-panel article p{margin:3px 0 0;font:12.5px/1.6 system-ui;color:#6a5560}
 .shop-panel article button{border:0;border-radius:999px;padding:7px 12px;background:#3a2a30;color:#ffd46a;font:600 13px Georgia,serif;cursor:pointer;white-space:nowrap}.shop-panel article button:disabled{background:#d8ccc0;color:#8a7a70;cursor:default}
 .shop-panel footer{padding:10px 18px 14px;font:11.5px system-ui;color:#8a6a70}
+.good-card .good-story{margin:0;padding:4px 20px 6px;font:15px/1.8 Georgia,"Songti SC",serif;color:#5a4550}.good-card .good-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}.good-card .good-actions button{border:0;border-radius:999px;padding:8px 14px;background:#3a2a30;color:#ffd46a;font:600 13px Georgia,serif;cursor:pointer}.good-card .good-actions button:disabled{background:#d8ccc0;color:#8a7a70}

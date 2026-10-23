@@ -12,34 +12,9 @@ import { playChime } from '../audio/drums'
 
 // The street: you arrive at z≈6 facing -Z and walk to the far door at z=-LENGTH-5.
 // Buildings line both sides with their fronts at |x| = FRONT; the walkable strip is |x| < WALK.
-export const LENGTH = 200
-const FRONT = 6.2, DEPTH = 7, WALK = 5.3
-export const START_DOOR = [0, 0, 9.4], END_DOOR = [0, 0, -LENGTH - 5]
-
-// ---------- layout (pure; also used by the HUD for shop positions) ----------
-export function layoutStreet(world) {
-  const r = rng(world.seed), style = world.street.style, tall = world.street.height
-  const walls = [world.palette.wallA, world.palette.wallB, world.palette.wallC]
-  const buildings = []
-  for (const side of [-1, 1]) {
-    let z = -2
-    while (z > -LENGTH + 4) {
-      const w = 6 + r() * 4
-      const floors = 1 + Math.floor(r() * (1.5 + tall * (style === 'gothic' ? 4 : 3)))
-      buildings.push({ side, z: z - w / 2, w, floors, wall: walls[Math.floor(r() * 3)], roll: r(), shop: null })
-      z -= w + .3 + r() * .8
-    }
-  }
-  // Spread the shops evenly down the street, alternating sides.
-  const shops = world.shops.map((shop, i) => {
-    const targetZ = -14 - (i + .5) * ((LENGTH - 30) / world.shops.length), side = i % 2 ? 1 : -1
-    const b = buildings.filter(b => b.side === side && !b.shop).reduce((best, b) => Math.abs(b.z - targetZ) < Math.abs(best.z - targetZ) ? b : best)
-    b.shop = i; b.floors = Math.max(b.floors, 2)
-    return { ...shop, index: i, side, z: b.z, w: b.w }
-  })
-  const coins = Array.from({ length: 46 }, (_, i) => [(r() - .5) * 8, 1.15, -8 - i * 4.2 - r() * 2])
-  return { buildings, shops, coins }
-}
+export { LENGTH, START_DOOR, END_DOOR } from './layout'
+import { DEPTH, END_DOOR, FRONT, LENGTH, START_DOOR, layoutStreet, makePhysics } from './layout'
+import { HomeInterior, RoofDeck, ShopInterior } from './interiors'
 
 // ---------- textures ----------
 function canvasTexture(w, h, draw, repeat) {
@@ -104,31 +79,33 @@ function Roof({ style, w, top, roof, roll, accent }) {
   return null
 }
 
-function Building({ b, world, night }) {
+function Building({ b, world, night, layout }) {
   const x = b.side * (FRONT + DEPTH / 2), H = b.floors * 3.1
   const shop = b.shop != null ? world.shops[b.shop] : null
   const sign = useMemo(() => shop && signTexture(shop.name, shop.sign), [shop])
   const front = -b.side * DEPTH / 2 // local x of the street-facing wall
+  const roof = b.roof ? null : <Roof style={world.street.style} w={b.w} top={H} roof={world.palette.roof} roll={b.roll} accent={world.palette.accent}/>
+  if (shop) return <>
+    <ShopInterior b={b} shop={shop} world={world} night={night}/>
+    <group position={[x, 0, b.z]}>
+      {roof}
+      {/* awning + blade sign over the pavement */}
+      <mesh position={[front - b.side * .9, 3.0, 0]} rotation-z={b.side * .35} scale={[2, .08, b.w - .6]} geometry={GEO.box}><meshStandardMaterial color={shop.sign} roughness={.7}/></mesh>
+      <group position={[front - b.side * 1.2, 3.9, b.w / 2 - .4]}>
+        <mesh geometry={GEO.box} position-x={b.side * .55} scale={[1.2, .06, .06]}><meshStandardMaterial color="#3a3036" metalness={.6}/></mesh>
+        {[0, Math.PI].map(r => <mesh key={r} position={[0, -.55, 0]} rotation-y={r}><planeGeometry args={[1.8, .8]}/><meshStandardMaterial map={sign} emissive="#ffffff" emissiveMap={sign} emissiveIntensity={night ? .55 : .15}/></mesh>)}
+      </group>
+    </group>
+  </>
+  if (b.home) return <>
+    <HomeInterior b={b} world={world} night={night} found={layout.interact.find(i => i.kind === 'found' && i.building === b.id)}/>
+    <group position={[x, 0, b.z]}>{roof}</group>
+  </>
   return <group position={[x, 0, b.z]}>
     <mesh geometry={GEO.box} position-y={H / 2} scale={[DEPTH, H, b.w]} castShadow receiveShadow><meshStandardMaterial color={b.wall} roughness={.85}/></mesh>
-    {/* plinth + door */}
     <mesh geometry={GEO.box} position={[front - b.side * .05, .25, 0]} scale={[.2, .5, b.w + .1]}><meshStandardMaterial color={world.palette.roof} roughness={.9}/></mesh>
-    <mesh geometry={GEO.box} position={[front - b.side * .04, 1.15, shop ? 0 : (b.roll - .5) * (b.w - 2)]} scale={[.1, 2.3, 1.2]}><meshStandardMaterial color={shop ? '#3a2a24' : '#4a3a40'} roughness={.6}/></mesh>
-    <Roof style={world.street.style} w={b.w} top={H} roof={world.palette.roof} roll={b.roll} accent={world.palette.accent}/>
-    {shop && <group position-x={front}>
-      {/* awning, shop window glow, blade sign, counter with the goods */}
-      <mesh position={[-b.side * .9, 3.0, 0]} rotation-z={b.side * .35} scale={[2, .08, b.w - .6]} geometry={GEO.box}><meshStandardMaterial color={shop.sign} roughness={.7}/></mesh>
-      <mesh position={[-b.side * .03, 1.6, 0]} rotation-y={-b.side * Math.PI / 2}><planeGeometry args={[b.w - 2.2, 1.9]}/>
-        <meshBasicMaterial color={new THREE.Color(world.palette.light).multiplyScalar(night ? 1.6 : 1.05)} toneMapped={false}/></mesh>
-      <group position={[-b.side * 1.2, 3.9, b.w / 2 - .4]}>
-        <mesh geometry={GEO.box} position-x={b.side * .55} scale={[1.2, .06, .06]}><meshStandardMaterial color="#3a3036" metalness={.6}/></mesh>
-        <mesh position={[0, -.55, 0]}><planeGeometry args={[1.8, .8]}/><meshStandardMaterial map={sign} emissive="#ffffff" emissiveMap={sign} emissiveIntensity={night ? .55 : .15} side={THREE.DoubleSide}/></mesh>
-      </group>
-      <mesh geometry={GEO.box} position={[-b.side * .35, .5, 0]} scale={[.7, 1, b.w - 2.4]} castShadow><meshStandardMaterial color={world.palette.roof} roughness={.8}/></mesh>
-      {shop.goods.map((g, i) => <SouvenirMesh key={g.id} shape={g.shape} color={g.color} glow={.5} spin={false} scale={1.3}
-        position={[-b.side * .35, 1.12, (i - (shop.goods.length - 1) / 2) * 1.1]}/>)}
-      <pointLight position={[-b.side * 2.2, 3, 0]} color={world.palette.light} intensity={night ? 14 : 4} distance={9} decay={2}/>
-    </group>}
+    <mesh geometry={GEO.box} position={[front - b.side * .04, 1.15, (b.roll - .5) * (b.w - 2)]} scale={[.1, 2.3, 1.2]}><meshStandardMaterial color="#4a3a40" roughness={.6}/></mesh>
+    {roof}
   </group>
 }
 
@@ -139,7 +116,7 @@ function Windows({ buildings, world, night }) {
     const r = rng(world.seed + 5), out = []
     for (const b of buildings) {
       const per = Math.max(1, Math.floor((b.w - 1.5) / 2.1)), x = b.side * (FRONT - .02)
-      for (let f = b.shop != null ? 1 : 0; f < b.floors; f++) for (let i = 0; i < per; i++) {
+      for (let f = b.shop != null || b.home ? 1 : 0; f < b.floors; f++) for (let i = 0; i < per; i++) {
         const z = b.z + (i - (per - 1) / 2) * 2.1
         if (f === 0 && Math.abs(z - (b.z + (b.roll - .5) * (b.w - 2))) < 1.1) continue // the door
         out.push({ x, y: 1.6 + f * 3.1, z, lit: r() < (night ? .6 : .15) })
@@ -255,12 +232,13 @@ export default function StrollWorld({ world }) {
     return new THREE.Vector3(.25 * Math.cos(el), Math.sin(el), -Math.cos(el)).normalize()
   }, [world])
   useEffect(() => {
-    worldPhysics.active = true; worldPhysics.ground = () => 0; worldPhysics.blockers = []
-    worldPhysics.walkable = (x, z) => (Math.abs(x) < WALK && z < 8.6 && z > -LENGTH - 4.2)
-    worldPhysics.spots = { door: START_DOOR, doors: [START_DOOR, END_DOOR], shops: layout.shops }
+    const physics = makePhysics(layout)
+    worldPhysics.active = true; worldPhysics.ground = physics.ground; worldPhysics.blockers = []
+    worldPhysics.walkable = physics.walkable
+    worldPhysics.spots = { door: START_DOOR, doors: [START_DOOR, END_DOOR], shops: layout.shops, interact: layout.interact }
     playerRig.teleport?.({ position: [0, 1.68, 6], yaw: 0, pitch: 0 })
     return () => {
-      worldPhysics.active = false; worldPhysics.walkable = null; worldPhysics.spots = null
+      worldPhysics.active = false; worldPhysics.walkable = null; worldPhysics.spots = null; worldPhysics.ground = () => 0
       playerRig.teleport?.({ position: [-4.5, 1.68, 6.4], yaw: 0, pitch: 0 })
     }
   }, [layout])
@@ -278,7 +256,8 @@ export default function StrollWorld({ world }) {
     {/* road + kerbs + wide ground */}
     <mesh rotation-x={-Math.PI / 2} position={[0, 0, -LENGTH / 2 + 4]} receiveShadow><planeGeometry args={[12.4, LENGTH + 20]}/><meshStandardMaterial map={road} roughness={.9}/></mesh>
     <mesh rotation-x={-Math.PI / 2} position={[0, -.02, -LENGTH / 2]}><planeGeometry args={[220, LENGTH + 260]}/><meshStandardMaterial color={new THREE.Color(p.road).multiplyScalar(.55)} roughness={1}/></mesh>
-    {layout.buildings.map((b, i) => <Building key={i} b={b} world={world} night={night}/>)}
+    {layout.buildings.map((b, i) => <Building key={i} b={b} world={world} night={night} layout={layout}/>)}
+    {layout.stairs.map((st, i) => <RoofDeck key={`r${i}`} stair={st} b={layout.buildings[st.building]} world={world} night={night}/>)}
     <Windows buildings={layout.buildings} world={world} night={night}/>
     <StreetLights world={world} night={night}/>
     <Passersby world={world}/>
