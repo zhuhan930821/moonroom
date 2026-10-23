@@ -127,17 +127,22 @@ export function startGroove(bpm, onHit) {
 // over ~2 s like a breeze moving through them.
 export function playChime(notes) {
   const audio = getContext()
-  const now = audio.currentTime
+  const times = notes.map((_, i) => audio.currentTime + i * (.18 + Math.random() * .32))
+  if (demoLog) demoLog.events.push({ chime: notes, times, when: times[0] })
+  chimeVoices(audio, master, notes, times)
+}
+
+function chimeVoices(ctx, target, notes, times) {
   notes.forEach((note, i) => {
-    const at = now + i * (.18 + Math.random() * .32)
+    const at = times[i]
     const f = 440 * 2 ** ((note - 69) / 12)
     ;[[1, .2], [2.76, .08], [5.4, .04]].forEach(([ratio, level]) => {
-      const osc = audio.createOscillator(), gain = audio.createGain()
+      const osc = ctx.createOscillator(), gain = ctx.createGain()
       osc.frequency.value = f * ratio
       gain.gain.setValueAtTime(0, at)
       gain.gain.linearRampToValueAtTime(level, at + .004)
       gain.gain.exponentialRampToValueAtTime(.0001, at + 2.8 / ratio ** .4)
-      osc.connect(gain).connect(master)
+      osc.connect(gain).connect(target)
       osc.start(at); osc.stop(at + 3)
     })
   })
@@ -411,6 +416,7 @@ export async function renderDemoLog(seconds) {
     if (e.choke && openHat) { openHat.gain.gain.setTargetAtTime(0, at, .015); openHat = null }
     else if (e.pad) { const v = voice(out, offline, samples[e.pad], at, e.level); if (e.pad === 'hihatOpen') openHat = v }
     else if (e.note != null) pianoVoice(out, offline, roots, e.note, at, (e.end ?? e.when + 2) - e.when)
+    else if (e.chime) chimeVoices(offline, out, e.chime, e.times.map(time => Math.max(0, time - origin)))
   }
   const rendered = await offline.startRendering()
   return wavBlob(rendered)
