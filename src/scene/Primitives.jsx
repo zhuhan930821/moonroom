@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { forwardRef, useMemo, useRef } from 'react'
 import { useLighting } from '../lighting/LightingContext'
 import { energy } from '../audio/musicBus'
+import { roomState } from '../game/roomState'
 
 export const RoundedBox = forwardRef(function RoundedBox({ args, color, ...props }, ref) {
   return <mesh ref={ref} castShadow receiveShadow {...props}><boxGeometry args={args} /><meshStandardMaterial color={color} roughness={0.72} /></mesh>
@@ -32,7 +33,7 @@ export function StarField({ hit }) {
   useFrame(({clock})=>{
     // Cymbals light up the sky; any note gives a faint shimmer.
     flash.current=energy('cymbal',1.2)*.45+energy('any',2)*.12
-    if(material.current){material.current.opacity=Math.min(1,.55+Math.sin(clock.elapsedTime*.7)*.08+flash.current);material.current.size=.09+energy('cymbal',1.2)*.05}
+    if(material.current){material.current.opacity=Math.min(1,.55+Math.sin(clock.elapsedTime*.7)*.08+flash.current)*(1-roomState.get().dawn*.9);material.current.size=.09+energy('cymbal',1.2)*.05}
   })
   return <points geometry={geometry}><pointsMaterial ref={material} size={.09} color="#fff1ce" sizeAttenuation transparent opacity={.6}/></points>
 }

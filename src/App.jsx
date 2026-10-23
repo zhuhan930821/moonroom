@@ -6,6 +6,7 @@ import PlayerController from './game/PlayerController'
 import { INTERACTIONS } from './config/scene'
 import { useInteractionSystem } from './game/useInteractionSystem'
 import { renderDemoLog, startDemoLog } from './audio/drums'
+import { roomState } from './game/roomState'
 import Desktop from './ui/Desktop'
 import DrumPanel from './ui/DrumPanel'
 import PianoPanel from './ui/PianoPanel'
@@ -17,6 +18,7 @@ import GLBAsset from './scene/AssetModel'
 import { LightingProvider } from './lighting/LightingContext'
 import { BLOOM_PASSES, CINEMATIC_DEFAULTS, GOLDEN_DEFAULTS, CinematicLights, CinematicPostFX } from './lighting/CinematicLighting'
 import FairyLights from './scene/FairyLights'
+import TimeOfDay from './scene/TimeOfDay'
 import { FLAGS } from './config/flags'
 
 preloadCoreAssets()
@@ -85,6 +87,7 @@ export default function App() {
     if (!FLAGS.demo) return
     window.__moonroomGame = game
     window.__moonroomAudio = { startDemoLog, renderDemoLog }
+    window.__moonroomRoom = roomState
   })
   const inExplore = game.mode === 'explore'
   const prompt = game.mode === 'beanbag' ? '起身' : inExplore && game.near ? INTERACTIONS[game.near].label : null
@@ -103,6 +106,7 @@ export default function App() {
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
           records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
+        <TimeOfDay resting={game.mode === 'beanbag'}/>
         {cinematic && <CinematicPostFX enabled={BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>} 
       </LightingProvider>}
       <PlayerController locked={game.locked} mode={game.mode} onPosition={game.updatePosition}/>

@@ -7,6 +7,7 @@ import GLBAsset from './AssetModel'
 import { GlowOrb, RoundedBox, StarField } from './Primitives'
 import { FLAGS } from '../config/flags'
 import { energy, pianoColor } from '../audio/musicBus'
+import { roomState } from '../game/roomState'
 
 const ARCHITECTURE_URLS = {
   phase1: '/assets/models/architecture/moonroom-architecture-phase1.glb',
@@ -87,24 +88,29 @@ void main() {
 const skyFragment = `
 uniform sampler2D map;
 uniform vec3 zenith, upper, horizon, below;
-uniform float imageArc, totalArc, imageV0, imageV1;
+uniform float imageArc, totalArc, imageV0, imageV1, dawn;
+uniform vec3 dawnZenith, dawnUpper, dawnHorizon;
 varying vec2 vUv;
 varying vec3 vDir;
 float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
 void main() {
   float h = normalize(vDir).y;
+  vec3 hz = mix(horizon, dawnHorizon, dawn), up = mix(upper, dawnUpper, dawn), zn = mix(zenith, dawnZenith, dawn);
   vec3 dome = h > 0.0
-    ? mix(mix(horizon, upper, smoothstep(0.0, 0.32, h)), zenith, smoothstep(0.32, 0.9, h))
-    : mix(horizon, below, smoothstep(0.0, -0.35, h));
+    ? mix(mix(hz, up, smoothstep(0.0, 0.32, h)), zn, smoothstep(0.32, 0.9, h))
+    : mix(hz, below, smoothstep(0.0, -0.35, h));
   vec3 cell = floor(normalize(vDir) * 260.0);
   float star = step(0.9965, hash(cell)) * smoothstep(0.12, 0.45, h);
-  dome += star * vec3(1.0, 0.94, 0.82) * (0.5 + 0.5 * hash(cell + 7.0));
+  dome += star * vec3(1.0, 0.94, 0.82) * (0.5 + 0.5 * hash(cell + 7.0)) * (1.0 - dawn);
   // Cylinder u runs against screen-right when seen from inside, so flip it.
   float u = 0.5 - (vUv.x - 0.5) * totalArc / imageArc;
   float v = (vUv.y - imageV0) / (imageV1 - imageV0);
   float fadeU = smoothstep(0.0, 0.14, u) * smoothstep(1.0, 0.86, u);
   float fadeV = smoothstep(0.0, 0.10, v) * smoothstep(1.0, 0.82, v);
   vec3 painting = texture2D(map, clamp(vec2(u, v), 0.0, 1.0)).rgb;
+  // Sunrise grades the painted night: warmer, lifted shadows, a low peach glow near the horizon.
+  vec3 sunrise = painting * vec3(1.18, 1.0, .82) + vec3(.10, .05, .02) + vec3(.22, .10, .03) * smoothstep(.55, .1, v);
+  painting = mix(painting, sunrise, dawn);
   gl_FragColor = vec4(mix(dome, painting, fadeU * fadeV), 1.0);
   #include <colorspace_fragment>
 }`
@@ -117,7 +123,8 @@ function SkyBackdrop({ sky }) {
         map: { value: sky },
         zenith: { value: new THREE.Color('#0a1846') }, upper: { value: new THREE.Color('#143276') },
         horizon: { value: new THREE.Color('#8a5f99') }, below: { value: new THREE.Color('#5a3d70') },
-        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC },
+        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC }, dawn: { value: 0 },
+        dawnZenith: { value: new THREE.Color('#5d7fd0') }, dawnUpper: { value: new THREE.Color('#e9a3b8') }, dawnHorizon: { value: new THREE.Color('#ffc58c') },
         imageV0: { value: (centre - SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
         imageV1: { value: (centre + SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
       },
@@ -131,6 +138,7 @@ function SkyBackdrop({ sky }) {
     cap.uniforms.imageV0 = { value: 2 }; cap.uniforms.imageV1 = { value: 3 }
     return cap
   }, [material])
+  useFrame(() => { material.uniforms.dawn.value = capMaterial.uniforms.dawn.value = roomState.get().dawn })
   return <group>
     <mesh material={material} renderOrder={-1}>
       <cylinderGeometry args={[SKY_RADIUS, SKY_RADIUS, SKY_HEIGHT, 96, 1, true, SKY_CENTER_ANGLE - SKY_TOTAL_ARC / 2, SKY_TOTAL_ARC]} />

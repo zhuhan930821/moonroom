@@ -271,7 +271,50 @@ function wavBlob(rendered) {
   return new Blob([view], { type: 'audio/wav' })
 }
 
-function makeAmbient() { ambientGain = buildAmbient(getContext(), master) }
+function makeAmbient() { ambientGain = buildAmbient(getContext(), master); buildWildlife(getContext(), ambientGain) }
+
+// Night crickets and dawn birds under the ambient bed, crossfaded by setTimeOfDayAudio().
+let crickets, birds, birdTimer, dawnLevel = 0
+function buildWildlife(audio, target) {
+  crickets = audio.createGain(); crickets.gain.value = .5; crickets.connect(target)
+  // A cricket: a 4.6 kHz tone gated at ~30 Hz into short trills, two trills a second.
+  ;[[4600, 0], [5200, .37]].forEach(([freq, offset]) => {
+    const tone = audio.createOscillator(), trill = audio.createGain(), phrase = audio.createGain(), level = audio.createGain()
+    tone.frequency.value = freq
+    trill.gain.value = 0; phrase.gain.value = 0; level.gain.value = .006
+    // Square LFOs swing −1…1; scale by .5 and add a .5 offset so each gate opens 0…1.
+    const gate = (param, rate) => {
+      const lfo = audio.createOscillator(), depth = audio.createGain(), bias = audio.createConstantSource()
+      lfo.type = 'square'; lfo.frequency.value = rate; depth.gain.value = .5; bias.offset.value = .5
+      lfo.connect(depth).connect(param); bias.connect(param)
+      return [lfo, bias]
+    }
+    const sources = [tone, ...gate(trill.gain, 29 + offset * 6), ...gate(phrase.gain, 1.6 - offset)]
+    tone.connect(trill).connect(phrase).connect(level).connect(crickets)
+    sources.forEach(node => node.start(audio.currentTime + offset))
+  })
+  birds = audio.createGain(); birds.gain.value = 0; birds.connect(target)
+  birdTimer = setInterval(() => {
+    if (dawnLevel < .25 || Math.random() > dawnLevel * .55) return
+    const now = audio.currentTime, base = 2300 + Math.random() * 1600, notes = 2 + Math.floor(Math.random() * 4)
+    for (let i = 0; i < notes; i++) {
+      const at = now + i * (.09 + Math.random() * .05)
+      const osc = audio.createOscillator(), gain = audio.createGain()
+      osc.frequency.setValueAtTime(base, at)
+      osc.frequency.exponentialRampToValueAtTime(base * (1.3 + Math.random() * .4), at + .06)
+      gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(.05, at + .01); gain.gain.exponentialRampToValueAtTime(.0001, at + .08)
+      osc.connect(gain).connect(birds); osc.start(at); osc.stop(at + .1)
+    }
+  }, 650)
+}
+
+export function setTimeOfDayAudio(dawn) {
+  dawnLevel = dawn
+  if (!crickets) return
+  const now = getContext().currentTime
+  crickets.gain.setTargetAtTime(.5 * (1 - dawn), now, .5)
+  birds.gain.setTargetAtTime(dawn, now, .5)
+}
 
 function buildAmbient(audio, target) {
   const ambientGain = audio.createGain()

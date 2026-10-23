@@ -1,5 +1,6 @@
 // Small shared room state that scene code reads every frame and UI subscribes to.
-const state = { lamps: { moon: true, floor: true } }
+// `dawn`: 0 = deep night, 1 = sunrise. Advanced every frame by <TimeOfDay/>.
+const state = { lamps: { moon: true, floor: true }, dawn: 0 }
 const listeners = new Set()
 
 export const roomState = {
