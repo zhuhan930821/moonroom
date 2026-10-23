@@ -3,6 +3,7 @@ import { PADS, PIANO, beatLength, makeTake, noteName, quantize, takeLength, take
 import { playTake, playDrum, playPiano, renderTakeWav } from '../audio/drums'
 import { isBlackKey } from '../game/pianoKeys'
 import { midiToTake, takeToMidi } from '../audio/midi'
+import { mugoOutbox } from '../game/mugoBridge'
 
 const STEPS_PER_BEAT = 4 // grid resolution: 1/16 notes
 
@@ -24,7 +25,7 @@ function lanesFor(take) {
 }
 
 // CRT "Studio": opens takes recorded at the drum kit as editable music projects.
-export default function Studio({ onHit }) {
+export default function Studio({ onHit, onOpenInMugo }) {
   const takes = useSyncExternalStore(takeStore.subscribe, takeStore.getAll)
   const [selectedId, setSelectedId] = useState(() => takes[0]?.id || null)
   const take = takes.find(item => item.id === selectedId) || takes[0] || null
@@ -99,13 +100,13 @@ export default function Studio({ onHit }) {
       </button>)}
     </aside>
     {take ? <ProjectView key={take.id} take={take} playing={playing} playheadRef={playheadRef} loop={loop} busy={busy}
-      onPlay={play} onLoop={() => setLoop(value => !value)} onEdit={edit} onExport={exportWav} onExportMidi={exportMidi}
+      onPlay={play} onLoop={() => setLoop(value => !value)} onEdit={edit} onExport={exportWav} onExportMidi={exportMidi} onOpenInMugo={() => { mugoOutbox.put(take); onOpenInMugo?.() }}
       onDelete={() => { stop(); takeStore.remove(take.id); setSelectedId(null) }}/>
       : <div className="studio-main studio-empty">选择或新建一个工程</div>}
   </section>
 }
 
-function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, onEdit, onExport, onExportMidi, onDelete }) {
+function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, onEdit, onExport, onExportMidi, onOpenInMugo, onDelete }) {
   const length = takeLength(take)
   const step = beatLength(take.bpm) / STEPS_PER_BEAT
   const steps = Math.round(length / step)
@@ -140,7 +141,8 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
       <button className="win-button" onClick={() => onEdit(quantize(take, STEPS_PER_BEAT))} disabled={!take.events.length}>Quantize 1/16</button>
       {take.original && <button className="win-button" onClick={() => onEdit({ events: take.original, original: undefined })}>Undo quantize</button>}
       <button className="win-button" onClick={onExport} disabled={!take.events.length || Boolean(busy)}>{busy || '⤓ Export WAV'}</button>
-      <button className="win-button" onClick={onExportMidi} disabled={!take.events.length} data-testid="studio-midi-export">⤓ MIDI → Mugo</button>
+      <button className="win-button" onClick={onOpenInMugo} disabled={!take.events.length} data-testid="studio-open-mugo">↗ 在 Mugo 打开</button>
+      <button className="win-button" onClick={onExportMidi} disabled={!take.events.length} data-testid="studio-midi-export">⤓ MIDI</button>
       <button className={`win-button ${take.pressed ? 'pressed' : ''}`} onClick={() => onEdit({ pressed: !take.pressed })} disabled={!take.events.length} data-testid="studio-press">{take.pressed ? '◉ 已压成唱片' : '◎ 压成唱片'}</button>
       <button className="win-button danger" onClick={onDelete}>Delete</button>
     </div>

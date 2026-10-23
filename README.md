@@ -42,7 +42,8 @@ npm run preview
 - **时间流转**：躺在沙发上，窗外约 40 秒从深夜转到黎明再回到夜里；夜里有蟋蟀，黎明有鸟叫。
 - **风铃**：按 C 拉窗帘时风铃会响，音高取自最近一个钢琴工程的调性。
 - **Milo 来串门**：在笔记本上的 Mugo 屏幕点「邀请 Milo 来串门」。Milo 坐到鼓边；你弹钢琴时他用 Mugo 的 Tiny Band 鼓点伴奏，录音会把他的鼓一起录进去。
-- **和 Mugo 互通**：Studio 的「MIDI → Mugo」导出标准 MIDI（通用 MIDI 鼓编号与 Mugo 一致），在 Mugo 的「乐谱库 → 导入 MIDI 文件…」打开；Mugo 导出的 MIDI 也能在 Studio 里导入或直接拖进窗口。
+- **一键互送**：Studio 的「↗ 在 Mugo 打开」直接切到笔记本上的 Mugo 并打开当前工程；Mugo 里点「↩ 送回 Moonroom」，曲子会压成唱片放进唱片箱。需要 Mugo 部署了 `moonroom/bridge` 分支（~/DrumApp，等 Codex 合并）；未部署前可用 `?mugoUrl=` 指向本地跑的分支。
+- **MIDI 文件互通**：Studio 的「⤓ MIDI」导出标准 MIDI（通用 MIDI 鼓编号与 Mugo 一致），在 Mugo 的「乐谱库 → 导入 MIDI 文件…」打开；Mugo 导出的 MIDI 也能在 Studio 里导入或直接拖进窗口。
 
 ## 结构
 

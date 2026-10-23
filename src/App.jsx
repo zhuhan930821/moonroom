@@ -125,7 +125,7 @@ export default function App() {
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
       {inExplore && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
-      {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse}/><div className="mode-exit">Esc · 返回房间</div></>}
+      {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse} onOpenInMugo={() => game.enter('mugo')}/><div className="mode-exit">Esc · 返回房间</div></>}
       {game.mode === 'drums' && <DrumPanel game={game}/>}
       {game.mode === 'drums' && game.challenge && <RhythmOverlay challenge={game.challenge} subscribeStrikes={game.subscribeStrikes} onRetry={() => game.startChallenge(game.challenge.take.id)} onClose={game.endChallenge}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}

@@ -9,7 +9,7 @@ const content = {
 
 const ICONS = { Diary: '📓', Music: '♫', Dreams: '✦', Studio: '🎚' }
 
-export default function Desktop({ ambient, onToggleAmbient, onHit }) {
+export default function Desktop({ ambient, onToggleAmbient, onHit, onOpenInMugo }) {
   const [open, setOpen] = useState(null)
   const [ready, setReady] = useState(false)
   useEffect(() => { const timer = setTimeout(() => setReady(true), 550); return () => clearTimeout(timer) }, [])
@@ -18,7 +18,7 @@ export default function Desktop({ ambient, onToggleAmbient, onHit }) {
     <div className="desktop-icons">
       {Object.keys(ICONS).map(name => <button key={name} className="desktop-icon" onClick={() => setOpen(name)} data-testid={`icon-${name.toLowerCase()}`}><span>{ICONS[name]}</span>{name}</button>)}
     </div>
-    {open === 'Studio' && <><Studio onHit={onHit}/><button className="studio-close" onClick={() => setOpen(null)} aria-label="Close Studio">×</button></>}
+    {open === 'Studio' && <><Studio onHit={onHit} onOpenInMugo={onOpenInMugo}/><button className="studio-close" onClick={() => setOpen(null)} aria-label="Close Studio">×</button></>}
     {open && open !== 'Studio' && <section className="desktop-window" role="dialog" aria-label={content[open].title} data-testid="desktop-window">
       <div className="window-bar"><strong>{content[open].title}</strong><button onClick={() => setOpen(null)} aria-label="Close window">×</button></div>
       <div className="window-body"><p>{content[open].body}</p>{open === 'Music' && <button className="win-button" onClick={onToggleAmbient}>{ambient ? '❚❚ Pause ambient' : '▶ Play ambient'}</button>}</div>
