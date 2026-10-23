@@ -9,6 +9,7 @@ import { renderDemoLog, startDemoLog } from './audio/drums'
 import { roomState } from './game/roomState'
 import Desktop from './ui/Desktop'
 import DrumPanel from './ui/DrumPanel'
+import RhythmOverlay from './ui/RhythmOverlay'
 import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
@@ -123,6 +124,7 @@ export default function App() {
       {inExplore && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
       {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse}/><div className="mode-exit">Esc · 返回房间</div></>}
       {game.mode === 'drums' && <DrumPanel game={game}/>}
+      {game.mode === 'drums' && game.challenge && <RhythmOverlay challenge={game.challenge} subscribeStrikes={game.subscribeStrikes} onRetry={() => game.startChallenge(game.challenge.take.id)} onClose={game.endChallenge}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}

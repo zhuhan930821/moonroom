@@ -188,6 +188,12 @@ function click(ctx, target, when, accent) {
   osc.start(when); osc.stop(when + .06)
 }
 
+// Count-in: `beats` clicks starting now (accent on the first).
+export function countIn(bpm, beats = 4) {
+  const audio = getContext()
+  for (let i = 0; i < beats; i++) click(audio, master, audio.currentTime + .05 + i * 60 / bpm, i === 0)
+}
+
 // Metronome: schedules clicks a little ahead of the clock until stopped.
 export function startMetronome(bpm, onBeat) {
   const audio = getContext()

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { FOX_HINTS, INTERACTIONS } from '../config/scene'
 import { nearestInteraction } from './collision'
-import { playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startCrackle, startMetronome } from '../audio/drums'
+import { countIn, playDrum, playPiano, playTake, prepareAudio, preparePiano, setAmbientPlaying, setMasterVolume, startCrackle, startMetronome } from '../audio/drums'
 import { finishRecording, takeStore } from '../audio/takes'
 import { emitMusic } from '../audio/musicBus'
 import { roomState } from './roomState'
@@ -42,6 +42,12 @@ export function useInteractionSystem(root) {
   const modeRef = useRef(mode)
   const nearRef = useRef(near)
   const lastHit = useRef({}) // per pad, so kick + hi-hat together both sound
+  // Rhythm challenge: strikes are forwarded to listeners (the overlay judges them).
+  const strikeListeners = useRef(new Set())
+  const subscribeStrikes = useCallback(listener => { strikeListeners.current.add(listener); return () => strikeListeners.current.delete(listener) }, [])
+  const [challenge, setChallenge] = useState(null) // { take, startAt }
+  const challengeRef = useRef(null)
+  challengeRef.current = challenge
   // Piano session: octave base, notes currently held (for the 3D keys), and their releases.
   const [pianoBase, setPianoBase] = useState(DEFAULT_PIANO_BASE)
   const [pianoNotes, setPianoNotes] = useState(() => new Set())
@@ -157,6 +163,19 @@ export function useInteractionSystem(root) {
   // A record deleted or un-pressed in Studio stops spinning.
   useEffect(() => { if (vinyl && !records.some(take => take.id === vinyl.id)) stopVinyl() }, [vinyl, records, stopVinyl])
 
+  const drumTakes = takes.filter(take => take.events.some(event => event.pad !== 'piano'))
+  const startChallenge = useCallback(async takeId => {
+    const take = takeStore.getAll().find(item => item.id === takeId) || takeStore.getAll().find(item => item.events.some(event => event.pad !== 'piano'))
+    if (!take) return
+    await prepareAudio()
+    if (recordingRef.current) setRecording(null)
+    stopTake(); setMetronome(false)
+    const beat = 60 / take.bpm
+    countIn(take.bpm, 4)
+    setChallenge({ take, startAt: clock() + .05 + 4 * beat })
+  }, [stopTake])
+  const endChallenge = useCallback(() => setChallenge(null), [])
+
   const changeBpm = useCallback(delta => setBpm(value => Math.max(50, Math.min(180, value + delta))), [])
 
   const noteOn = useCallback(async (id, note) => {
@@ -193,6 +212,7 @@ export function useInteractionSystem(root) {
     stopTake()
     setMetronome(false)
     setBook(null)
+    setChallenge(null)
     setMode('explore')
     setNear(null)
   }, [toggleRecording, stopTake, releaseAllNotes])
@@ -204,6 +224,7 @@ export function useInteractionSystem(root) {
     lastHit.current[name] = performance.now()
     try {
       const at = clock()
+      strikeListeners.current.forEach(listener => listener(name, at))
       await playDrum(name)
       setRecording(current => current && at >= current.startedAt ? { ...current, hits: [...current.hits, { pad: name, at }] } : current)
       pulse(name)
@@ -242,6 +263,7 @@ export function useInteractionSystem(root) {
         if (event.code === 'KeyM') { event.preventDefault(); toggleMetronome() }
         if (event.code === 'BracketLeft') { event.preventDefault(); changeBpm(-5) }
         if (event.code === 'BracketRight') { event.preventDefault(); changeBpm(5) }
+        if (event.code === 'KeyG') { event.preventDefault(); startChallenge(challengeRef.current?.take.id) } // replays the current chart
         return
       }
       if (current === 'piano') {
@@ -279,10 +301,11 @@ export function useInteractionSystem(root) {
     window.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', releaseAllNotes)
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', releaseAllNotes) }
-  }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook])
+  }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge])
 
   return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume,
     records, vinyl, playVinyl, stopVinyl, book, pullBook,
+    drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
     recording, metronome, bpm, playingTake, lastTake, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, pulse,
     pianoBase, pianoNotes, noteOn, noteOff, shiftOctave }
 }

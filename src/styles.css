@@ -45,3 +45,9 @@
 .diary-date{font:600 11px/1 Georgia,serif;letter-spacing:.24em;color:#9b7e6c;margin-bottom:12px}.diary-page p{margin:0 0 18px}
 .diary-actions{display:flex;gap:8px;justify-content:flex-end}.diary-actions button{background:transparent;border:1px solid #c7b3a2;color:#5a4757;padding:6px 10px;cursor:pointer;font:12px system-ui}
 @keyframes diaryIn{from{opacity:0;transform:translateY(-46%)}}@media(prefers-reduced-motion:reduce){.diary-page{animation:none}}
+.challenge-row select{background:#3e3150;color:#fff2df;border:1px solid #8f7199;padding:8px;font-size:12px;max-width:180px}.challenge-row .challenge{background:#9b6a3f;border-color:#ffd3a0}
+.drum-panel.in-challenge{display:none}
+.rhythm{position:absolute;top:64px;right:24px;bottom:84px;width:min(340px,40vw);display:flex;flex-direction:column;background:linear-gradient(#0d0b1c00,#0d0b1cc0);border:1px solid #ffffff22;border-radius:12px;overflow:hidden}
+.rhythm canvas{flex:1;width:100%;min-height:0}.rhythm-head{display:flex;align-items:baseline;gap:10px;padding:10px 14px;color:#f3e9d8;font-size:13px}.rhythm-head span{margin-left:auto;font:600 18px Georgia,serif;font-variant-numeric:tabular-nums}.rhythm-head em{font-style:normal;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ffd3a0;min-width:70px;text-align:right}.rhythm-head em.miss{color:#a58bb8}
+.rhythm-result{position:absolute;inset:auto 12px 12px;padding:16px;background:#1b1530ee;border:1px solid #ffd3a066;border-radius:10px;color:#f3e9d8;text-align:center}.rhythm-result .stars{font-size:34px;color:#ffd78a;letter-spacing:6px}.rhythm-result .stars span{color:#ffffff22}
+.rhythm-result dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:10px 0;font-size:12.5px;text-align:left}.rhythm-result dd{margin:0;font-variant-numeric:tabular-nums}.rhythm-actions{display:flex;gap:8px;justify-content:center}.rhythm-actions button{background:#695175;color:#fff2df;border:1px solid #d3abc1;padding:7px 12px;cursor:pointer}
