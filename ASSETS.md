@@ -17,6 +17,7 @@
 | `public/assets/models/drum-corner.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_drum_corner.py`；含星月地毯、落地灯、植物、窗帘/藤蔓、吊星、音乐书架与睡狐 | 项目原创资产；可随本项目使用与修改。没有第三方模型或贴图。 |
 | `public/assets/models/lounge/moon-breathing-lamp.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_dream_lounge_props.py` | Phase A2 原创资产；月球灯原型使用共享奶油、薰衣草与香槟金 PBR 材质，没有第三方模型或贴图。 |
 | `public/assets/models/architecture/moonroom-architecture-phase1.glb` | 项目内 Blender 原创建筑，源文件 `assets-source/architecture/moonroom-architecture-phase1.blend`，生成脚本 `scripts/build_moonroom_architecture.py` | 项目原创资产；Phase 1 建筑默认加载，旧建筑可用 `?architecture=legacy` 查看。详见 `docs/architecture-phase-1.md`。 |
+| `public/assets/models/collectibles/fox-{sit,sleep}.glb` | 项目内 Blender 原创 Q 版狐狸，生成脚本 `scripts/build_cute_fox.py`，源文件 `assets-source/collectibles/cute-fox/` | 项目原创资产；没有第三方模型或贴图 |
 | `src/scene/**` 3D 家具、月亮、浮岛和植物 | 项目内程序化建模 | 项目原创代码与几何体；没有外部 GLTF。 |
 | `src/audio/drums.js` 环境音 | Web Audio 实时合成 | 项目原创；没有外部曲目或录音。 |
 
