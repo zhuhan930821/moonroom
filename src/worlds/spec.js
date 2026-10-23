@@ -11,6 +11,8 @@ export const CHOICES = {
   weather: ['none', 'rain', 'snow', 'petals', 'embers', 'bubbles'],
   scale: ['major', 'minor', 'pentatonic', 'dorian'],
   souvenir: ['stone', 'shell', 'bottle', 'feather', 'key', 'star', 'lantern', 'seed'],
+  scatter: ['grass', 'flowers', 'stones', 'shells', 'crystals', 'mushrooms', 'none'],
+  hero: ['giant-tree', 'inverted-castle', 'colossal-moon', 'great-arch', 'spiral-tower', 'sky-whale', 'none'],
 }
 
 const hex = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' }
@@ -28,7 +30,11 @@ export const WORLD_SCHEMA = obj({
   landmarks: { type: 'array', minItems: 1, maxItems: 4, items: obj({
     kind: pick(CHOICES.landmark), count: { type: 'integer', minimum: 1, maximum: 12 },
     scale: { type: 'number', minimum: .5, maximum: 3 }, color: hex, glow: unit,
+    height: { ...unit, description: '0 矮胖 … 1 高耸' }, tiers: { type: 'integer', minimum: 1, maximum: 6, description: '层数/分段/成组数量' },
+    ornament: { ...unit, description: '装饰多少：窗、符文、果子、挂灯等' },
   }) },
+  hero: obj({ kind: { ...pick(CHOICES.hero), description: '一进门就能看见的巨大标志物，远在天边' }, color: hex, glow: unit }),
+  scatter: obj({ kind: { ...pick(CHOICES.scatter), description: '铺满地面的小东西' }, density: unit, color: hex }),
   creatures: obj({ kind: pick(CHOICES.creature), count: { type: 'integer', minimum: 0, maximum: 60 }, color: hex }),
   weather: obj({ kind: pick(CHOICES.weather), intensity: unit }),
   music: obj({ root: { type: 'integer', minimum: 0, maximum: 11 }, scale: pick(CHOICES.scale), tempo: { type: 'integer', minimum: 50, maximum: 110 } }),
@@ -54,7 +60,10 @@ export function normalize(raw) {
     terrain: { kind: one(raw?.terrain?.kind, CHOICES.terrain), roughness: clamp(raw?.terrain?.roughness, 0, 1, .4) },
     landmarks: (Array.isArray(raw?.landmarks) ? raw.landmarks : []).slice(0, 4).map(l => ({
       kind: one(l?.kind, CHOICES.landmark), count: Math.round(clamp(l?.count, 1, 12, 3)), scale: clamp(l?.scale, .5, 3, 1),
-      color: color(l?.color, '#c9b8e8'), glow: clamp(l?.glow, 0, 1, .4) })),
+      color: color(l?.color, '#c9b8e8'), glow: clamp(l?.glow, 0, 1, .4),
+      height: clamp(l?.height, 0, 1, .5), tiers: Math.round(clamp(l?.tiers, 1, 6, 3)), ornament: clamp(l?.ornament, 0, 1, .5) })),
+    hero: { kind: one(raw?.hero?.kind, CHOICES.hero), color: color(raw?.hero?.color, '#e8dcff'), glow: clamp(raw?.hero?.glow, 0, 1, .5) },
+    scatter: { kind: one(raw?.scatter?.kind, CHOICES.scatter), density: clamp(raw?.scatter?.density, 0, 1, .5), color: color(raw?.scatter?.color, '#9ccf8a') },
     creatures: { kind: one(raw?.creatures?.kind, CHOICES.creature), count: Math.round(clamp(raw?.creatures?.count, 0, 60, 20)), color: color(raw?.creatures?.color, '#bff6ff') },
     weather: { kind: one(raw?.weather?.kind, CHOICES.weather), intensity: clamp(raw?.weather?.intensity, 0, 1, .4) },
     music: { root: Math.round(clamp(raw?.music?.root, 0, 11, 0)), scale: one(raw?.music?.scale, CHOICES.scale), tempo: Math.round(clamp(raw?.music?.tempo, 50, 110, 72)) },
@@ -86,7 +95,9 @@ export function generateOffline(seed = Math.floor(Math.random() * 1e9)) {
     palette: { skyTop: c(hue, .5, .12), skyHorizon: c(hue + 40, .55, .55), fog: c(hue + 30, .35, .4), ground: c(hue + 180, .25, .25), accent: c(hue + 150, .8, .7), light: c(hue + 60, .5, .9) },
     sky: { celestial: any(CHOICES.celestial), time: any(CHOICES.time), stars: r(), aurora: r() > .6 ? r() : 0 },
     terrain: { kind: any(CHOICES.terrain), roughness: r() },
-    landmarks: Array.from({ length: 1 + Math.floor(r() * 3) }, () => ({ kind: any(CHOICES.landmark), count: 1 + Math.floor(r() * 8), scale: .6 + r() * 1.8, color: c(hue + r() * 120, .5, .65), glow: r() })),
+    landmarks: Array.from({ length: 1 + Math.floor(r() * 3) }, () => ({ kind: any(CHOICES.landmark), count: 1 + Math.floor(r() * 8), scale: .6 + r() * 1.8, color: c(hue + r() * 120, .5, .65), glow: r(), height: r(), tiers: 1 + Math.floor(r() * 6), ornament: r() })),
+    hero: { kind: any(CHOICES.hero.slice(0, -1)), color: c(hue + 20, .45, .7), glow: r() },
+    scatter: { kind: any(CHOICES.scatter.slice(0, -1)), density: .3 + r() * .7, color: c(hue + 100, .5, .6) },
     creatures: { kind: any(CHOICES.creature), count: 10 + Math.floor(r() * 40), color: c(hue + 200, .7, .75) },
     weather: { kind: any(CHOICES.weather), intensity: r() },
     music: { root: Math.floor(r() * 12), scale: any(CHOICES.scale), tempo: 55 + Math.floor(r() * 45) },

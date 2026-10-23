@@ -7,6 +7,7 @@ import { playerRig } from '../game/PlayerController'
 import SouvenirMesh from './SouvenirMesh'
 import { DoorModel } from './AnywhereDoor'
 import IdSea from './IdSea'
+import { Hero, Landmark, Scatter } from './landmarks'
 import { startWorldMusic } from './worldAudio'
 
 // Builds a world spec into a walkable scene. The player arrives at the origin facing -Z with
@@ -106,8 +107,8 @@ function Terrain({ spec, ground }) {
     {(kind === 'ocean' || kind === 'islands') && <Water spec={spec}/>}
     {/* the arrival plaza: a soft stone disc so the door always stands on something */}
     <group position-y={kind === 'ocean' || kind === 'islands' ? .05 : ground(0, 0)}>
-      <mesh position-y={.1} receiveShadow><cylinderGeometry args={[6.5, 6.8, .24, 64]}/><meshStandardMaterial color={new THREE.Color(p.ground).lerp(new THREE.Color(p.light), .6)} roughness={.75}/></mesh>
-      <mesh position-y={.23} rotation-x={-Math.PI / 2}><ringGeometry args={[6.1, 6.35, 64]}/><meshBasicMaterial color={new THREE.Color(p.accent).multiplyScalar(1.6)} toneMapped={false}/></mesh>
+      <mesh position={[0, .05, 6.5]} receiveShadow><cylinderGeometry args={[3.2, 3.4, .1, 48]}/><meshStandardMaterial color={new THREE.Color(p.ground).lerp(new THREE.Color(p.light), .3)} roughness={.85}/></mesh>
+      <mesh position={[0, .11, 6.5]} rotation-x={-Math.PI / 2}><ringGeometry args={[3.0, 3.12, 48]}/><meshBasicMaterial color={new THREE.Color(p.accent)} transparent opacity={.6} toneMapped={false}/></mesh>
     </group>
   </>
 }
@@ -137,68 +138,6 @@ function Water({ spec }) {
   }), [spec])
   useFrame(({ clock }) => { material.uniforms.time.value = clock.elapsedTime })
   return <mesh material={material} rotation-x={-Math.PI / 2}><planeGeometry args={[RADIUS * 3, RADIUS * 3, 160, 160]}/></mesh>
-}
-
-// ---------- landmarks ----------
-function Landmark({ kind, color, glow, scale, seed, accent }) {
-  const r = useMemo(() => rng(seed), [seed])
-  const c = useMemo(() => new THREE.Color(color), [color])
-  const e = useMemo(() => c.clone().lerp(new THREE.Color(accent), .3), [c, accent])
-  const stone = <meshStandardMaterial color={c} emissive={c} emissiveIntensity={.12} roughness={.85}/>
-  const lit = <meshStandardMaterial color={e} emissive={e} emissiveIntensity={.4 + glow * 2.2} roughness={.4}/>
-  const parts = useMemo(() => Array.from({ length: 6 }, () => [r(), r(), r()]), [r])
-  return <group scale={scale}>
-    {kind === 'tower' && <group>
-      {[0, 1, 2, 3].map(i => <mesh key={i} position-y={1.6 + i * 3} castShadow><cylinderGeometry args={[1.5 - i * .25, 1.7 - i * .25, 3, 20]}/>{stone}</mesh>)}
-      {[0, 1, 2].map(i => <mesh key={`w${i}`} position-y={2.2 + i * 3}><cylinderGeometry args={[1.52 - i * .25, 1.52 - i * .25, .5, 20, 1, true]}/>{lit}</mesh>)}
-      <mesh position-y={13.6}><coneGeometry args={[1.1, 2.4, 20]}/>{stone}</mesh>
-      <mesh position-y={15.1}><sphereGeometry args={[.35, 16, 12]}/>{lit}</mesh>
-    </group>}
-    {kind === 'arch' && <group>
-      <mesh position-y={0} rotation-y={Math.PI / 2}><torusGeometry args={[4, .55, 16, 40, Math.PI]}/>{stone}</mesh>
-      <mesh position-y={0} rotation-y={Math.PI / 2}><torusGeometry args={[3.45, .08, 8, 40, Math.PI]}/>{lit}</mesh>
-    </group>}
-    {kind === 'monolith' && <group rotation-z={(parts[0][0] - .5) * .2}>
-      <mesh position-y={3.5} castShadow><boxGeometry args={[1.4, 7, .7]}/>{stone}</mesh>
-      {[0, 1, 2, 3].map(i => <mesh key={i} position={[0, 1.6 + i * 1.4, .36]}><boxGeometry args={[.7 + parts[i][1] * .4, .08, .02]}/>{lit}</mesh>)}
-    </group>}
-    {kind === 'tree' && <group>
-      <mesh position-y={2} castShadow><cylinderGeometry args={[.25, .45, 4, 10]}/><meshStandardMaterial color="#5b3f35" roughness={.9}/></mesh>
-      {parts.map(([a, b, d], i) => <mesh key={i} position={[(a - .5) * 2.6, 4.2 + b * 1.6, (d - .5) * 2.6]} castShadow><icosahedronGeometry args={[1 + b * .5, 1]}/>{stone}</mesh>)}
-      {parts.slice(0, 4).map(([a, b, d], i) => <mesh key={`f${i}`} position={[(d - .5) * 3, 3.6 + a, (b - .5) * 3]}><sphereGeometry args={[.13, 10, 8]}/>{lit}</mesh>)}
-    </group>}
-    {kind === 'crystal' && <group>
-      {parts.map(([a, b, d], i) => <mesh key={i} position={[(a - .5) * 2, 0, (d - .5) * 2]} rotation={[(b - .5) * .6, a * 3, (d - .5) * .6]} scale={[.6, 2 + b * 3, .6]}>
-        <octahedronGeometry args={[1, 0]}/><meshStandardMaterial color={c} emissive={e} emissiveIntensity={.3 + glow * 1.5} roughness={.15} metalness={.1} transparent opacity={.85}/>
-      </mesh>)}
-    </group>}
-    {kind === 'lantern' && <group>
-      <mesh position-y={1.2}><cylinderGeometry args={[.05, .07, 2.4, 8]}/><meshStandardMaterial color="#3a3340" metalness={.5}/></mesh>
-      <mesh position-y={2.55}><sphereGeometry args={[.28, 16, 12]}/>{lit}</mesh>
-      {glow > .3 && <pointLight position-y={2.55} color={e} intensity={glow * 6} distance={7} decay={2}/>}
-    </group>}
-    {kind === 'ruin' && <group>
-      {parts.map(([a, b, d], i) => <mesh key={i} position={[(a - .5) * 6, (1 + b * 3) / 2, (d - .5) * 6]} rotation-z={b > .8 ? 1.4 : 0} castShadow>
-        <cylinderGeometry args={[.4, .45, 1 + b * 3, 12]}/>{stone}</mesh>)}
-      <mesh position-y={.15} rotation-x={-Math.PI / 2}><ringGeometry args={[2.8, 3.1, 40]}/>{lit}</mesh>
-    </group>}
-    {kind === 'floating-island' && <FloatingIsland stone={stone} lit={lit} phase={parts[0][0] * 6}/>}
-    {kind === 'shrine' && <group>
-      {[-1.6, 1.6].map(x => <mesh key={x} position={[x, 2.2, 0]} castShadow><cylinderGeometry args={[.22, .26, 4.4, 12]}/>{stone}</mesh>)}
-      <mesh position-y={4.5}><boxGeometry args={[4.6, .35, .5]}/>{stone}</mesh>
-      <mesh position-y={3.8}><boxGeometry args={[3.8, .2, .35]}/>{lit}</mesh>
-    </group>}
-  </group>
-}
-
-function FloatingIsland({ stone, lit, phase }) {
-  const ref = useRef()
-  useFrame(({ clock }) => { if (ref.current) ref.current.position.y = 12 + Math.sin(clock.elapsedTime * .3 + phase) * .8 })
-  return <group ref={ref}>
-    <mesh rotation-x={Math.PI}><coneGeometry args={[4, 6, 8]}/>{stone}</mesh>
-    <mesh position-y={3.1}><cylinderGeometry args={[4, 4, .3, 8]}/><meshStandardMaterial color="#6b8f6a" roughness={.9}/></mesh>
-    <mesh position-y={4.2}><sphereGeometry args={[.9, 12, 10]}/>{lit}</mesh>
-  </group>
 }
 
 // ---------- creatures + weather ----------
@@ -305,14 +244,16 @@ function GeneratedWorld({ spec }) {
   const lightLevel = { day: 2.4, dusk: 1.4, dawn: 1.4, night: .9 }[time]
   return <>
     <color attach="background" args={[p.skyHorizon]}/>
-    <fogExp2 attach="fog" args={[p.fog, time === 'day' ? .009 : .014]}/>
+    <fogExp2 attach="fog" args={[p.fog, time === 'day' ? .0065 : .009]}/>
     <Sky spec={spec} sunDir={sunDir}/>
     <hemisphereLight args={[p.skyHorizon, p.ground, .8 + lightLevel * .3]}/>
     <ambientLight color={p.light} intensity={.35}/>
     <directionalLight position={sunDir.clone().multiplyScalar(60)} color={p.light} intensity={lightLevel} castShadow shadow-mapSize={[1024, 1024]}
       shadow-camera-left={-40} shadow-camera-right={40} shadow-camera-top={40} shadow-camera-bottom={-40} shadow-camera-far={150}/>
     <Terrain spec={spec} ground={ground}/>
-    {placed.map(({ key, ...l }) => <group key={key} position={[l.x, l.y, l.z]} rotation-y={l.rot}><Landmark {...l} accent={p.accent}/></group>)}
+    {placed.map(({ key, ...l }) => <group key={key} position={[l.x, l.y, l.z]} rotation-y={l.rot} scale={l.scale}><Landmark {...l} accent={p.accent}/></group>)}
+    <Hero {...spec.hero} accent={p.accent}/>
+    <Scatter {...spec.scatter} ground={ground} seed={spec.seed}/>
     <Creatures spec={spec} ground={ground}/>
     <Weather spec={spec}/>
     <SouvenirSpot spec={spec} at={souvenirAt}/>
