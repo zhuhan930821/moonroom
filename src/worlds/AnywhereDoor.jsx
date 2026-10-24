@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import EntryDoor from '../scene/EntryDoor'
 
 // The Anywhere Door: a dusty-blue door left slightly ajar, with light spilling from the gap.
 // Faces +Z (into the room when placed on the back wall with rotation π).
@@ -63,5 +64,8 @@ function FloorSpill({ color = '#cfe8ff', length = 7 }) {
 }
 
 export default function AnywhereDoor() {
-  return <group position={ROOM_DOOR.position} rotation-y={ROOM_DOOR.rotationY}><DoorModel/><FloorSpill/></group>
+  return <>
+    <group position={ROOM_DOOR.position} rotation-y={ROOM_DOOR.rotationY}><DoorModel/><FloorSpill/></group>
+    <EntryDoor/>{/* the room's real front door, closing the open doorway in the entry wall */}
+  </>
 }
