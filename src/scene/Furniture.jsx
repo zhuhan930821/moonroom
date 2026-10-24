@@ -10,6 +10,7 @@ import Workstation from './Workstation'
 import DreamLoungeProps from './DreamLoungeProps'
 import GLBAsset from './AssetModel'
 import Piano from './Piano'
+import ReferenceDecor from './ReferenceDecor'
 import RecordPlayer from './RecordPlayer'
 import Bookshelves from './Bookshelf'
 import { FLAGS } from '../config/flags'
@@ -96,5 +97,5 @@ function Details(){const { decorationLights } = useLighting(); return <>
 
 export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook, activeBookShelf}) {
   const candidateDrums = FLAGS.drumCandidate
-  return <><Details/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/></>
+  return <><Details/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/><ReferenceDecor/></>
 }
