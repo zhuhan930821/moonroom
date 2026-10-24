@@ -68,9 +68,9 @@ export function useInteractionSystem(root) {
     if (modeRef.current === 'explore') root.current?.requestPointerLock?.()
   }, [root])
 
-  const start = useCallback(() => {
+  const start = useCallback((touch = false) => {
     setStarted(true)
-    requestLock()
+    if (!touch) requestLock()
     prepareAudio().catch(error => setAudioError(error.message))
     setAmbientPlaying(true).then(setAmbient).catch(error => setAudioError(error.message))
   }, [requestLock])
@@ -92,7 +92,11 @@ export function useInteractionSystem(root) {
   const enter = useCallback(nextMode => {
     if(nextMode==='drums') setHit(old=>({name:null,id:old.id}))
     if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
-    if(nextMode==='books') pullBook()
+    if(nextMode==='musicBooks') setScorePage(0)
+    if(nextMode==='books') {
+      setActiveBookShelf(nearRef.current === 'booksLeft' ? 'left' : 'right')
+      pullBook()
+    }
     setMode(nextMode)
     document.exitPointerLock?.()
   }, [])
@@ -144,13 +148,12 @@ export function useInteractionSystem(root) {
     stopPlayback.current = await playTake(take, { onHit: pulse, onEnd: () => { stopPlayback.current = null; setPlayingTake(false) } })
   }, [pulse, stopTake])
 
-  // Bookshelf: which book is pulled out and which diary page it holds.
+  // Each shelf has one authored diary book; E turns to another page.
   const [book, setBook] = useState(null) // { index, page }
+  const [scorePage, setScorePage] = useState(0)
+  const [activeBookShelf, setActiveBookShelf] = useState('right')
   const pullBook = useCallback(() => setBook(old => {
-    // Eye-height shelves (rows 1–2), never the same book twice in a row.
-    let index
-    do index = 9 + Math.floor(Math.random() * 18); while (index === old?.index)
-    return { index, page: ((old?.page ?? Math.floor(Math.random() * 8)) + 1) % 8 }
+    return { index: 0, page: ((old?.page ?? Math.floor(Math.random() * 8)) + 1) % 8 }
   }), [])
   const vinylToken = useRef(0)
   const stopVinyl = useCallback(() => { vinylToken.current++; stopVinylRef.current?.(); stopVinylRef.current = null; setVinyl(null) }, [])
@@ -236,6 +239,14 @@ export function useInteractionSystem(root) {
     setNear(null)
   }, [toggleRecording, stopTake, releaseAllNotes])
 
+  const interact = useCallback(() => {
+    if (modeRef.current !== 'explore' || !nearRef.current) return
+    const item = nearRef.current
+    const lamp = INTERACTIONS[item].lamp
+    if (lamp) roomState.toggleLamp(lamp)
+    else enter(item === 'booksLeft' ? 'books' : item)
+  }, [enter])
+
   const strike = useCallback(async name => {
     if (modeRef.current !== 'drums') return
     // Short per-pad guard against double-fired input (key + click on the same pad).
@@ -303,6 +314,10 @@ export function useInteractionSystem(root) {
         if (event.code === 'Space' || event.code === 'KeyE') { event.preventDefault(); if (!event.repeat) pullBook() }
         return
       }
+      if (current === 'musicBooks') {
+        if (event.code === 'Space' || event.code === 'KeyE') { event.preventDefault(); if (!event.repeat) setScorePage(page => (page + 1) % 3) }
+        return
+      }
       if (current === 'beanbag') {
         if (event.code === 'KeyE') { event.preventDefault(); leave() }
         if (event.code === 'KeyM') { event.preventDefault(); toggleAmbient() }
@@ -311,9 +326,7 @@ export function useInteractionSystem(root) {
       if (current === 'computer') return
       if (event.code === 'KeyE' && nearRef.current) {
         event.preventDefault()
-        const lamp = INTERACTIONS[nearRef.current].lamp
-        if (lamp) roomState.toggleLamp(lamp) // switches act in place, no mode change
-        else enter(nearRef.current)
+        interact()
       }
     }
     const onKeyUp = event => { if (modeRef.current === 'piano') noteOff(event.code) }
@@ -321,10 +334,10 @@ export function useInteractionSystem(root) {
     window.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', releaseAllNotes)
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', releaseAllNotes) }
-  }, [enter, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge])
+  }, [interact, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge])
 
-  return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, strike, toggleAmbient, changeVolume,
-    records, vinyl, playVinyl, stopVinyl, book, pullBook,
+  return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, interact, strike, toggleAmbient, changeVolume,
+    records, vinyl, playVinyl, stopVinyl, book, pullBook, activeBookShelf, scorePage, nextScore: () => setScorePage(page => (page + 1) % 3),
     drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
     milo, inviteMilo, toggleMiloJam,
     playerPosition,

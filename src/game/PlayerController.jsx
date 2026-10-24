@@ -10,7 +10,7 @@ export const playerRig = { teleport: null }
 
 const keys = new Set()
 
-export default function PlayerController({ locked, mode, onPosition }) {
+export default function PlayerController({ locked, mode, onPosition, activeBookShelf = 'right', touchInput, touchEnabled = false }) {
   const { camera } = useThree()
   const spawnName = FLAGS.spawn
   const initialLook = QA_LOOKS[spawnName] || START_LOOK
@@ -62,7 +62,7 @@ export default function PlayerController({ locked, mode, onPosition }) {
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05)
     if (mode !== 'explore') {
-      const pose = CAMERA_POSES[mode]
+      const pose = mode === 'books' && activeBookShelf === 'left' ? CAMERA_POSES.booksLeft : CAMERA_POSES[mode]
       if (!pose) return
       target.current.set(...pose.position)
       camera.position.lerp(target.current, 1 - Math.exp(-dt * 3.1))
@@ -73,14 +73,24 @@ export default function PlayerController({ locked, mode, onPosition }) {
       returning.current = true
       return
     }
-    if (locked) {
-      const f = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0)
-      const s = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0)
+    const touch = touchInput?.current
+    if (touchEnabled && touch) {
+      yaw.current -= touch.lookX * 0.0035
+      pitch.current = THREE.MathUtils.clamp(pitch.current - touch.lookY * 0.003, -1.25, 1.25)
+      touch.lookX = 0
+      touch.lookY = 0
+    }
+    if (locked || touchEnabled) {
+      const keyboardF = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0)
+      const keyboardS = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0)
+      const f = keyboardF || (touchEnabled ? touch?.forward || 0 : 0)
+      const s = keyboardS || (touchEnabled ? touch?.strafe || 0 : 0)
       if (f || s) {
-        const speed = keys.has('ShiftLeft') || keys.has('ShiftRight') ? PLAYER.sprint : PLAYER.speed
+        const speed = keys.has('ShiftLeft') || keys.has('ShiftRight') || touch?.sprint ? PLAYER.sprint : PLAYER.speed
+        const strength = keyboardF || keyboardS ? 1 : Math.min(1, Math.hypot(f, s))
         const next = movePlayer(position.current, yaw.current, f, s, speed, dt)
-        position.current.x = next.x
-        position.current.z = next.z
+        position.current.x += (next.x - position.current.x) * strength
+        position.current.z += (next.z - position.current.z) * strength
       }
     }
     if (worldPhysics.active) position.current.y = PLAYER.height + worldPhysics.ground(position.current.x, position.current.z)

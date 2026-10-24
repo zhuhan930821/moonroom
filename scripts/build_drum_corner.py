@@ -4,7 +4,7 @@ import os
 from mathutils import Vector
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, 'public', 'assets', 'models')
+OUT = os.environ.get('MOONROOM_CORNER_OUT', os.path.join(ROOT, 'public', 'assets', 'models'))
 STAGE = os.environ.get('MOONROOM_CORNER_STAGE', 'c').lower()
 
 
@@ -207,7 +207,9 @@ def make_stars(brass, glow):
 
 
 def make_shelf(wood, dark_wood, paper, colors, vinyl):
-    x, z = -2.68, -2.58
+    # The music shelf sits on the left wall beside the piano. Coordinates are
+    # local to the drum-corner anchor (-7.1, 0, -2.8) in Three.js.
+    x, z = -2.68, 8.0
     cube('Music_Shelf_Back', (x, 1.55, z), (.13, 1.55, 1.15), dark_wood, .035)
     for y in (.12, .86, 1.61, 2.36, 3.10):
         cube('Music_Shelf_Board', (x + .20, y, z), (.31, .075, 1.22), wood, .025)

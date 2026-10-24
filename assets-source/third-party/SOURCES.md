@@ -1,5 +1,7 @@
 # Moonroom soft furnishing source assets (staging only)
 
+- `sketchfab-wooden-bookcases/original.glb`: **Wooden Bookcases with Books**, Matthew Collings, Sketchfab, CC BY 4.0. Source: https://sketchfab.com/3d-models/wooden-bookcases-with-books-d0618ac16b2a4a87b9b6c7d5e6765626 . User-supplied GLB, received 2026-10-23. Active as one short left bookcase and one tall right bookcase; original unmodified source retained here.
+
 These files are not loaded by the game. The chosen Sketchfab sofa and bed still require authenticated downloads supplied by the user.
 
 - `polyhaven-throw-pillows-01/`: **Throw Pillows 01**, Serhii Khromov, Poly Haven, CC0. Source: https://polyhaven.com/a/throw_pillows_01 . Downloaded as 1K glTF + binary + PBR maps via the official Poly Haven API. Official MD5 hashes were checked.

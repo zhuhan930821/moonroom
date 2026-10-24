@@ -17,7 +17,6 @@ function ringChime() {
 // One track serves the entire transparent front wall, not three arch-sized curtains.
 const WALL_SPAN = 19.6
 const PANEL_WIDTH = WALL_SPAN / 2
-const RAIL_Y = 7.78
 const WALL_Z = -7.16
 
 const VERTEX = `
@@ -105,20 +104,23 @@ export default function SheerCurtainSample() {
   const gather = useRef(initiallyClosed ? 0 : 0.86)
   const target = useRef(initiallyClosed ? 0 : 0.86)
   useEffect(() => {
-    const onKey = event => {
-      if (event.code !== 'KeyC' || event.repeat || document.querySelector('main')?.dataset.mode !== 'explore') return
+    const toggle = () => {
+      if (document.querySelector('main')?.dataset.mode !== 'explore') return
       target.current = target.current > 0.5 ? 0 : 0.86
       ringChime()
     }
+    const onKey = event => {
+      if (event.code !== 'KeyC' || event.repeat) return
+      toggle()
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('moonroom:toggle-curtain', toggle)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('moonroom:toggle-curtain', toggle) }
   }, [])
   useFrame((_, delta) => {
     gather.current = THREE.MathUtils.damp(gather.current, target.current, 2.2, delta)
   })
   return <group name="Whole_Wall_Sheer_Voile">
-    <mesh name="Continuous_Curtain_Rail" position={[0, RAIL_Y, WALL_Z]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.035, 0.035, WALL_SPAN + 0.25, 12]} /><meshStandardMaterial color="#c8ac91" metalness={0.6} roughness={0.35} /></mesh>
-    {[-1, 1].map(side => <mesh key={side} name={`Curtain_Rail_End_${side}`} position={[side * (WALL_SPAN / 2 + .13), RAIL_Y, WALL_Z]}><sphereGeometry args={[.085, 12, 8]} /><meshStandardMaterial color="#d4bdad" metalness={.48} roughness={.42} /></mesh>)}
     <VoilePanel x={-PANEL_WIDTH} side={1} phase={0.3} gather={gather} />
     <VoilePanel x={PANEL_WIDTH} side={-1} phase={2.1} gather={gather} />
   </group>

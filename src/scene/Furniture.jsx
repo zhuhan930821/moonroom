@@ -1,8 +1,6 @@
-import { useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useMemo } from 'react'
 import * as THREE from 'three'
 import { FURNITURE } from '../config/scene'
-import { GlowOrb, Plant, RoundedBox } from './Primitives'
 import DrumKit from './DrumKit'
 import CandidateDrumKit from './CandidateDrumKit'
 import DrumCorner from './DrumCorner'
@@ -13,7 +11,9 @@ import DreamLoungeProps from './DreamLoungeProps'
 import GLBAsset from './AssetModel'
 import Piano from './Piano'
 import RecordPlayer from './RecordPlayer'
+import Bookshelves from './Bookshelf'
 import { FLAGS } from '../config/flags'
+import { useLighting } from '../lighting/LightingContext'
 
 function rugTexture() {
   const canvas = document.createElement('canvas')
@@ -87,33 +87,14 @@ function LegacyBed() {
   />
 }
 
-// G02 right-wall bookcase. In the `books` mode one book slides out toward you (`pulled`).
-function Book({ i, pulled }) {
-  const ref = useRef()
-  const shelf = Math.floor(i / 9), slot = i % 9
-  useFrame((_, dt) => { if (ref.current) ref.current.position.x += ((pulled ? -.62 : -.15) - ref.current.position.x) * (1 - Math.exp(-dt * 6)) })
-  return <RoundedBox ref={ref} args={[.47, .58 + .11 * (i % 3), .13 + .08 * (i % 2)]} color={BOOK_COLORS[i % 4]} position={[-.15, .65 + shelf * 1.1, -2.08 + slot * .52]} rotation-x={(i % 3 - 1) * .04}/>
-}
-export const BOOK_COLORS = ['#c88b88', '#7778a7', '#e2aa79', '#a075a7']
-
-function Bookcase({ pulledBook }){const p=FURNITURE.bookshelf.position;return <group position={p}>
-  {[-2.4,2.4].map(z=><RoundedBox key={z} args={[.22,4.7,.18]} color="#6e4d5d" position={[0,2.35,z]}/>)}
-  {[.25,1.35,2.45,3.55,4.65].map(y=><RoundedBox key={y} args={[1.05,.16,5]} color="#966677" position={[0,y,0]}/>)}
-  {Array.from({length:36},(_,i)=><Book key={i} i={i} pulled={pulledBook === i}/>)}
-</group>}
-
-
-
-function Details(){return <>
+function Details(){const { decorationLights } = useLighting(); return <>
   <Rug/>
-  {[-9,-7.8,8.2,9.1].map((x,i)=><Plant key={i} position={[x,0,-6.1+i*.15]} scale={.7+i%2*.15}/>)}
-  <Plant position={[-9.25,0,1.8]} scale={1.05}/><Plant position={[4.3,0,-5.45]} scale={.8}/>
-  {[-6.4,-3.6,3.4,7.2].map((x,i)=><GlowOrb key={i} position={[x,1.2,4.9-i*.8]} color="#ffc08a" size={.1} intensity={2.4}/>)}
-  {[-7,-4,3.5,7].map((x,i)=><group key={i} position={[x,7.2,-6.6]}>{Array.from({length:5},(_,j)=><mesh key={j} position={[Math.sin(j*2.4+i)*.18,-j*.28,0]} rotation-z={j*.7}><sphereGeometry args={[.19,.1,.08,8,6]}/><meshStandardMaterial color={j%2?'#63875e':'#536b55'}/></mesh>)}</group>)}
-  <GlowOrb position={[9.4,2.14,.7]} color="#ffc47b" size={.15} intensity={4}/>
+  <GLBAsset url="/assets/models/decor/room-dressing.glb" axisCorrection={false} castShadow={false} fallbackScale={.1}/>
+  {decorationLights && [-6.4,-3.6,3.4,7.2].map((x,i)=><pointLight key={i} position={[x,1.2,4.9-i*.8]} color="#ffc08a" intensity={.85} distance={2.4}/>)}
+  {decorationLights && <pointLight position={[9.4,2.14,.7]} color="#ffc47b" intensity={1.2} distance={2.9}/>}
 </>}
 
-export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook}) {
+export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook, activeBookShelf}) {
   const candidateDrums = FLAGS.drumCandidate
-  return <><Details/><Bed/><Bookcase pulledBook={pulledBook}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/></>
+  return <><Details/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/></>
 }

@@ -14,7 +14,7 @@ function localCapture() {
     configureServer(server) {
       server.middlewares.use('/__capture', async (req, res) => {
         const name = new URL(req.url, 'http://localhost').searchParams.get('name')
-        const allowedCaptures = ['bed', 'deskView', 'lounge', 'drums', 'sofa', 'drumFront', 'drumSide', 'drumCorner', 'drumHardware', 'candidateDrums', 'candidateDrumFront', 'candidateDrumSide', 'candidateDrumCorner']
+        const allowedCaptures = ['bed', 'deskView', 'lounge', 'drums', 'sofa', 'drumFront', 'drumSide', 'drumCorner', 'drumHardware', 'candidateDrums', 'candidateDrumFront', 'candidateDrumSide', 'candidateDrumCorner', 'bookshelfLeft', 'bookshelfRight', 'pianoShelf', 'hero', 'ceilingGarden', 'plantDetail']
         if (req.method !== 'POST' || !allowedCaptures.includes(name)) { res.statusCode = 400; res.end('Invalid capture'); return }
         const chunks = []
         for await (const chunk of req) chunks.push(chunk)

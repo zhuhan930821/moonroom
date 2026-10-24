@@ -14,6 +14,8 @@ import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import DiaryPage from './ui/DiaryPage'
+import ScorePage from './ui/ScorePage'
+import { MobileExploreControls, MobilePianoKeys } from './ui/MobileControls'
 import WorldScene from './worlds/WorldScene'
 import AnywhereDoor from './worlds/AnywhereDoor'
 import SouvenirShelf from './worlds/SouvenirShelf'
@@ -31,6 +33,11 @@ import Milo from './scene/Milo'
 import { FLAGS } from './config/flags'
 
 preloadCoreAssets()
+
+const isTouchScreen = () => typeof window !== 'undefined' && (
+  new URLSearchParams(window.location.search).get('mobile') === '1' ||
+  window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && window.innerWidth < 1000)
+)
 
 function PerformanceProbe() {
   const gl = useThree(state => state.gl)
@@ -53,8 +60,10 @@ function PerformanceProbe() {
 
 export default function App() {
   const root = useRef(null)
+  const touchInput = useRef({ forward: 0, strafe: 0, lookX: 0, lookY: 0, sprint: false })
+  const [isTouch, setIsTouch] = useState(isTouchScreen)
   const game = useInteractionSystem(root)
-  const [quality, setQuality] = useState('high')
+  const [quality, setQuality] = useState(() => isTouchScreen() ? 'low' : 'high')
   const [showSettings, setShowSettings] = useState(false)
   const [lightingPass, setLightingPass] = useState(FLAGS.lightingPass)
   const [lighting, setLighting] = useState(FLAGS.lightingPass === 'golden' ? GOLDEN_DEFAULTS : CINEMATIC_DEFAULTS)
@@ -82,9 +91,16 @@ export default function App() {
     await fetch(`/__capture?name=${encodeURIComponent(captureName)}`, { method:'POST', headers:{'Content-Type':'image/png'}, body:bytes })
   }
   useEffect(() => {
+    const media = window.matchMedia('(pointer: coarse)')
+    const update = () => setIsTouch(isTouchScreen())
+    media.addEventListener?.('change', update)
+    window.addEventListener('resize', update)
+    return () => { media.removeEventListener?.('change', update); window.removeEventListener('resize', update) }
+  }, [])
+  useEffect(() => {
     if (!captureEnabled || game.started) return
     game.startPreview()
-    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books'].includes(captureMode)) game.enter(captureMode)
+    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks'].includes(captureMode)) game.enter(captureMode)
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (!captureEnabled) return
@@ -108,7 +124,7 @@ export default function App() {
   const inExplore = game.mode === 'explore'
   const prompt = game.mode === 'beanbag' ? '起身' : inExplore && game.near ? INTERACTIONS[game.near].label : null
 
-  return <main ref={root} onClick={() => game.started && inExplore && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
+  return <main ref={root} className={isTouch ? 'touch-layout' : ''} onClick={() => game.started && inExplore && !isTouch && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
     <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state}}>
       {world ? <WorldScene world={world}/> : whiteModel ? <>
         <color attach="background" args={['#44444a']}/>
@@ -120,18 +136,18 @@ export default function App() {
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
         <Furniture hit={game.hit} onStrike={game.mode === 'drums' ? game.strike : null}
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
-          records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index}/>
+          records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index} activeBookShelf={game.activeBookShelf}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
         <TimeOfDay resting={game.mode === 'beanbag'}/>
         <AnywhereDoor/><SouvenirShelf/>
         {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
-        {cinematic && <CinematicPostFX enabled={BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>} 
+        {cinematic && <CinematicPostFX enabled={quality === 'high' && BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>}
       </LightingProvider>}
-      <PlayerController locked={game.locked} mode={game.mode} onPosition={game.updatePosition}/>
+      <PlayerController locked={game.locked} mode={game.mode} onPosition={game.updatePosition} activeBookShelf={game.activeBookShelf} touchInput={touchInput} touchEnabled={isTouch}/>
       {captureEnabled && <PerformanceProbe/>}
     </Canvas>
 
-    {!game.started && <section className="welcome"><div className="eyebrow">A PLACE BETWEEN DREAMS</div><h1>MOONROOM</h1><p>月光穿过拱窗，房间还记得你。</p><button onClick={game.start}>进入梦境 <span>→</span></button><small>桌面浏览器 · 建议佩戴耳机</small></section>}
+    {!game.started && <section className="welcome"><div className="eyebrow">A PLACE BETWEEN DREAMS</div><h1>MOONROOM</h1><p>月光穿过拱窗，房间还记得你。</p><button onClick={() => game.start(isTouch)}>进入梦境 <span>→</span></button><small>{isTouch ? '左手移动 · 右侧滑动观察 · 建议横屏' : '桌面浏览器 · 建议佩戴耳机'}</small></section>}
 
     {game.started && <>
       <div className="hud"><div className="brand">MOONROOM <span>{whiteModel ? 'WHITE MODEL / LAYOUT REVIEW' : '01 / THE ROOM'}</span></div><div className="controls"><b>WASD</b> 移动　<b>Shift</b> 加速　<b>鼠标</b> 观察　<b>C</b> 窗帘　<b>Esc</b> 退出</div></div>
@@ -140,17 +156,23 @@ export default function App() {
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
       {celebrating && <div className="castle-toast" data-testid="castle-toast">✦ {roomState.get().celebration} · 窗外的城堡为你亮起来了</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
-      {inExplore && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
+      {inExplore && !isTouch && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
+      {isTouch && inExplore && <MobileExploreControls input={touchInput} near={world ? '互动' : game.near ? INTERACTIONS[game.near].label : null}
+        onInteract={() => world ? window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })) : game.interact()}
+        onCurtain={() => window.dispatchEvent(new Event('moonroom:toggle-curtain'))}/>}
+      {isTouch && !inExplore && <button className="mobile-exit" data-testid="mobile-exit" onClick={event => { event.stopPropagation(); game.leave() }}>← 返回探索</button>}
       {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse} onOpenInMugo={() => game.enter('mugo')}/><div className="mode-exit">Esc · 返回房间</div></>}
       {game.mode === 'drums' && <DrumPanel game={game}/>}
       {game.mode === 'drums' && game.challenge && <RhythmOverlay challenge={game.challenge} subscribeStrikes={game.subscribeStrikes} onRetry={() => game.startChallenge(game.challenge.take.id)} onClose={game.endChallenge}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}
+      {isTouch && game.mode === 'piano' && <MobilePianoKeys game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave} milo={game.milo} onInviteMilo={game.inviteMilo}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
       {game.mode === 'portal' && <PortalPanel onDone={game.leave}/>}
       {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
       {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
+      {game.mode === 'musicBooks' && <ScorePage page={game.scorePage} onNext={game.nextScore} onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}

@@ -16,12 +16,17 @@
 | `public/assets/models/reclining-lounge.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_core_assets.py` | 项目原创资产；可随本项目使用与修改。 |
 | `public/assets/models/drum-corner.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_drum_corner.py`；含星月地毯、落地灯、植物、窗帘/藤蔓、吊星、音乐书架与睡狐 | 项目原创资产；可随本项目使用与修改。没有第三方模型或贴图。 |
 | `public/assets/models/lounge/moon-breathing-lamp.glb` | 项目内 Blender 原创建模，生成脚本为 `scripts/build_dream_lounge_props.py` | Phase A2 原创资产；月球灯原型使用共享奶油、薰衣草与香槟金 PBR 材质，没有第三方模型或贴图。 |
+| `public/assets/models/decor/room-dressing.glb` | 项目内 Blender 原创盆栽、垂藤、花朵、吊星、吊灯、壁灯、桌灯、灯串外壳与蜡烛；生成脚本 `scripts/build_room_dressing.py`，可编辑源文件 `assets-source/room-dressing/source.blend` | 项目原创资产；没有第三方模型或贴图。网页导出按材质批合并，源文件保留每个物件独立编辑。Three.js 只保留实时光照和音乐驱动的发光核心。 |
 | `public/assets/models/architecture/moonroom-architecture-phase1.glb` | 项目内 Blender 原创建筑，源文件 `assets-source/architecture/moonroom-architecture-phase1.blend`，生成脚本 `scripts/build_moonroom_architecture.py` | 项目原创资产；Phase 1 建筑默认加载，旧建筑可用 `?architecture=legacy` 查看。详见 `docs/architecture-phase-1.md`。 |
 | `public/assets/models/collectibles/fox-{sit,sleep}.glb` | 项目内 Blender 原创 Q 版狐狸，生成脚本 `scripts/build_cute_fox.py`，源文件 `assets-source/collectibles/cute-fox/` | 项目原创资产；没有第三方模型或贴图 |
-| `src/scene/**` 3D 家具、月亮、浮岛和植物 | 项目内程序化建模 | 项目原创代码与几何体；没有外部 GLTF。 |
+| `src/scene/**` 仍在使用的程序化几何 | 项目内程序化建模 | 用于实时天空、动画效果、部分乐器/家具和窗帘；植物与小型灯具外观已迁至上方 Blender GLB。 |
 | `src/audio/drums.js` 环境音 | Web Audio 实时合成 | 项目原创；没有外部曲目或录音。 |
 
 新版远景生成提示强调 16:9 梦核云海、巨大青绿色纹理月球、右侧哥特漂浮城堡、发光轨道，以及从城堡穿过云海向前蜿蜒的青紫色“月亮河”。使用内置 imagegen 生成，配合实时 3D 云层、星光与鼓击发光反馈。
+
+## 书架（G02，2026-10-23 起默认）
+
+`public/assets/models/bookshelf/wooden-bookcases-with-diary.glb` 基于用户提供的 [“Wooden Bookcases with Books” by Matthew Collings](https://sketchfab.com/3d-models/wooden-bookcases-with-books-d0618ac16b2a4a87b9b6c7d5e6765626)，许可为 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)。原文件保留在 `assets-source/third-party/sketchfab-wooden-bookcases/original.glb`。派生版本只把每柜的一本书改成 Moonroom 原创紫色封面日记；可编辑源文件为 `assets-source/bookshelf/diary-books/source.blend`，生成脚本为 `scripts/build_diary_bookcases.py`。运行时左侧使用矮书柜、右侧使用高书架，日记交互只抽出各柜的这一本书。重新分发时须保留原作者、链接与许可署名。
 
 ## 床（E01，2026-10-22 起默认）
 

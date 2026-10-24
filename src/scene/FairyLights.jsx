@@ -42,13 +42,12 @@ function catenary({ from, to, sag }) {
 
 export default function FairyLights({ quality = 'high' }) {
   const bulbs = useRef(), flames = useRef(), strandLights = useRef([])
-  const { points, along, wire, glows } = useMemo(() => {
+  const { points, along, glows } = useMemo(() => {
     const strands = STRANDS.map(catenary)
-    const wire = new THREE.BufferGeometry().setFromPoints(strands.flatMap(p => p.slice(1).flatMap((q, i) => [p[i], q])))
     const glows = STRANDS.map((s, i) => s.glow || strands[i][Math.floor(strands[i].length / 2)].toArray())
     // 0 at a strand's middle, 1 at its ends: snare hits travel outward along each garland.
     const along = strands.flatMap(p => p.map((_, i) => Math.abs(i / (p.length - 1) - .5) * 2))
-    return { points: strands.flat(), along, wire, glows }
+    return { points: strands.flat(), along, glows }
   }, [])
   const candles = useMemo(() => CANDLES.flatMap(([[x, y, z], n], g) => Array.from({ length: n }, (_, i) => ({
     x: x + Math.cos(i * 2.3 + g) * .09 * (i > 0), z: z + Math.sin(i * 2.3 + g) * .09 * (i > 0), h: .16 - i * .035,
@@ -97,13 +96,9 @@ export default function FairyLights({ quality = 'high' }) {
   })
 
   return <group>
-    <lineSegments geometry={wire}><lineBasicMaterial color="#3a2a22" /></lineSegments>
     <instancedMesh ref={bulbs} args={[null, null, points.length]} frustumCulled={false}>
-      <sphereGeometry args={[.032, 8, 6]} /><meshBasicMaterial toneMapped={false} />
+      <sphereGeometry args={[.025, 8, 6]} /><meshBasicMaterial toneMapped={false} />
     </instancedMesh>
-    {candles.map((c, i) => <mesh key={i} position={[c.x, c.y + c.h / 2, c.z]} castShadow={false}>
-      <cylinderGeometry args={[.045, .05, c.h, 12]} /><meshStandardMaterial color="#f3e2c8" roughness={.6} emissive="#ff9a4a" emissiveIntensity={.12} />
-    </mesh>)}
     <instancedMesh ref={flames} args={[null, null, candles.length]} frustumCulled={false}>
       <sphereGeometry args={[.018, 8, 6]} /><meshBasicMaterial toneMapped={false} />
     </instancedMesh>

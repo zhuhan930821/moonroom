@@ -8,6 +8,11 @@ test('room walls and furniture block the player while open floor remains walkabl
   assert.equal(isBlocked(9.3, 1.0), true)
   assert.equal(isBlocked(7.15, 3), true)
   assert.equal(isBlocked(-7.1, -2.8), true)
+  assert.equal(isBlocked(-8.15, -5.8), true, 'left bookshelf has a simplified collider')
+  assert.equal(isBlocked(9.05, -3.1), true, 'right bookshelf has a simplified collider')
+  assert.equal(isBlocked(-9.72, 5.2), true, 'relocated music shelf has a simplified collider')
+  assert.equal(isBlocked(-5.45, 5.2), false, 'piano-side viewing path remains clear')
+  assert.equal(isBlocked(-6.75, -5.8), false, 'left diary interaction remains reachable')
   for (const point of [START, ...Object.values(QA_SPAWNS)]) assert.equal(isBlocked(point[0],point[2]), false, `spawn ${point} must be walkable`)
   for (let z = 1.3; z <= 5.5; z += .35) assert.equal(isBlocked(3.55,z), false, `bed-side corridor blocked at ${z}`)
 })
@@ -15,6 +20,9 @@ test('room walls and furniture block the player while open floor remains walkabl
 test('interaction targeting chooses nearby objects only', () => {
   assert.equal(nearestInteraction({ x: -6.5, z: -.5 }, INTERACTIONS), 'drums')
   assert.equal(nearestInteraction({ x: 1.3, z: 3.0 }, INTERACTIONS), 'beanbag')
+  assert.equal(nearestInteraction({ x: -6.75, z: -5.8 }, INTERACTIONS), 'booksLeft')
+  assert.equal(nearestInteraction({ x: 7.7, z: -3.1 }, INTERACTIONS), 'books')
+  assert.equal(nearestInteraction({ x: -8.9, z: 5.2 }, INTERACTIONS), 'musicBooks')
   assert.equal(nearestInteraction({ x: 0, z: 0 }, INTERACTIONS), null)
 })
 

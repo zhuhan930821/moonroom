@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { ROOM, WINDOW_ARCHES } from '../config/scene'
 import SheerCurtainSample from './SheerCurtainSample'
 import GLBAsset from './AssetModel'
-import { GlowOrb, RoundedBox, StarField } from './Primitives'
+import { RoundedBox, StarField } from './Primitives'
 import { FLAGS } from '../config/flags'
 import { energy, pianoColor } from '../audio/musicBus'
 import { roomState } from '../game/roomState'
@@ -198,21 +198,6 @@ function Outside({ hit, quality, visualBaseline, cinematic }) {
   </group>
 }
 
-function CeilingLights() {
-  const starShape=new THREE.Shape()
-  for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?.08:.19;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)starShape.moveTo(x,y);else starShape.lineTo(x,y)}
-  starShape.closePath()
-  return <group>
-    {Array.from({ length: 24 }, (_, i) => {
-      const x = -9.2 + i % 8 * 2.6
-      const z = -6.6 + Math.floor(i / 8) * 3.2
-      return <GlowOrb key={i} position={[x, 7.65, z]} color="#ffc07e" size={.055} intensity={.65} light={false} />
-    })}
-    {[-5.2, 0, 5.2].map((x, i) => <group key={x}><mesh position={[x, 6.8 - i * .25, -6.85]}><sphereGeometry args={[.15, 12, 10]} /><meshBasicMaterial color="#ffd38b" /></mesh><mesh position={[x, 7.25 - i * .25, -6.85]}><cylinderGeometry args={[.01, .01, .9, 6]} /><meshStandardMaterial color="#b99b8f" /></mesh></group>)}
-    {[-3.5,2.9,6.8].map((x,i)=><group key={x} position={[x,6.1-i*.28,-6.9]}><mesh position-y={.42}><cylinderGeometry args={[.008,.008,.84,6]}/><meshStandardMaterial color="#d4b99e"/></mesh><mesh><shapeGeometry args={[starShape]}/><meshBasicMaterial color="#ffe2a2" side={THREE.DoubleSide} toneMapped={false}/></mesh></group>)}
-  </group>
-}
-
 export default function Environment({ hit, quality, cinematic = false }) {
   const blenderArchitecture = !FLAGS.legacyArchitecture
   const architectureUrl = ARCHITECTURE_URLS[FLAGS.floor]
@@ -233,11 +218,11 @@ export default function Environment({ hit, quality, cinematic = false }) {
       <mesh receiveShadow position={[0, ROOM.height / 2, ROOM.depth / 2]} rotation-y={Math.PI}><planeGeometry args={[ROOM.width, ROOM.height]} /><meshStandardMaterial color="#6b4b71" /></mesh>
       <Windows />
     </>}
-    {FLAGS.voile && <SheerCurtainSample />}<CeilingLights />
+    {FLAGS.voile && <SheerCurtainSample />}
     {FLAGS.decorSample && <>
       <GLBAsset url="/assets/models/decor/moonroom-decor-phase01-ceiling-sample.glb" axisCorrection castShadow={false} fallbackScale={.1} />
       {!cinematic && <pointLight position={[2.9,6.55,-3.05]} color="#ffe0b5" intensity={3.5} distance={3.2} decay={2} />}
     </>}
-    {[-9.5, 9.5].map(x => <GlowOrb key={x} position={[x, 3.3, -4]} color="#ffbc79" size={.16} intensity={5} />)}
+    {!cinematic && [-9.5, 9.5].map(x => <pointLight key={x} position={[x, 3.3, -4]} color="#ffbc79" intensity={5} distance={4} />)}
   </>
 }

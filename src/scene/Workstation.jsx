@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { FURNITURE } from '../config/scene'
-import { GlowOrb, RoundedBox } from './Primitives'
+import { RoundedBox } from './Primitives'
+import { useLighting } from '../lighting/LightingContext'
 import GLBAsset from './AssetModel'
 import { FLAGS } from '../config/flags'
 
@@ -56,7 +57,7 @@ function ExternalMonitor() {
   </GLBAsset>
 }
 
-export default function Workstation(){const p=FURNITURE.desk.position;const {desk:deskCandidate,laptop:laptopCandidate,midi:midiCandidate}=FLAGS;return <group>
+export default function Workstation(){const p=FURNITURE.desk.position;const {desk:deskCandidate,laptop:laptopCandidate,midi:midiCandidate}=FLAGS;const { decorationLights }=useLighting();return <group>
   {deskCandidate ? <GLBAsset url="/assets/models/candidates/C01-workstation-desk-review.glb" position={p} axisCorrection={false} /> : <>
     <RoundedBox args={[8.25,.18,1.8]} color="#a36c6c" position={[p[0],1.22,p[2]]} />
     {[-3.8,3.8].map(x=>[-.65,.65].map(z=><RoundedBox key={`${x}/${z}`} args={[.13,1.22,.13]} color="#735260" position={[p[0]+x,.61,p[2]+z]}/>))}
@@ -68,5 +69,5 @@ export default function Workstation(){const p=FURNITURE.desk.position;const {des
     {Array.from({length:14},(_,i)=><RoundedBox key={i} args={[.08,.015,.28]} color={i%2?'#f4e8d6':'#bfa5b7'} position={[2.18+i*.105,1.45,-4.18]}/>)}
   </>}
   {[-.95,laptopCandidate?3.5:1.95].map(x=><GLBAsset key={x} url="/assets/models/candidates/C04-studio-speaker-review.glb" position={[x,1.31,-4.44]} axisCorrection={false} castShadow/>) }
-  <GlowOrb position={[3.65,2.05,-4.55]} size={.14} intensity={3.5} color="#ffc184" />
+  {decorationLights && <pointLight position={[3.65,2.05,-4.55]} intensity={1.7} distance={3.2} color="#ffc184" />}
 </group>}
