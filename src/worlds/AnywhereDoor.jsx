@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -30,6 +30,38 @@ export function DoorModel({ glow = '#cfe8ff', open = .18 }) {
 
 // In the room: on the back (entrance) wall, facing the window.
 export const ROOM_DOOR = { position: [-4.5, 0, 7.9], rotationY: Math.PI }
+// Light spilling from the door's gap across the floor, so you notice it from the room: a soft
+// fan that widens and fades away from the door, breathing with the glow, with a few motes in it.
+function FloorSpill({ color = '#cfe8ff', length = 7 }) {
+  const fan = useRef(), motes = useRef()
+  const texture = useMemo(() => {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 512
+    const g = c.getContext('2d')
+    const fade = g.createLinearGradient(0, 0, 0, 512); fade.addColorStop(0, 'rgba(255,255,255,.9)'); fade.addColorStop(.35, 'rgba(255,255,255,.35)'); fade.addColorStop(1, 'rgba(255,255,255,0)')
+    g.fillStyle = fade; g.beginPath(); g.moveTo(98, 0); g.lineTo(158, 0); g.lineTo(256, 512); g.lineTo(0, 512); g.closePath(); g.fill()
+    g.globalCompositeOperation = 'destination-in' // soften the fan's long edges
+    const side = g.createLinearGradient(0, 0, 256, 0); side.addColorStop(0, 'rgba(0,0,0,0)'); side.addColorStop(.3, 'rgba(0,0,0,1)'); side.addColorStop(.7, 'rgba(0,0,0,1)'); side.addColorStop(1, 'rgba(0,0,0,0)')
+    g.fillStyle = side; g.fillRect(0, 0, 256, 512)
+    return new THREE.CanvasTexture(c)
+  }, [])
+  const dots = useMemo(() => Array.from({ length: 24 }, (_, i) => [(Math.sin(i * 12.9) * .5) * (.6 + (i % 5) * .25), .2 + (i % 7) * .28, .4 + (i * .37) % (length * .7)]), [length])
+  const positions = useMemo(() => new Float32Array(dots.length * 3), [dots])
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime
+    if (fan.current) fan.current.material.opacity = .4 + Math.sin(t * 1.3) * .1
+    dots.forEach(([x, y, z], i) => { positions[i * 3] = x + Math.sin(t * .3 + i) * .15; positions[i * 3 + 1] = y + Math.sin(t * .5 + i * 2) * .2; positions[i * 3 + 2] = z })
+    if (motes.current) motes.current.geometry.attributes.position.needsUpdate = true
+  })
+  return <group>
+    <mesh ref={fan} position={[0, .025, length / 2 + .05]} rotation-x={-Math.PI / 2}>
+      <planeGeometry args={[4.2, length]}/>
+      <meshBasicMaterial map={texture} color={new THREE.Color(color).multiplyScalar(.55)} transparent opacity={.4} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false}/>
+    </mesh>
+    <points ref={motes}><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]}/></bufferGeometry>
+      <pointsMaterial color={color} size={.05} transparent opacity={.7} depthWrite={false} blending={THREE.AdditiveBlending}/></points>
+  </group>
+}
+
 export default function AnywhereDoor() {
-  return <group position={ROOM_DOOR.position} rotation-y={ROOM_DOOR.rotationY}><DoorModel/></group>
+  return <group position={ROOM_DOOR.position} rotation-y={ROOM_DOOR.rotationY}><DoorModel/><FloorSpill/></group>
 }
