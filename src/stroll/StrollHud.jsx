@@ -3,6 +3,7 @@ import { worldPhysics, worldState } from '../worlds/worldState'
 import { LENGTH } from './constants'
 import { get, renderer } from './registry'
 import { seat } from './seat'
+import { worldPrompt } from '../worlds/worldPrompt'
 import { playerRig } from '../game/PlayerController'
 import './content/render'
 import { playChime } from '../audio/drums'
@@ -19,6 +20,8 @@ export default function StrollHud({ playerPosition, mode }) {
   const [progress, setProgress] = useState(0)
   const [toast, setToast] = useState('')
   const ctxRef = useRef(null)
+  const promptRef = useRef(null)
+  useEffect(() => { worldPrompt.set(world ? promptRef.current : null) }) // after render: never update App mid-render
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -69,6 +72,7 @@ export default function StrollHud({ playerPosition, mode }) {
   if (!world) return null
 
   const prompt = !open && near ? get('interaction', near.kind)?.label(near, ctx) : null
+  promptRef.current = prompt || null
   const bought = state.souvenirs.filter(s => s.worldId === `w${world.seed}`).length
   return <>
     <div className="world-card" key={state.visits} data-testid="world-card">

@@ -1,11 +1,13 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { worldPhysics, worldState } from './worldState'
+import { worldPrompt } from './worldPrompt'
 import StrollHud from '../stroll/StrollHud'
 
 // In-world overlay: arrival title card, "pick up" / "go home" prompts, and the E key handling
 // for both (the room's interaction system stands down while you're away).
 export default function WorldHud(props) {
   const kind = useSyncExternalStore(worldState.subscribe, () => worldState.get().world?.kind)
+  useEffect(() => { if (!kind) worldPrompt.set(null) }, [kind])
   return kind === 'stroll' ? <><OpeningVeil/><StrollHud {...props}/></> : <RoamHud {...props}/>
 }
 
@@ -16,6 +18,9 @@ function OpeningVeil() {
 
 function RoamHud({ playerPosition, mode }) {
   const state = useSyncExternalStore(worldState.subscribe, worldState.get)
+  const promptRef = useRef(null)
+  useEffect(() => { worldPrompt.set(promptRef.current) })
+  promptRef.current = null // reset each render; set again below when a prompt shows
   const [near, setNear] = useState(null)
   const [toast, setToast] = useState('')
   const world = state.world
@@ -44,6 +49,7 @@ function RoamHud({ playerPosition, mode }) {
   if (state.status === 'opening') return <div className="world-veil" data-testid="world-opening"><div><small>ANYWHERE DOOR</small><p>门后的世界正在成形……</p></div></div>
   if (!world) return null
   const prompt = near === 'souvenir' ? `拾起「${world.souvenir.name}」` : near === 'door' ? '回到房间' : null
+  promptRef.current = prompt
   return <>
     <div className="world-card" key={state.visits} data-testid="world-card">
       <small>{world.kind === 'idsea' ? 'ANYWHERE DOOR · 01' : `ANYWHERE DOOR · ${String(state.visits).padStart(2, '0')}`}</small>
