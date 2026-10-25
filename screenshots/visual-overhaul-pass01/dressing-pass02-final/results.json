@@ -1,0 +1,55 @@
+{
+  "results": {
+    "hero-desktop": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.09263891204943535,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 805,
+        "textures": 43
+      }
+    },
+    "hero-mobile": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.3358183894203819,
+        "calls": 762,
+        "triangles": 706812,
+        "geometries": 747,
+        "textures": 29
+      }
+    },
+    "bed-corner": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.10821339681852614,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 611,
+        "textures": 31
+      }
+    },
+    "ceiling-garden": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.09407337723424271,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 477,
+        "textures": 25
+      }
+    },
+    "wall-left": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.062430156262774046,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 502,
+        "textures": 26
+      }
+    }
+  },
+  "errors": []
+}

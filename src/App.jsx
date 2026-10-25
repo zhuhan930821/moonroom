@@ -23,6 +23,7 @@ import WorldHud from './worlds/WorldHud'
 import PortalPanel from './worlds/PortalPanel'
 import SouvenirPanel from './worlds/SouvenirPanel'
 import { worldState } from './worlds/worldState'
+import { worldPrompt } from './worlds/worldPrompt'
 import { preloadCoreAssets } from './scene/AssetModel'
 import GLBAsset from './scene/AssetModel'
 import { LightingProvider } from './lighting/LightingContext'
@@ -121,11 +122,12 @@ export default function App() {
   useEffect(() => { const timer = setTimeout(() => rerender(n => n + 1), 7000); return () => clearTimeout(timer) }, [celebrateAt])
   const celebrating = performance.now() / 1000 - celebrateAt < 7
   const world = useSyncExternalStore(worldState.subscribe, () => worldState.get().world) // Anywhere Door
+  const worldNear = useSyncExternalStore(worldPrompt.subscribe, worldPrompt.get) // touch button label behind the door
   const inExplore = game.mode === 'explore'
   const prompt = game.mode === 'beanbag' ? '起身' : inExplore && game.near ? INTERACTIONS[game.near].label : null
 
   return <main ref={root} className={isTouch ? 'touch-layout' : ''} onClick={() => game.started && inExplore && !isTouch && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
-    <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state}}>
+    <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state;if(captureEnabled)window.__moonroomCaptureScene=state.scene}}>
       {world ? <WorldScene world={world}/> : whiteModel ? <>
         <color attach="background" args={['#44444a']}/>
         <ambientLight intensity={1.8}/>
@@ -134,7 +136,7 @@ export default function App() {
       </> : <LightingProvider value={{ cinematic, decorationLights: !cinematic }}>
         <Environment hit={game.hit} quality={quality} cinematic={cinematic}/>
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
-        <Furniture hit={game.hit} onStrike={game.mode === 'drums' ? game.strike : null}
+        <Furniture hit={game.hit} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
           records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index} activeBookShelf={game.activeBookShelf}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
@@ -157,7 +159,7 @@ export default function App() {
       {celebrating && <div className="castle-toast" data-testid="castle-toast">✦ {roomState.get().celebration} · 窗外的城堡为你亮起来了</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
       {inExplore && !isTouch && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
-      {isTouch && inExplore && <MobileExploreControls input={touchInput} near={world ? '互动' : game.near ? INTERACTIONS[game.near].label : null}
+      {isTouch && inExplore && <MobileExploreControls input={touchInput} near={world ? worldNear : game.near ? INTERACTIONS[game.near].label : null}
         onInteract={() => world ? window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })) : game.interact()}
         onCurtain={() => window.dispatchEvent(new Event('moonroom:toggle-curtain'))}/>}
       {isTouch && !inExplore && <button className="mobile-exit" data-testid="mobile-exit" onClick={event => { event.stopPropagation(); game.leave() }}>← 返回探索</button>}

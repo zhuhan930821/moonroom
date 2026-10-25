@@ -202,6 +202,11 @@ export default function Environment({ hit, quality, cinematic = false }) {
   const blenderArchitecture = !FLAGS.legacyArchitecture
   const architectureUrl = ARCHITECTURE_URLS[FLAGS.floor]
   const visualBaseline = FLAGS.visualBaseline
+  const showDressing = FLAGS.visualPass && FLAGS.decorPass02
+  const architectureHiddenNodes = [
+    'ARCH_Lounge_Floor_Inlay', ...TRANSPARENT_WINDOW_WALL,
+    ...(FLAGS.visualPass ? ['ARCH_Ceiling_Crossbeam_0', 'ARCH_Ceiling_Crossbeam_3.45'] : []),
+  ]
   return <>
     <color attach="background" args={['#182657']} /><fog attach="fog" args={['#b47caf', 24, 58]} />
     {!cinematic && <><ambientLight intensity={visualBaseline?1.15:.55} color={visualBaseline?'#d5b5d9':'#d0c2df'} />
@@ -210,7 +215,7 @@ export default function Environment({ hit, quality, cinematic = false }) {
     <pointLight position={[0, 5, -5]} color="#f5a8bc" intensity={visualBaseline?22:6} distance={15} />
     {!visualBaseline && <><pointLight position={[-2.7,2.5,-4.2]} color="#ffbd80" intensity={13} distance={5.8} decay={2}/><pointLight position={[6.7,2.5,2.8]} color="#ffc28a" intensity={9} distance={6.5} decay={2}/></>}</>}
     <Outside hit={hit} quality={quality} visualBaseline={visualBaseline} cinematic={cinematic} />
-    {blenderArchitecture ? <GLBAsset url={architectureUrl} axisCorrection castShadow={false} hiddenNodes={['ARCH_Lounge_Floor_Inlay', ...TRANSPARENT_WINDOW_WALL]} /> : <>
+    {blenderArchitecture ? <GLBAsset url={architectureUrl} axisCorrection castShadow={false} hiddenNodes={architectureHiddenNodes} /> : <>
       <mesh receiveShadow rotation-x={-Math.PI / 2}><planeGeometry args={[ROOM.width, ROOM.depth]} /><meshStandardMaterial color="#70516f" roughness={.92} /></mesh>
       <mesh receiveShadow position={[0, ROOM.height, 0]} rotation-x={Math.PI / 2}><planeGeometry args={[ROOM.width, ROOM.depth]} /><meshStandardMaterial color="#433150" /></mesh>
       <mesh receiveShadow position={[-ROOM.width / 2, ROOM.height / 2, 0]} rotation-y={Math.PI / 2}><planeGeometry args={[ROOM.depth, ROOM.height]} /><meshStandardMaterial color="#765172" /></mesh>
@@ -219,9 +224,9 @@ export default function Environment({ hit, quality, cinematic = false }) {
       <Windows />
     </>}
     {FLAGS.voile && <SheerCurtainSample />}
-    {FLAGS.decorSample && <>
-      <GLBAsset url="/assets/models/decor/moonroom-decor-phase01-ceiling-sample.glb" axisCorrection castShadow={false} fallbackScale={.1} />
-      {!cinematic && <pointLight position={[2.9,6.55,-3.05]} color="#ffe0b5" intensity={3.5} distance={3.2} decay={2} />}
+    {(FLAGS.decorSample || showDressing) && <>
+      <GLBAsset url={showDressing ? '/assets/models/decor/moonroom-ceiling-wall-dressing-pass02.glb' : '/assets/models/decor/moonroom-decor-phase01-ceiling-sample.glb'} axisCorrection castShadow={false} fallbackScale={.1} />
+      {!cinematic && quality === 'high' && <pointLight position={[2.9,6.55,-3.05]} color="#ffe0b5" intensity={3.5} distance={3.2} decay={2} />}
     </>}
     {!cinematic && [-9.5, 9.5].map(x => <pointLight key={x} position={[x, 3.3, -4]} color="#ffbc79" intensity={5} distance={4} />)}
   </>

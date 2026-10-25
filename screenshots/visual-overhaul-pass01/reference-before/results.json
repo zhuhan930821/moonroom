@@ -1,0 +1,55 @@
+{
+  "results": {
+    "hero-desktop": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.15810526648702264,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 435,
+        "textures": 40
+      }
+    },
+    "rug-close": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.17165319188969821,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 397,
+        "textures": 29
+      }
+    },
+    "hero-mobile": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.6611570247933883,
+        "calls": 337,
+        "triangles": 576571,
+        "geometries": 328,
+        "textures": 26
+      }
+    },
+    "drum-corner": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.16800228483241955,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 381,
+        "textures": 29
+      }
+    },
+    "bed-corner": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.13245559426118705,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 413,
+        "textures": 29
+      }
+    }
+  },
+  "errors": []
+}

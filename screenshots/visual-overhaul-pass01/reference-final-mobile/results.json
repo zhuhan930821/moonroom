@@ -1,0 +1,15 @@
+{
+  "results": {
+    "hero-mobile": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.21132266858159413,
+        "calls": 337,
+        "triangles": 582182,
+        "geometries": 328,
+        "textures": 28
+      }
+    }
+  },
+  "errors": []
+}

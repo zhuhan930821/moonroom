@@ -34,9 +34,15 @@ function rugTexture() {
   return texture
 }
 
-function Rug(){
+function Rug({ quality }){
   const texture=useMemo(rugTexture,[])
   const baseline=FLAGS.visualBaseline
+  if (FLAGS.visualPass && !FLAGS.rugPileTest && !FLAGS.rugMaterialTest) return <GLBAsset
+    url={quality === 'low' ? '/assets/models/rugs/moonroom-persian-floral-pass01-low.glb' : '/assets/models/rugs/moonroom-persian-floral-pass01.glb'}
+    axisCorrection={false}
+    castShadow={false}
+    fallbackScale={.25}
+  />
   if(FLAGS.rugPileTest) return <GLBAsset
     url="/assets/models/candidates/rug-star-moon-pile-test.glb"
     axisCorrection={false}
@@ -88,14 +94,14 @@ function LegacyBed() {
   />
 }
 
-function Details(){const { decorationLights } = useLighting(); return <>
-  <Rug/>
+function Details({ quality }){const { decorationLights } = useLighting(); return <>
+  <Rug quality={quality}/>
   <GLBAsset url="/assets/models/decor/room-dressing.glb" axisCorrection={false} castShadow={false} fallbackScale={.1}/>
   {decorationLights && [-6.4,-3.6,3.4,7.2].map((x,i)=><pointLight key={i} position={[x,1.2,4.9-i*.8]} color="#ffc08a" intensity={.85} distance={2.4}/>)}
   {decorationLights && <pointLight position={[9.4,2.14,.7]} color="#ffc47b" intensity={1.2} distance={2.9}/>}
 </>}
 
-export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook, activeBookShelf}) {
+export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook, activeBookShelf, quality = 'high'}) {
   const candidateDrums = FLAGS.drumCandidate
-  return <><Details/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/><ReferenceDecor/></>
+  return <><Details quality={quality}/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/><ReferenceDecor/></>
 }

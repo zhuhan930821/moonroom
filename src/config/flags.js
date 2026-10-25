@@ -17,6 +17,9 @@ export function parseFlags(search = '') {
     // Lighting
     lightingPass: ['current', 'moon', 'warm', 'combined', 'bloom', 'golden'].includes(pass) ? pass : 'golden',
     lightingDebug: on('lightingDebug'),
+    // First environment-art pass. Keep ?visualPass=0 for identical-camera before/after review.
+    visualPass: notOff('visualPass'),
+    decorPass02: notOff('decorPass02'),
     // Fairy lights + candles default on with the golden pass; ?fairyLights=0/1 overrides
     fairyLights: q.get('fairyLights') ? on('fairyLights') : !pass || pass === 'golden',
     visualBaseline: on('visualBaseline'),

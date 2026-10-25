@@ -1,0 +1,35 @@
+{
+  "results": {
+    "hero-desktop": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.1549762886272673,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 462,
+        "textures": 42
+      }
+    },
+    "rug-close": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.15873267829407803,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 397,
+        "textures": 31
+      }
+    },
+    "hero-mobile": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.6104260773842587,
+        "calls": 337,
+        "triangles": 582182,
+        "geometries": 335,
+        "textures": 28
+      }
+    }
+  },
+  "errors": []
+}

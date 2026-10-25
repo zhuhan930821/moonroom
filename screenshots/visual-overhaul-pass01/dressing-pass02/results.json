@@ -1,0 +1,35 @@
+{
+  "results": {
+    "hero-desktop": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.10395766843792761,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 451,
+        "textures": 42
+      }
+    },
+    "drum-corner": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.10546187026054203,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 397,
+        "textures": 29
+      }
+    },
+    "bed-corner": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.0988689393330866,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 429,
+        "textures": 31
+      }
+    }
+  },
+  "errors": []
+}
