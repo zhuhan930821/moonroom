@@ -100,6 +100,7 @@ export const INTERACTIONS = {
   musicBooks: { position: [-9.72, 0, 5.2], radius: 1.25, label: '翻阅乐谱' },
   portal: { position: [-4.5, 0, 6.85], radius: 1.3, label: '打开任意门' },
   souvenirs: { position: [-6.6, 0, 6.95], radius: 1.0, label: '看看纪念品' },
+  photos: { position: [-7.55, 0, 1.05], radius: .75, label: '整理照片墙' }, // in front of the wall, clear of piano + drums
 }
 
 export const FOX_HINTS = [
@@ -119,4 +120,5 @@ export const CAMERA_POSES = {
   musicBooks: { position: [-8.85, 1.8, 5.2], lookAt: [-9.72, 1.55, 5.2] },
   portal: { position: [-4.5, 1.75, 5.2], lookAt: [-4.5, 1.6, 7.9] },
   souvenirs: { position: [-6.6, 1.75, 5.8], lookAt: [-6.6, 1.5, 7.85] },
+  photos: { position: [-7.6, 2.95, 2.78], lookAt: [-9.9, 2.85, 2.78] },
 }

@@ -1,7 +1,10 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { DECOR_COLLIDERS } from '../game/collision'
+import { hungItems, photoWall } from '../game/photoWall'
+import { layoutPhotoWall } from './photoWallLayout'
+import { builtinCanvas } from './photoArt'
 
 // Decor pass 03: the layer of the 2D reference that the room still lacked — ivy curtains over
 // the arches and along the loft, a photo wall + neon moon-fox on the left wall, hanging stars and
@@ -144,40 +147,52 @@ function Crystals() {
 }
 
 // ---------- the photo wall (left wall, under the loft) ----------
-function photoAtlas() {
-  const c = document.createElement('canvas'); c.width = 1024; c.height = 512
-  const g = c.getContext('2d'), r = rand(5)
-  const skies = [['#1d2a6a', '#e89ac0'], ['#2a1e5a', '#7a5ab8'], ['#f4b6a0', '#ffe2c8'], ['#3a5a9a', '#bfe0ff'], ['#4a2a5a', '#ff9ac0'], ['#1a2040', '#5a7ac0'], ['#e8c0d8', '#fff4f8'], ['#2a3a2a', '#9ac08a']]
-  for (let i = 0; i < 8; i++) {
-    const x = (i % 4) * 256, y = Math.floor(i / 4) * 256, [a, b] = skies[i]
-    const grad = g.createLinearGradient(0, y, 0, y + 256); grad.addColorStop(0, a); grad.addColorStop(1, b)
-    g.fillStyle = grad; g.fillRect(x, y, 256, 256)
-    g.fillStyle = 'rgba(255,255,255,.9)'; for (let s = 0; s < 18; s++) g.fillRect(x + r() * 256, y + r() * 140, 2, 2)
-    g.fillStyle = '#fff6dc'
-    if (i % 3 === 0) { g.beginPath(); g.arc(x + 170, y + 80, 34, 0, 7); g.fill(); g.fillStyle = a; g.beginPath(); g.arc(x + 186, y + 72, 30, 0, 7); g.fill() } // crescent
-    else if (i % 3 === 1) { g.beginPath(); g.arc(x + 128, y + 96, 44, 0, 7); g.fill() } // full moon
-    g.fillStyle = 'rgba(30,20,50,.85)' // castles / hills / fox silhouettes
-    if (i % 2) { for (let t = 0; t < 5; t++) { const tx = x + 60 + t * 30, th = 60 + r() * 70; g.fillRect(tx, y + 256 - th, 18, th); g.beginPath(); g.moveTo(tx - 4, y + 256 - th); g.lineTo(tx + 9, y + 226 - th); g.lineTo(tx + 22, y + 256 - th); g.fill() } }
-    else { g.beginPath(); g.moveTo(x, y + 256); g.quadraticCurveTo(x + 90, y + 150, x + 170, y + 200); g.quadraticCurveTo(x + 220, y + 170, x + 256, y + 190); g.lineTo(x + 256, y + 256); g.fill()
-      g.beginPath(); g.moveTo(x + 150, y + 200); g.lineTo(x + 158, y + 180); g.lineTo(x + 166, y + 196); g.lineTo(x + 174, y + 180); g.lineTo(x + 182, y + 200); g.fill() }
-  }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t
+// Which photos hang is up to the player (src/game/photoWall.js); the layout is a staggered
+// salon arrangement (src/scene/photoWallLayout.js).
+const FRAME_COLORS = { polaroid: '#f6f0e6', wood: '#6a4430', black: '#2a2228', gold: '#c8a060', cream: '#efe4d0' }
+// The free band of wall between the chair rail (y 2.78), the loft soffit (y 3.82), the moon
+// wall relief (z < 1.55, scripts/build_ceiling_wall_dressing.py) and the music shelf (z 3.98).
+const PHOTO_WALL = { centerZ: 2.78, centerY: 3.3, width: 2.3, height: .88 }
+function photoTexture(item) {
+  const t = item.src ? new THREE.TextureLoader().load(item.src) : new THREE.CanvasTexture(builtinCanvas(item.id))
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+// Crops the texture to the frame's shape (like object-fit: cover).
+function coverCrop(texture, frameAspect, imageAspect) {
+  texture.repeat.set(1, 1); texture.offset.set(0, 0)
+  if (frameAspect > imageAspect) { texture.repeat.y = imageAspect / frameAspect; texture.offset.y = (1 - texture.repeat.y) / 2 }
+  else { texture.repeat.x = frameAspect / imageAspect; texture.offset.x = (1 - texture.repeat.x) / 2 }
+}
+function FramedPhoto({ p, item, texture }) {
+  const polaroid = p.frame === 'polaroid'
+  const picY = polaroid ? (p.h - p.ph) / 2 - (p.w - p.pw) / 2 : 0
+  useLayoutEffect(() => { coverCrop(texture, p.pw / p.ph, item.src ? item.aspect : 1); texture.needsUpdate = true }, [texture, p.pw, p.ph, item])
+  return <group position={[p.x, p.y, 0]} rotation-z={p.rot}>
+    <mesh position-z={-.008}><boxGeometry args={[p.w, p.h, .025]}/><meshStandardMaterial color={FRAME_COLORS[p.frame]} roughness={p.frame === 'gold' ? .35 : .8} metalness={p.frame === 'gold' ? .55 : 0}/></mesh>
+    {p.frame === 'cream' && <mesh position-z={.0055}><planeGeometry args={[p.pw + .03, p.ph + .03]}/><meshStandardMaterial color="#8a6a50" roughness={.8}/></mesh>}
+    <mesh position={[0, picY, .006]}><planeGeometry args={[p.pw, p.ph]}/><meshStandardMaterial map={texture} roughness={.6}/></mesh>
+    {polaroid && <mesh position={[0, p.h / 2 - .005, .008]} rotation-z={(p.rot * 7) % .3}><planeGeometry args={[.11, .035]}/><meshStandardMaterial color={BLOSSOMS[Math.abs(Math.round(p.x * 10)) % 5]} transparent opacity={.85} roughness={.9}/></mesh>}
+  </group>
 }
 function PhotoWall() {
-  const atlas = useMemo(photoAtlas, [])
-  const photos = useMemo(() => { const r = rand(9), out = []
-    for (let i = 0; i < 22; i++) { const w = .28 + r() * .24, polaroid = r() < .55
-      out.push({ z: -.6 + (i % 8) * .62 + (r() - .5) * .2, y: 3.3 + Math.floor(i / 8) * .58 + (r() - .5) * .12, w, h: w * (polaroid ? 1.2 : .8), rot: (r() - .5) * .25, tile: i % 8, polaroid })
-    } return out }, [])
-  const mats = useMemo(() => Array.from({ length: 8 }, (_, i) => { const t = atlas.clone(); t.needsUpdate = true; t.repeat.set(.25, .5); t.offset.set((i % 4) * .25, i < 4 ? .5 : 0); return new THREE.MeshStandardMaterial({ map: t, roughness: .7 }) }), [atlas])
-  return <group position={[-9.93, 0, 0]} rotation-y={Math.PI / 2}>
-    {photos.map((p, i) => <group key={i} position={[-p.z, p.y, 0]} rotation-z={p.rot}>
-      <mesh position-z={-.005}><planeGeometry args={[p.w + .05, p.h + .05]}/><meshStandardMaterial color={p.polaroid ? '#f6f0e6' : '#5a3a2a'} roughness={.8}/></mesh>
-      <mesh position={[0, p.polaroid ? p.h * .08 : 0, 0]} material={mats[p.tile]}><planeGeometry args={[p.w * (p.polaroid ? .88 : 1), p.h * (p.polaroid ? .72 : 1)]}/></mesh>
-      <mesh position={[0, p.h / 2 + .01, .005]}><sphereGeometry args={[.012, 6, 4]}/><meshStandardMaterial color={BLOSSOMS[i % 5]}/></mesh>
-    </group>)}
+  const wall = useSyncExternalStore(photoWall.subscribe, photoWall.get)
+  const items = useMemo(() => hungItems(wall), [wall])
+  const layout = useMemo(() => layoutPhotoWall(items, { seed: wall.seed, width: PHOTO_WALL.width, height: PHOTO_WALL.height }), [items, wall.seed])
+  // One texture per photo id, kept while it hangs and disposed once taken down.
+  const cache = useRef(new Map())
+  const textures = useMemo(() => {
+    const next = new Map()
+    for (const item of items) next.set(item.id, cache.current.get(item.id) || photoTexture(item))
+    for (const [id, t] of cache.current) if (!next.has(id)) t.dispose()
+    cache.current = next
+    return next
+  }, [items])
+  useEffect(() => () => cache.current.forEach(t => t.dispose()), [])
+  return <group position={[-9.93, PHOTO_WALL.centerY, PHOTO_WALL.centerZ]} rotation-y={Math.PI / 2}>
+    {layout.map(p => <FramedPhoto key={p.id} p={p} item={items.find(item => item.id === p.id)} texture={textures.get(p.id)}/>)}
     {/* a string of photo-clip lights across the gallery */}
-    {Array.from({ length: 16 }, (_, i) => <mesh key={`l${i}`} position={[.6 - i * .36, 4.95 - Math.sin(i / 15 * Math.PI) * .2, .03]}><sphereGeometry args={[.035, 8, 6]}/><meshBasicMaterial color={new THREE.Color('#ffc77a').multiplyScalar(2.2)} toneMapped={false}/></mesh>)}
+    {Array.from({ length: 10 }, (_, i) => <mesh key={`l${i}`} position={[-1.2 + i * 2.4 / 9, 3.77 - PHOTO_WALL.centerY - Math.sin(i / 9 * Math.PI) * .07, .03]}><sphereGeometry args={[.028, 8, 6]}/><meshBasicMaterial color={new THREE.Color('#ffc77a').multiplyScalar(2.2)} toneMapped={false}/></mesh>)}
   </group>
 }
 

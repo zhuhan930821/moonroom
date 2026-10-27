@@ -13,6 +13,7 @@ import RhythmOverlay from './ui/RhythmOverlay'
 import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
+import PhotoPanel from './ui/PhotoPanel'
 import DiaryPage from './ui/DiaryPage'
 import ScorePage from './ui/ScorePage'
 import { MobileExploreControls, MobilePianoKeys } from './ui/MobileControls'
@@ -101,7 +102,7 @@ export default function App() {
   useEffect(() => {
     if (!captureEnabled || game.started) return
     game.startPreview()
-    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks'].includes(captureMode)) game.enter(captureMode)
+    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos'].includes(captureMode)) game.enter(captureMode)
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (!captureEnabled) return
@@ -170,6 +171,7 @@ export default function App() {
       {isTouch && game.mode === 'piano' && <MobilePianoKeys game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave} milo={game.milo} onInviteMilo={game.inviteMilo}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
+      {game.mode === 'photos' && <PhotoPanel/>}
       {game.mode === 'portal' && <PortalPanel onDone={game.leave}/>}
       {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
@@ -178,7 +180,7 @@ export default function App() {
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
-      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button></section>}
+      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}</section>}
       {showLightingDebug && !whiteModel && <section className="lighting-debug" onClick={e=>e.stopPropagation()}>
         <header><span>LIGHTING PASS 01</span><button onClick={()=>setLightingPass(value=>value === 'current' ? 'bloom' : 'current')}>{lightingPass === 'current' ? '查看升级版' : '对比原版'}</button></header>
         <label>渲染层<select value={lightingPass} onChange={e=>setLightingPass(e.target.value)}><option value="current">Current</option><option value="moon">Moon only</option><option value="warm">Warm only</option><option value="combined">Combined</option><option value="bloom">Combined + Bloom</option><option value="golden">Golden (warm)</option></select></label>
