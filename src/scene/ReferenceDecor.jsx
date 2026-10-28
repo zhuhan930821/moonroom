@@ -1,10 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { RoundedBox as SoftBox, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { DECOR_COLLIDERS } from '../game/collision'
 import { hungItems, photoWall } from '../game/photoWall'
 import { layoutPhotoWall } from './photoWallLayout'
 import { builtinCanvas } from './photoArt'
+import GLBAsset from './AssetModel'
 
 // Decor pass 03: the layer of the 2D reference that the room still lacked — ivy curtains over
 // the arches and along the loft, a photo wall + neon moon-fox on the left wall, hanging stars and
@@ -22,6 +24,7 @@ DECOR_COLLIDERS.push(
   box(-.6, .6, .6, 1.8),        // coffee table
   box(-4.75, -3.65, .95, 2.05), // flower floor cushion
   box(8.9, 9.95, -1.8, .1),     // guitars + amp
+  box(-.76, .16, -2.94, -2.11), // pulled-out desk chair
 )
 
 // ---------- ivy: strands hanging from points, leaves + blossoms instanced ----------
@@ -31,6 +34,16 @@ function leafGeometry() {
   const g = new THREE.ShapeGeometry(s, 4); g.translate(0, -.01, 0); return g
 }
 const LEAF = leafGeometry(), BLOOM = new THREE.IcosahedronGeometry(.045, 0)
+const BROAD_LEAF = (() => {
+  const s = new THREE.Shape()
+  s.moveTo(0, -.31)
+  s.bezierCurveTo(-.11, -.28, -.31, -.11, -.31, .05)
+  s.bezierCurveTo(-.32, .19, -.17, .29, -.045, .21)
+  s.quadraticCurveTo(0, .13, .045, .21)
+  s.bezierCurveTo(.17, .29, .32, .19, .31, .05)
+  s.bezierCurveTo(.31, -.11, .11, -.28, 0, -.31)
+  return new THREE.ShapeGeometry(s, 12)
+})()
 
 function strandsFor(seed) {
   const r = rand(seed), out = []
@@ -81,8 +94,24 @@ function Ivy() {
 function Plant({ position, scale = 1, pot = '#e8dccb', bush = 'leafy', flowers = 0, seed = 1 }) {
   const r = useMemo(() => rand(seed), [seed])
   const parts = useMemo(() => Array.from({ length: bush === 'tall' ? 9 : bush === 'vase' ? 10 : 7 }, () => [r(), r(), r()]), [r, bush])
+  const leafy = useRef()
+  const leafParts = useMemo(() => bush === 'vase' ? [] : parts.flatMap(([a, b, c], i) => [-1, 1].map(side => ({
+    p: [(a - .5) * .19 + side * (.06 + c * .025), .36 + b * (bush === 'tall' ? .66 : .25) + side * .045, (c - .5) * .16],
+    r: [-(.15 + b * .35), a * Math.PI * 2 + (side < 0 ? .35 : -.35), side * (.55 + c * .3)],
+    k: bush === 'tall' ? 1.3 + c * .7 : .85 + c * .48,
+    color: LEAF_GREENS[(i + (side > 0 ? 2 : 0)) % LEAF_GREENS.length],
+  }))), [parts, bush])
+  useLayoutEffect(() => {
+    if (!leafy.current || !leafParts.length) return
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color()
+    leafParts.forEach((leaf, i) => {
+      leafy.current.setMatrixAt(i, m.compose(new THREE.Vector3(...leaf.p), q.setFromEuler(e.set(...leaf.r)), new THREE.Vector3(leaf.k, leaf.k, leaf.k)))
+      leafy.current.setColorAt(i, c.set(leaf.color))
+    })
+    leafy.current.instanceMatrix.needsUpdate = true; leafy.current.instanceColor.needsUpdate = true
+  }, [leafParts])
   return <group position={position} scale={scale}>
-    <mesh position-y={.14} castShadow><cylinderGeometry args={[.16, .12, .28, 14]}/><meshStandardMaterial color={pot} roughness={.6}/></mesh>
+    <mesh position-y={.14} castShadow><cylinderGeometry args={[.16, .12, .28, 14]}/><meshStandardMaterial color={pot} roughness={.86}/></mesh>
     {bush === 'vase' ? <>
       <mesh position-y={.14}><cylinderGeometry args={[.1, .14, .28, 14]}/><meshPhysicalMaterial color="#ffffff" transparent opacity={.35} roughness={.05}/></mesh>
       {parts.map(([a, b, c], i) => <group key={i} rotation={[(a - .5) * .7, b * 6, (c - .5) * .7]}>
@@ -90,9 +119,14 @@ function Plant({ position, scale = 1, pot = '#e8dccb', bush = 'leafy', flowers =
         {[0, 1, 2].map(k => <mesh key={k} position={[(k - 1) * .025, .6 + k * .03 + a * .06, (k % 2) * .02]}><sphereGeometry args={[.022 + c * .012, 6, 5]}/><meshStandardMaterial color={BLOSSOMS[(i + k) % BLOSSOMS.length]} roughness={.7}/></mesh>)}
         <mesh position={[.03, .45, 0]} rotation-z={-.8} scale={[.5, 1, .2]}><sphereGeometry args={[.05, 6, 4]}/><meshStandardMaterial color="#5f8b5c"/></mesh>
       </group>)}
-    </> : parts.map(([a, b, c], i) => <mesh key={i} position={[(a - .5) * .3, .32 + b * (bush === 'tall' ? .7 : .28), (c - .5) * .3]} rotation={[a, b * 6, c]} scale={[1, .55, 1]} castShadow>
-      <sphereGeometry args={[.12 + c * .06, 8, 6]}/><meshStandardMaterial color={LEAF_GREENS[i % LEAF_GREENS.length]} roughness={.85}/>
-    </mesh>)}
+    </> : <>
+      {parts.map(([a, b, c], i) => <mesh key={i} position={[(a - .5) * .13, .29 + b * (bush === 'tall' ? .35 : .15), (c - .5) * .13]} rotation-z={(a - .5) * .5}>
+        <cylinderGeometry args={[.007, .01, .35 + b * (bush === 'tall' ? .55 : .2), 5]}/><meshStandardMaterial color="#4e6548" roughness={1}/>
+      </mesh>)}
+      <instancedMesh ref={leafy} args={[LEAF, null, leafParts.length]} frustumCulled={false}>
+        <meshStandardMaterial side={THREE.DoubleSide} roughness={.92}/>
+      </instancedMesh>
+    </>}
     {flowers > 0 && parts.slice(0, flowers).map(([a, b], i) => <mesh key={`f${i}`} position={[(b - .5) * .3, .5 + a * .3, (a - .5) * .3]}><sphereGeometry args={[.04, 8, 6]}/><meshStandardMaterial color={BLOSSOMS[i % 3]}/></mesh>)}
   </group>
 }
@@ -104,7 +138,9 @@ function Monstera({ position, scale = 1, seed = 3 }) {
     <mesh position-y={.25} castShadow><cylinderGeometry args={[.28, .22, .5, 16]}/><meshStandardMaterial color="#c98a6a" roughness={.7}/></mesh>
     {leaves.map((l, i) => <group key={i} rotation-y={l.a}>
       <mesh position={[0, l.h * .5 + .4, .05]} rotation-x={.2}><cylinderGeometry args={[.012, .015, l.h, 5]}/><meshStandardMaterial color="#4f7a52"/></mesh>
-      <mesh position={[0, l.h + .45, .35]} rotation-x={-l.tilt} scale={[1, 1.25, .08]}><sphereGeometry args={[.28, 12, 8]}/><meshStandardMaterial color={LEAF_GREENS[i % 3]} roughness={.7}/></mesh>
+      <mesh geometry={BROAD_LEAF} position={[0, l.h + .45, .35]} rotation-x={-l.tilt} scale={[.95, 1.15, 1]} castShadow>
+        <meshStandardMaterial color={LEAF_GREENS[i % 3]} side={THREE.DoubleSide} roughness={.88}/>
+      </mesh>
     </group>)}
   </group>
 }
@@ -146,6 +182,26 @@ function Crystals() {
   return <instancedMesh ref={ref} args={[null, null, parts.length]}><octahedronGeometry args={[1, 0]}/><meshStandardMaterial color="#b48ae8" emissive="#9a6ad8" emissiveIntensity={.6} roughness={.15} transparent opacity={.9}/></instancedMesh>
 }
 
+// Shared 8-tile atlas for the fixed side-wall photos and the drum-wall poster.
+function photoAtlas() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 512
+  const g = c.getContext('2d'), r = rand(5)
+  const skies = [['#1d2a6a', '#e89ac0'], ['#2a1e5a', '#7a5ab8'], ['#f4b6a0', '#ffe2c8'], ['#3a5a9a', '#bfe0ff'], ['#4a2a5a', '#ff9ac0'], ['#1a2040', '#5a7ac0'], ['#e8c0d8', '#fff4f8'], ['#2a3a2a', '#9ac08a']]
+  for (let i = 0; i < 8; i++) {
+    const x = (i % 4) * 256, y = Math.floor(i / 4) * 256, [a, b] = skies[i]
+    const grad = g.createLinearGradient(0, y, 0, y + 256); grad.addColorStop(0, a); grad.addColorStop(1, b)
+    g.fillStyle = grad; g.fillRect(x, y, 256, 256)
+    g.fillStyle = 'rgba(255,255,255,.9)'; for (let s = 0; s < 18; s++) g.fillRect(x + r() * 256, y + r() * 140, 2, 2)
+    g.fillStyle = '#fff6dc'
+    if (i % 3 === 0) { g.beginPath(); g.arc(x + 170, y + 80, 34, 0, 7); g.fill(); g.fillStyle = a; g.beginPath(); g.arc(x + 186, y + 72, 30, 0, 7); g.fill() } // crescent
+    else if (i % 3 === 1) { g.beginPath(); g.arc(x + 128, y + 96, 44, 0, 7); g.fill() } // full moon
+    g.fillStyle = 'rgba(30,20,50,.85)' // castles / hills / fox silhouettes
+    if (i % 2) { for (let t = 0; t < 5; t++) { const tx = x + 60 + t * 30, th = 60 + r() * 70; g.fillRect(tx, y + 256 - th, 18, th); g.beginPath(); g.moveTo(tx - 4, y + 256 - th); g.lineTo(tx + 9, y + 226 - th); g.lineTo(tx + 22, y + 256 - th); g.fill() } }
+    else { g.beginPath(); g.moveTo(x, y + 256); g.quadraticCurveTo(x + 90, y + 150, x + 170, y + 200); g.quadraticCurveTo(x + 220, y + 170, x + 256, y + 190); g.lineTo(x + 256, y + 256); g.fill()
+      g.beginPath(); g.moveTo(x + 150, y + 200); g.lineTo(x + 158, y + 180); g.lineTo(x + 166, y + 196); g.lineTo(x + 174, y + 180); g.lineTo(x + 182, y + 200); g.fill() }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t
+}
 // ---------- the photo wall (left wall, under the loft) ----------
 // Which photos hang is up to the player (src/game/photoWall.js); the layout is a staggered
 // salon arrangement (src/scene/photoWallLayout.js).
@@ -196,6 +252,129 @@ function PhotoWall() {
   </group>
 }
 
+// The existing photo wall lives under the loft and reads mainly from oblique
+// views. These smaller clusters occupy the side-wall gaps visible on entry.
+function SideWallGallery() {
+  const atlas = useMemo(photoAtlas, [])
+  const mats = useMemo(() => Array.from({ length: 8 }, (_, i) => {
+    const t = atlas.clone(); t.needsUpdate = true; t.repeat.set(.25, .5); t.offset.set((i % 4) * .25, i < 4 ? .5 : 0)
+    return new THREE.MeshStandardMaterial({ map: t, roughness: .82, side: THREE.DoubleSide })
+  }), [atlas])
+  const photos = useMemo(() => {
+    const r = rand(241), list = []
+    const add = (side, zs, ys) => zs.forEach((z, i) => ys.forEach((y, row) => {
+      if (side === 'left' && z > 4.65 && z < 5.95 && y > 2.9 && y < 4.45) return // Claude's neon fox
+      if (side === 'left' && z > 1.5 && z < 4.0 && y < 3.9) return // the customizable photo wall's band
+      if (r() < .19) return // negative space prevents wallpaper-like repetition
+      const w = .24 + r() * .21
+      list.push({ side, z: z + (r() - .5) * .17, y: y + (r() - .5) * .18,
+        w, h: w * (.82 + r() * .6), tilt: (r() - .5) * .17,
+        tile: (i + row * 3 + (side === 'right' ? 2 : 0)) % 8, polaroid: r() > .34 })
+    }))
+    add('left', [3.75, 4.22, 4.62, 6.05, 6.48, 6.93, 7.38], [2.85, 3.42, 4.02])
+    add('left', [-6.65, -6.12, -4.12, -3.58], [3.8, 4.45])
+    // Quiet collage inside the otherwise bare drum-side wall panel.
+    add('left', [-1.25, -.62, .08, .7], [2.22, 2.86])
+    add('right', [-5.6, -5.1, -4.6, -4.1, -3.6], [4.95, 5.52])
+    add('right', [2.46, 3.02, 3.6, 4.16], [2.86, 3.49])
+    return list
+  }, [])
+  return <group name="DECOR_SideWallGallery_PASS04">
+    {photos.map((p, i) => <group key={i} position={[p.side === 'left' ? -9.54 : 9.54, p.y, p.z]}
+      rotation={[0, p.side === 'left' ? Math.PI / 2 : -Math.PI / 2, p.tilt]}>
+      <mesh position-z={-.015}><boxGeometry args={[p.w + .052, p.h + .075, .025]}/><meshStandardMaterial color={p.polaroid ? '#f2e6dd' : '#785069'} roughness={.9}/></mesh>
+      <mesh material={mats[p.tile]} position-y={p.polaroid ? p.h * .055 : 0} position-z={.004}>
+        <planeGeometry args={[p.w * .88, p.h * (p.polaroid ? .72 : .9)]}/>
+      </mesh>
+      <mesh position={[0, p.h / 2 + .05, .025]}><sphereGeometry args={[.014, 6, 4]}/><meshStandardMaterial color={i % 4 ? '#d8ac75' : '#a987b0'} metalness={.5}/></mesh>
+    </group>)}
+  </group>
+}
+
+function DrumWallPoster() {
+  const atlas = useMemo(photoAtlas, [])
+  const texture = useMemo(() => {
+    const t = atlas.clone(); t.needsUpdate = true; t.repeat.set(.25, .5); t.offset.set(.25, .5)
+    return t
+  }, [atlas])
+  return <group name="DECOR_DrumWallPoster_PASS05" position={[-9.53, 4.1, -5.13]} rotation-y={Math.PI / 2}>
+    <mesh position-z={-.035} castShadow><boxGeometry args={[1.02, 1.42, .065]}/><meshStandardMaterial color="#8b634e" roughness={.78}/></mesh>
+    <mesh position-z={.002}><planeGeometry args={[.89, 1.27]}/><meshStandardMaterial map={texture} roughness={.93} side={THREE.DoubleSide}/></mesh>
+    <mesh position={[0, -.51, .009]}><planeGeometry args={[.82, .18]}/><meshStandardMaterial color="#352b4f" roughness={1} side={THREE.DoubleSide}/></mesh>
+    {[-.13, -.065, 0, .065, .13].map((dy, i) => <mesh key={i} position={[0, -.51 + dy, .018]}>
+      <boxGeometry args={[.68, .006, .005]}/><meshBasicMaterial color="#d9b47e"/>
+    </mesh>)}
+  </group>
+}
+
+function RearWallPrint() {
+  const texture = useTexture('/assets/textures/wall-art/rear-crescent-castle.jpg')
+  texture.colorSpace = THREE.SRGBColorSpace
+  return <group name="DECOR_RearCrescentPrint" position={[-8.65, 2.72, 7.85]} rotation-y={Math.PI}>
+    <mesh castShadow><boxGeometry args={[1.45, 1.8, .09]}/><meshStandardMaterial color="#715341" roughness={.76}/></mesh>
+    <mesh position-z={.052}><planeGeometry args={[1.31, 1.66]}/><meshStandardMaterial color="#ecd9c4" roughness={.96}/></mesh>
+    <mesh position-z={.059}><planeGeometry args={[1.2, 1.55]}/><meshStandardMaterial map={texture} roughness={.94}/></mesh>
+  </group>
+}
+
+function WallShelf({ side, z, y, width = 1.45, seed = 1 }) {
+  const x = side === 'left' ? -9.58 : 9.58
+  const items = useMemo(() => {
+    const r = rand(seed)
+    return Array.from({ length: 5 }, (_, i) => ({ z: z - width * .33 + i * width * .16,
+      h: .16 + r() * .2, color: ['#6f425a', '#bb8d6d', '#574d73', '#937156', '#d8a9a4'][i] }))
+  }, [seed, z, width])
+  return <group name={`DECOR_WallShelf_${side}_${seed}`}>
+    <mesh position={[x, y, z]} castShadow><boxGeometry args={[.32, .055, width]}/><meshStandardMaterial color="#80604e" roughness={.84}/></mesh>
+    {[z - width * .36, z + width * .36].map((zz, i) => <mesh key={i} position={[side === 'left' ? -9.75 : 9.75, y - .18, zz]} rotation-z={side === 'left' ? -.28 : .28}>
+      <boxGeometry args={[.035, .36, .045]}/><meshStandardMaterial color="#b49876" metalness={.38} roughness={.52}/>
+    </mesh>)}
+    {items.map((item, i) => <mesh key={i} position={[x, y + .028 + item.h / 2, item.z]} rotation-x={(i - 2) * .025} castShadow>
+      <boxGeometry args={[.19, item.h, .075]}/><meshStandardMaterial color={item.color} roughness={.91}/>
+    </mesh>)}
+    <Plant position={[x, y + .035, z + width * .3]} scale={.52} pot="#d7b2aa" seed={seed + 13}/>
+    <mesh position={[x, y + .16, z - width * .28]}><sphereGeometry args={[.085, 12, 8]}/><meshStandardMaterial color="#f6d9bd" emissive="#e8aa68" emissiveIntensity={.4} roughness={.6}/></mesh>
+    <ShelfVines side={side} x={x} z={z + width * .3} y={y - .02} seed={seed}/>
+  </group>
+}
+
+function ShelfVines({ side, x, y, z, seed }) {
+  const leaves = useRef()
+  const strands = useMemo(() => {
+    const r = rand(seed * 53)
+    return Array.from({ length: 4 }, (_, strand) => Array.from({ length: 9 + strand * 2 }, (_, i) => ({
+      x: x + (side === 'left' ? .12 : -.12) + Math.sin(i * .34 + strand) * .05,
+      y: y - i * .085,
+      z: z + (strand - 1.5) * .075 + Math.sin(i * .48 + strand) * .045,
+      scale: .55 + r() * .52,
+      turn: r() * Math.PI * 2,
+      color: LEAF_GREENS[(strand + i) % LEAF_GREENS.length],
+    }))).flat()
+  }, [side, x, y, z, seed])
+  useLayoutEffect(() => {
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color()
+    strands.forEach((l, i) => {
+      leaves.current.setMatrixAt(i, m.compose(new THREE.Vector3(l.x, l.y, l.z), q.setFromEuler(e.set(0, l.turn, .5)), new THREE.Vector3(l.scale, l.scale, l.scale)))
+      leaves.current.setColorAt(i, c.set(l.color))
+    })
+    leaves.current.instanceMatrix.needsUpdate = true; leaves.current.instanceColor.needsUpdate = true
+  }, [strands])
+  return <instancedMesh ref={leaves} args={[LEAF, null, strands.length]} frustumCulled={false}>
+    <meshStandardMaterial side={THREE.DoubleSide} roughness={.9}/>
+  </instancedMesh>
+}
+
+function ReadingNookNeon() {
+  const curves = useMemo(() => {
+    const crescent = new THREE.CatmullRomCurve3([[.12, .39], [-.16, .25], [-.27, -.02], [-.16, -.28], [.13, -.4], [-.04, -.18], [-.07, .08], [.12, .39]].map(([x, y]) => new THREE.Vector3(x, y, 0)))
+    const star = new THREE.CatmullRomCurve3(Array.from({ length: 11 }, (_, i) => { const a = i * Math.PI / 5 + Math.PI / 2, r = i % 2 ? .07 : .16; return new THREE.Vector3(.45 + Math.cos(a) * r, .16 + Math.sin(a) * r, 0) }), true)
+    return [new THREE.TubeGeometry(crescent, 50, .024, 6), new THREE.TubeGeometry(star, 30, .019, 6, true)]
+  }, [])
+  return <group name="DECOR_ReadingNookNeon_PASS04" position={[9.77, 4.34, 5.55]} rotation-y={-Math.PI / 2}>
+    {curves.map((g, i) => <mesh key={i} geometry={g}><meshBasicMaterial color={new THREE.Color(i ? '#f5c489' : '#d9a3f0').multiplyScalar(1.6)} toneMapped={false}/></mesh>)}
+  </group>
+}
+
 // ---------- neon moon + fox (left wall, beside the photos) ----------
 function NeonSign() {
   const tube = (pts, closed = false) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y]) => new THREE.Vector3(x, y, 0)), closed), 80, .022, 8, closed)
@@ -238,29 +417,41 @@ function blanketTexture() {
   const g = c.getContext('2d'); g.fillStyle = '#3a3a7a'; g.fillRect(0, 0, 256, 256)
   g.fillStyle = '#e8c070'; const r = rand(3)
   for (let i = 0; i < 26; i++) { const x = r() * 256, y = r() * 256, k = 4 + r() * 8; g.beginPath(); for (let j = 0; j < 10; j++) { const a = j * Math.PI / 5, rr = j % 2 ? k * .45 : k; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) } g.fill() }
-  g.strokeStyle = '#e8c070'; g.lineWidth = 6; g.strokeRect(8, 8, 240, 240)
+  // No rectangular border: it made the cloth read as a floating framed poster.
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t
 }
 function DeskChair() {
   const tex = useMemo(blanketTexture, [])
-  // A cloth panel hanging from the backrest roll: soft vertical folds that deepen toward the hem.
+  // The throw occupies only one side of the chair back, leaving the upholstery visible.
   const drape = useMemo(() => {
-    const g = new THREE.PlaneGeometry(.72, .9, 24, 12), pos = g.attributes.position
+    const g = new THREE.PlaneGeometry(.34, .71, 16, 12), pos = g.attributes.position
     for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i), y = pos.getY(i), down = (.45 - y) / .9
-      pos.setXYZ(i, x * (1 + down * .15), y - .45, Math.sin(x * 26) * .035 * down + down * .06)
+      const x = pos.getX(i), y = pos.getY(i), down = (.355 - y) / .71
+      pos.setXYZ(i, x * (1 + down * .1), y - .355, Math.sin(x * 28) * .016 * down + down * .015)
     }
     g.computeVertexNormals(); return g
   }, [])
-  return <group position={[-.3, 0, -2.95]} rotation-y={.25}>
-    {[0, 1, 2, 3, 4].map(i => <mesh key={i} position={[Math.cos(i * 1.256) * .3, .06, Math.sin(i * 1.256) * .3]}><sphereGeometry args={[.04, 8, 6]}/><meshStandardMaterial color="#2a2a30"/></mesh>)}
-    <mesh position-y={.32}><cylinderGeometry args={[.04, .04, .5, 10]}/><meshStandardMaterial color="#3a3a40" metalness={.6}/></mesh>
-    <mesh position-y={.6}><boxGeometry args={[.62, .1, .58]}/><meshStandardMaterial color="#4a4650" roughness={.8}/></mesh>
-    <mesh position={[0, 1.05, .28]} rotation-x={-.12}><boxGeometry args={[.58, .8, .08]}/><meshStandardMaterial color="#4a4650" roughness={.8}/></mesh>
-    {/* the star blanket thrown over the back: a soft roll on top, folds hanging off one side */}
-    <mesh position={[0, 1.46, .3]} rotation-z={Math.PI / 2} scale={[1, 1, .8]}><cylinderGeometry args={[.07, .07, .66, 12]}/><meshStandardMaterial map={tex} roughness={.95}/></mesh>
-    <mesh geometry={drape} position={[0, 1.47, .36]}><meshStandardMaterial map={tex} roughness={.95} side={THREE.DoubleSide}/></mesh>
-    {Array.from({ length: 9 }, (_, i) => <mesh key={`t${i}`} position={[-.3 + i * .07, .6 - (i % 3) * .03, .4]}><cylinderGeometry args={[.006, .006, .08, 4]}/><meshStandardMaterial color="#e8c070"/></mesh>)}
+  return <group name="DECOR_DeskChair" position={[-.3, 0, -2.52]} rotation-y={.12}>
+    {[0, 1, 2, 3, 4].map(i => <group key={i} rotation-y={i * Math.PI * 2 / 5}>
+      <mesh position={[0, .12, .23]}><boxGeometry args={[.055, .055, .46]}/><meshStandardMaterial color="#3a3542" metalness={.5} roughness={.5}/></mesh>
+      <mesh position={[0, .075, .44]}><sphereGeometry args={[.055, 10, 8]}/><meshStandardMaterial color="#27242c" roughness={.75}/></mesh>
+    </group>)}
+    <mesh position-y={.36}><cylinderGeometry args={[.045, .045, .53, 12]}/><meshStandardMaterial color="#4b4350" metalness={.55} roughness={.48}/></mesh>
+    <SoftBox args={[.76, .16, .72]} radius={.075} smoothness={4} position-y={.68} castShadow>
+      <meshStandardMaterial color="#a27f9f" roughness={.94}/>
+    </SoftBox>
+    <SoftBox args={[.73, .91, .17]} radius={.075} smoothness={4} position={[0, 1.17, .34]} rotation-x={-.1} castShadow>
+      <meshStandardMaterial color="#94748e" roughness={.93}/>
+    </SoftBox>
+    {[-1, 1].map(side => <group key={side}>
+      <mesh position={[side * .42, .88, .04]}><boxGeometry args={[.045, .32, .045]}/><meshStandardMaterial color="#55495a" metalness={.3} roughness={.65}/></mesh>
+      <SoftBox args={[.11, .065, .43]} radius={.025} smoothness={3} position={[side * .42, 1.055, .04]} castShadow>
+        <meshStandardMaterial color="#a889a5" roughness={.92}/>
+      </SoftBox>
+    </group>)}
+    <mesh position={[-.24, 1.59, .39]} rotation-z={Math.PI / 2}><cylinderGeometry args={[.055, .055, .35, 12]}/><meshStandardMaterial map={tex} roughness={.98}/></mesh>
+    <mesh geometry={drape} position={[-.24, 1.58, .46]} castShadow><meshStandardMaterial map={tex} roughness={.98} side={THREE.DoubleSide}/></mesh>
+    {Array.from({ length: 5 }, (_, i) => <mesh key={`t${i}`} position={[-.39 + i * .075, .80 - (i % 2) * .025, .48]}><cylinderGeometry args={[.004, .004, .07, 4]}/><meshStandardMaterial color="#e8c070"/></mesh>)}
   </group>
 }
 function DeskLamp() {
@@ -366,6 +557,14 @@ export default function ReferenceDecor() {
     <Ivy/>
     <PhotoWall/>
     <NeonSign/>
+    <SideWallGallery/>
+    <DrumWallPoster/>
+    <RearWallPrint/>
+    <WallShelf side="left" z={6.55} y={2.32} seed={81}/>
+    <WallShelf side="left" z={-4.8} y={3.18} seed={82}/>
+    <WallShelf side="right" z={2.45} y={3.12} seed={83}/>
+    <WallShelf side="right" z={6.25} y={2.75} seed={84}/>
+    <ReadingNookNeon/>
     <Pendants/>
     <Candles/>
     <Crystals/>
@@ -379,10 +578,12 @@ export default function ReferenceDecor() {
     {/* big floor plants framing the window wall, by the bed, by the drums */}
     <Monstera position={[-6.8, 0, -7.0]} scale={1.1} seed={51}/>
     <Monstera position={[6.9, 0, -7.0]} scale={1.05} seed={52}/>
-    <Monstera position={[9.3, 0, 7.2]} scale={.9} seed={53}/>
+    <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[9.3, 0, 7.2]} scale={1.7} axisCorrection={false}/>
     <Plant position={[-4.6, 0, -6.95]} scale={1.6} bush="tall" pot="#d8a0b0" seed={54}/>
     <Plant position={[4.4, 0, -6.95]} scale={1.6} bush="tall" seed={55}/>
-    <Plant position={[-9.4, 0, 6.9]} scale={1.5} bush="tall" pot="#c98a6a" seed={56} flowers={4}/>
+    <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[-9.4, 0, 6.9]} rotation={[0, 1.2, 0]} scale={1.7} axisCorrection={false}/>
+    <pointLight position={[-8.9, 1.35, 6.85]} color="#ffd1a0" intensity={2.4} distance={2.4} decay={2}/>
+    <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[-9.2, 0, .55]} rotation={[0, -.7, 0]} scale={1.4} axisCorrection={false}/>
     <CoffeeTable/>
     <FlowerCushion position={[-4.2, 0, 1.5]}/>
     <FloorBits/>

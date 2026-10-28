@@ -325,6 +325,10 @@ def main():
         ((-9,0,-6.1),.7),((-7.8,0,-5.95),.85),((8.2,0,-5.8),.7),
         ((9.1,0,-5.65),.85),((-9.25,0,1.8),1.05),((4.3,0,-5.45),.8),
     ]):
+        # Botanical_04 at the piano is replaced in R3F by a textured GLB plant.
+        # Keep every other room-dressing fixture and botanical unchanged.
+        if i == 4:
+            continue
         potted_plant(i,loc,scale,sage,ceramic[i%3],soil,stem,petals,brass,botanical)
     for i,x in enumerate((-8.2,-7,-4.8,-4,3.5,4.5,7,8.1)):
         hanging_vine(i,(x,7.52,-6.45),sage,stem,petals,brass,botanical)
