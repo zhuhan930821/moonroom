@@ -108,6 +108,7 @@ export const INTERACTIONS = {
   deskChair: { position: [-.3, 0, -2.52], radius: 1.15, label: '坐下写点什么' },
   foxSleeping: { position: [6.0, 0, 6.7], radius: 1.35, label: '轻轻摸摸眠眠', fox: '眠眠' },
   foxListening: { position: [3.25, 0, 4.45], radius: 1.25, label: '摸摸云团', fox: '云团' },
+  photos: { position: [-7.55, 0, 1.05], radius: .75, label: '整理照片墙' }, // in front of the wall, clear of piano + drums
 }
 
 export const FOX_HINTS = [
@@ -129,4 +130,5 @@ export const CAMERA_POSES = {
   souvenirs: { position: [-6.6, 1.75, 5.8], lookAt: [-6.6, 1.5, 7.85] },
   bed: { position: [7.6, 1.15, 4.7], lookAt: [5.7, 4.6, -5.4] },
   deskChair: { position: [-.3, 1.45, -2.52], lookAt: [-.4, 1.45, -4.5] },
+  photos: { position: [-7.6, 2.95, 2.78], lookAt: [-9.9, 2.85, 2.78] },
 }

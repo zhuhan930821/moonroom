@@ -1,8 +1,11 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { RoundedBox as SoftBox, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { DECOR_COLLIDERS } from '../game/collision'
+import { hungItems, photoWall } from '../game/photoWall'
+import { layoutPhotoWall } from './photoWallLayout'
+import { builtinCanvas } from './photoArt'
 import GLBAsset from './AssetModel'
 
 // Decor pass 03: the layer of the 2D reference that the room still lacked — ivy curtains over
@@ -179,7 +182,7 @@ function Crystals() {
   return <instancedMesh ref={ref} args={[null, null, parts.length]}><octahedronGeometry args={[1, 0]}/><meshStandardMaterial color="#b48ae8" emissive="#9a6ad8" emissiveIntensity={.6} roughness={.15} transparent opacity={.9}/></instancedMesh>
 }
 
-// ---------- the photo wall (left wall, under the loft) ----------
+// Shared 8-tile atlas for the fixed side-wall photos and the drum-wall poster.
 function photoAtlas() {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 512
   const g = c.getContext('2d'), r = rand(5)
@@ -199,21 +202,53 @@ function photoAtlas() {
   }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t
 }
+// ---------- the photo wall (left wall, under the loft) ----------
+// Which photos hang is up to the player (src/game/photoWall.js); the layout is a staggered
+// salon arrangement (src/scene/photoWallLayout.js).
+const FRAME_COLORS = { polaroid: '#f6f0e6', wood: '#6a4430', black: '#2a2228', gold: '#c8a060', cream: '#efe4d0' }
+// The free band of wall between the chair rail (y 2.78), the loft soffit (y 3.82), the moon
+// wall relief (z < 1.55, scripts/build_ceiling_wall_dressing.py) and the music shelf (z 3.98).
+const PHOTO_WALL = { centerZ: 2.78, centerY: 3.3, width: 2.3, height: .88 }
+function photoTexture(item) {
+  const t = item.src ? new THREE.TextureLoader().load(item.src) : new THREE.CanvasTexture(builtinCanvas(item.id))
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+// Crops the texture to the frame's shape (like object-fit: cover).
+function coverCrop(texture, frameAspect, imageAspect) {
+  texture.repeat.set(1, 1); texture.offset.set(0, 0)
+  if (frameAspect > imageAspect) { texture.repeat.y = imageAspect / frameAspect; texture.offset.y = (1 - texture.repeat.y) / 2 }
+  else { texture.repeat.x = frameAspect / imageAspect; texture.offset.x = (1 - texture.repeat.x) / 2 }
+}
+function FramedPhoto({ p, item, texture }) {
+  const polaroid = p.frame === 'polaroid'
+  const picY = polaroid ? (p.h - p.ph) / 2 - (p.w - p.pw) / 2 : 0
+  useLayoutEffect(() => { coverCrop(texture, p.pw / p.ph, item.src ? item.aspect : 1); texture.needsUpdate = true }, [texture, p.pw, p.ph, item])
+  return <group position={[p.x, p.y, 0]} rotation-z={p.rot}>
+    <mesh position-z={-.008}><boxGeometry args={[p.w, p.h, .025]}/><meshStandardMaterial color={FRAME_COLORS[p.frame]} roughness={p.frame === 'gold' ? .35 : .8} metalness={p.frame === 'gold' ? .55 : 0}/></mesh>
+    {p.frame === 'cream' && <mesh position-z={.0055}><planeGeometry args={[p.pw + .03, p.ph + .03]}/><meshStandardMaterial color="#8a6a50" roughness={.8}/></mesh>}
+    <mesh position={[0, picY, .006]}><planeGeometry args={[p.pw, p.ph]}/><meshStandardMaterial map={texture} roughness={.6}/></mesh>
+    {polaroid && <mesh position={[0, p.h / 2 - .005, .008]} rotation-z={(p.rot * 7) % .3}><planeGeometry args={[.11, .035]}/><meshStandardMaterial color={BLOSSOMS[Math.abs(Math.round(p.x * 10)) % 5]} transparent opacity={.85} roughness={.9}/></mesh>}
+  </group>
+}
 function PhotoWall() {
-  const atlas = useMemo(photoAtlas, [])
-  const photos = useMemo(() => { const r = rand(9), out = []
-    for (let i = 0; i < 22; i++) { const w = .28 + r() * .24, polaroid = r() < .55
-      out.push({ z: -.6 + (i % 8) * .62 + (r() - .5) * .2, y: 3.3 + Math.floor(i / 8) * .58 + (r() - .5) * .12, w, h: w * (polaroid ? 1.2 : .8), rot: (r() - .5) * .25, tile: i % 8, polaroid })
-    } return out }, [])
-  const mats = useMemo(() => Array.from({ length: 8 }, (_, i) => { const t = atlas.clone(); t.needsUpdate = true; t.repeat.set(.25, .5); t.offset.set((i % 4) * .25, i < 4 ? .5 : 0); return new THREE.MeshStandardMaterial({ map: t, roughness: .7 }) }), [atlas])
-  return <group position={[-9.93, 0, 0]} rotation-y={Math.PI / 2}>
-    {photos.map((p, i) => <group key={i} position={[-p.z, p.y, 0]} rotation-z={p.rot}>
-      <mesh position-z={-.005}><planeGeometry args={[p.w + .05, p.h + .05]}/><meshStandardMaterial color={p.polaroid ? '#f6f0e6' : '#5a3a2a'} roughness={.8}/></mesh>
-      <mesh position={[0, p.polaroid ? p.h * .08 : 0, 0]} material={mats[p.tile]}><planeGeometry args={[p.w * (p.polaroid ? .88 : 1), p.h * (p.polaroid ? .72 : 1)]}/></mesh>
-      <mesh position={[0, p.h / 2 + .01, .005]}><sphereGeometry args={[.012, 6, 4]}/><meshStandardMaterial color={BLOSSOMS[i % 5]}/></mesh>
-    </group>)}
+  const wall = useSyncExternalStore(photoWall.subscribe, photoWall.get)
+  const items = useMemo(() => hungItems(wall), [wall])
+  const layout = useMemo(() => layoutPhotoWall(items, { seed: wall.seed, width: PHOTO_WALL.width, height: PHOTO_WALL.height }), [items, wall.seed])
+  // One texture per photo id, kept while it hangs and disposed once taken down.
+  const cache = useRef(new Map())
+  const textures = useMemo(() => {
+    const next = new Map()
+    for (const item of items) next.set(item.id, cache.current.get(item.id) || photoTexture(item))
+    for (const [id, t] of cache.current) if (!next.has(id)) t.dispose()
+    cache.current = next
+    return next
+  }, [items])
+  useEffect(() => () => cache.current.forEach(t => t.dispose()), [])
+  return <group position={[-9.93, PHOTO_WALL.centerY, PHOTO_WALL.centerZ]} rotation-y={Math.PI / 2}>
+    {layout.map(p => <FramedPhoto key={p.id} p={p} item={items.find(item => item.id === p.id)} texture={textures.get(p.id)}/>)}
     {/* a string of photo-clip lights across the gallery */}
-    {Array.from({ length: 16 }, (_, i) => <mesh key={`l${i}`} position={[.6 - i * .36, 4.95 - Math.sin(i / 15 * Math.PI) * .2, .03]}><sphereGeometry args={[.035, 8, 6]}/><meshBasicMaterial color={new THREE.Color('#ffc77a').multiplyScalar(2.2)} toneMapped={false}/></mesh>)}
+    {Array.from({ length: 10 }, (_, i) => <mesh key={`l${i}`} position={[-1.2 + i * 2.4 / 9, 3.77 - PHOTO_WALL.centerY - Math.sin(i / 9 * Math.PI) * .07, .03]}><sphereGeometry args={[.028, 8, 6]}/><meshBasicMaterial color={new THREE.Color('#ffc77a').multiplyScalar(2.2)} toneMapped={false}/></mesh>)}
   </group>
 }
 
@@ -229,6 +264,7 @@ function SideWallGallery() {
     const r = rand(241), list = []
     const add = (side, zs, ys) => zs.forEach((z, i) => ys.forEach((y, row) => {
       if (side === 'left' && z > 4.65 && z < 5.95 && y > 2.9 && y < 4.45) return // Claude's neon fox
+      if (side === 'left' && z > 1.5 && z < 4.0 && y < 3.9) return // the customizable photo wall's band
       if (r() < .19) return // negative space prevents wallpaper-like repetition
       const w = .24 + r() * .21
       list.push({ side, z: z + (r() - .5) * .17, y: y + (r() - .5) * .18,
