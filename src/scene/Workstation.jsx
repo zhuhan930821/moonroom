@@ -57,13 +57,33 @@ function ExternalMonitor() {
   </GLBAsset>
 }
 
+function MoonRiverTicket() {
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 512; canvas.height = 256
+    const c = canvas.getContext('2d')
+    c.fillStyle = '#f4e6cc'; c.fillRect(0, 0, 512, 256)
+    c.strokeStyle = '#ab8669'; c.lineWidth = 7; c.strokeRect(14, 14, 484, 228)
+    c.fillStyle = '#634d72'; c.font = 'bold 31px Georgia'; c.fillText('MOON RIVER', 46, 92)
+    c.font = '22px Georgia'; c.fillText('ONE WAY · 月亮河车站', 46, 142)
+    c.fillStyle = '#aa778a'; c.font = '18px Georgia'; c.fillText('✦  听见三声琴音，房间便启航  ✦', 46, 194)
+    const result = new THREE.CanvasTexture(canvas)
+    result.colorSpace = THREE.SRGBColorSpace
+    return result
+  }, [])
+  return <group position={[-3.65, 1.365, -3.45]} rotation-y={-.08}>
+    <mesh rotation-x={-Math.PI / 2} castShadow><planeGeometry args={[.72, .36]}/><meshStandardMaterial map={texture} side={THREE.DoubleSide} roughness={.93}/></mesh>
+    <mesh position={[.36,.005,0]} rotation-x={-Math.PI / 2}><circleGeometry args={[.026,12]}/><meshStandardMaterial color="#8c6b7b" roughness={.8}/></mesh>
+  </group>
+}
+
 export default function Workstation(){const p=FURNITURE.desk.position;const {desk:deskCandidate,laptop:laptopCandidate,midi:midiCandidate}=FLAGS;const { decorationLights }=useLighting();return <group>
   {deskCandidate ? <GLBAsset url="/assets/models/candidates/C01-workstation-desk-review.glb" position={p} axisCorrection={false} /> : <>
     <RoundedBox args={[8.25,.18,1.8]} color="#a36c6c" position={[p[0],1.22,p[2]]} />
     {[-3.8,3.8].map(x=>[-.65,.65].map(z=><RoundedBox key={`${x}/${z}`} args={[.13,1.22,.13]} color="#735260" position={[p[0]+x,.61,p[2]+z]}/>))}
     <RoundedBox args={[8.25,.12,.14]} color="#563d59" position={[p[0],.77,p[2]-.73]} />
   </>}
-  <CRT/><Laptop candidate={laptopCandidate}/>{laptopCandidate && <ExternalMonitor/>}
+  <CRT/><Laptop candidate={laptopCandidate}/>{laptopCandidate && <ExternalMonitor/>}<MoonRiverTicket/>
   {midiCandidate ? <GLBAsset url="/assets/models/candidates/C05-midi-keyboard-review.glb" position={[2.85,1.29,-4.22]} rotation={[0,Math.PI,0]} /> : <>
     <RoundedBox args={[1.55,.15,.47]} color="#4e455e" position={[2.85,1.36,-4.22]} />
     {Array.from({length:14},(_,i)=><RoundedBox key={i} args={[.08,.015,.28]} color={i%2?'#f4e8d6':'#bfa5b7'} position={[2.18+i*.105,1.45,-4.18]}/>)}

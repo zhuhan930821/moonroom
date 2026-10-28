@@ -35,6 +35,8 @@ import FairyLights from './scene/FairyLights'
 import TimeOfDay from './scene/TimeOfDay'
 import Milo from './scene/Milo'
 import { FLAGS } from './config/flags'
+import JourneyHud from './ui/JourneyHud'
+import { journey } from './game/journey'
 
 preloadCoreAssets()
 
@@ -117,7 +119,9 @@ export default function App() {
     window.__moonroomGame = game
     window.__moonroomAudio = { startDemoLog, renderDemoLog }
     window.__moonroomRoom = roomState
+    window.__moonroomJourney = journey
   })
+  useEffect(() => { if (FLAGS.demo && FLAGS.capture && FLAGS.voyagePreview === 'arrived') journey.previewArrival() }, [])
   // Subscribe to the celebration timestamp (room state is mutated in place, so the object
   // itself never changes identity).
   const celebrateAt = useSyncExternalStore(roomState.subscribe, () => roomState.get().celebrateAt)
@@ -195,6 +199,7 @@ export default function App() {
       {game.mode === 'bed' && <BedDreamPanel onClose={game.leave}/>}
       {game.mode === 'deskChair' && <ChairNotePanel onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
+      {!whiteModel && !world && <JourneyHud/>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
       {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}</section>}

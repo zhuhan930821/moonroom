@@ -14,6 +14,7 @@ export function parseFlags(search = '') {
     whiteModel: on('whiteModel'),
     // Scripted product-video capture (scripts/record_demo.mjs): exposes camera/game/audio hooks, hides QA UI
     demo: on('demo'),
+    voyagePreview: q.get('voyagePreview'),
     // Lighting
     lightingPass: ['current', 'moon', 'warm', 'combined', 'bloom', 'golden'].includes(pass) ? pass : 'golden',
     lightingDebug: on('lightingDebug'),

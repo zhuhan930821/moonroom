@@ -1,0 +1,22 @@
+import { test, expect } from '@playwright/test'
+
+test('two held drum keys produce two independent hit events', async ({ page }) => {
+  test.setTimeout(180000)
+  await page.goto('http://127.0.0.1:5190/?demo=1&capture=1&whiteModel=1', { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => window.__moonroomGame?.started, null, { timeout: 120000 })
+  await page.evaluate(() => window.__moonroomGame.enter('drums'))
+  await expect(page.locator('main')).toHaveAttribute('data-mode', 'drums')
+  await page.evaluate(() => window.__moonroomGame.toggleRecording())
+  await expect(page.getByTestId('drum-controls')).toHaveAttribute('data-recording', '1')
+  await page.keyboard.down('j')
+  await page.keyboard.down('k')
+  await page.keyboard.up('k')
+  await page.keyboard.up('j')
+  await page.waitForFunction(() => window.__moonroomGame.hit.events.some(event => event.name === 'kick') && window.__moonroomGame.hit.events.some(event => event.name === 'snare'), null, { timeout: 30000 })
+  const events = await page.evaluate(() => window.__moonroomGame.hit.events.slice(-2).map(event => event.name))
+  expect(events).toEqual(['kick', 'snare'])
+  await page.waitForFunction(() => window.__moonroomGame.recording?.hits.length >= 2)
+  expect(await page.evaluate(() => window.__moonroomGame.recording.hits.slice(-2).map(hit => hit.pad))).toEqual(['kick', 'snare'])
+  await page.keyboard.press('Escape')
+  await expect(page.locator('main')).toHaveAttribute('data-mode', 'explore')
+})

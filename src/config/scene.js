@@ -92,6 +92,7 @@ export const COLLIDERS = Object.values(FURNITURE).map(({ position, size }) => ({
 
 export const INTERACTIONS = {
   computer: { position: [-2.65, 0, -3.1], radius: 1.8, label: '使用电脑' },
+  moonTicket: { position: [-3.65, 0, -2.62], radius: .85, label: '拿起月亮河车票' },
   drums: { position: [-6.6, 0, -.15], radius: 1.95, label: '坐到鼓凳' },
   beanbag: { position: [1.3, 0, 3.0], radius: 2.25, label: '躺下' },
   piano: { position: [-7.7, 0, 2.6], radius: 1.6, label: '弹钢琴' },
@@ -128,7 +129,9 @@ export const CAMERA_POSES = {
   musicBooks: { position: [-8.85, 1.8, 5.2], lookAt: [-9.72, 1.55, 5.2] },
   portal: { position: [-4.5, 1.75, 5.2], lookAt: [-4.5, 1.6, 7.9] },
   souvenirs: { position: [-6.6, 1.75, 5.8], lookAt: [-6.6, 1.5, 7.85] },
-  bed: { position: [7.6, 1.15, 4.7], lookAt: [5.7, 4.6, -5.4] },
+  // The headboard and pillows are on the +X side of the bed. Rest near the
+  // pillows and look diagonally across the duvet toward the moonlit windows.
+  bed: { position: [8.35, 1.75, 3.0], lookAt: [4.9, 2.85, -4.8] },
   deskChair: { position: [-.3, 1.45, -2.52], lookAt: [-.4, 1.45, -4.5] },
   photos: { position: [-7.6, 2.95, 2.78], lookAt: [-9.9, 2.85, 2.78] },
 }

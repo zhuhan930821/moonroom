@@ -1,10 +1,14 @@
 import { noteName } from '../audio/takes'
+import { useSyncExternalStore } from 'react'
+import { journey } from '../game/journey'
 
 export default function PianoPanel({ game }) {
+  const voyage = useSyncExternalStore(journey.subscribe, journey.get)
   const held = [...game.pianoNotes].sort((a, b) => a - b).map(noteName).join(' ')
   return <div className="mode-panel drum-panel piano-panel" data-testid="piano-controls" data-recording={game.recording ? '1' : '0'}
     onClick={event => event.stopPropagation()} onMouseDown={event => event.preventDefault() /* keep keys as notes, not button focus */}>
     <span>PIANO · {noteName(game.pianoBase)}–{noteName(game.pianoBase + 28)}</span>
+    {voyage.phase === 'ticket' && <div className="voyage-piano-prompt">月亮河车票正在等待琴声 · {voyage.notes}/3</div>}
     <div className="piano-rows">
       <div><kbd>Z</kbd>…<kbd>/</kbd> 下排从 {noteName(game.pianoBase)}　<kbd>Q</kbd>…<kbd>P</kbd> 上排从 {noteName(game.pianoBase + 12)}　黑键在 <kbd>S</kbd><kbd>D</kbd> / <kbd>2</kbd><kbd>3</kbd> 行</div>
       <div className="held">{held || '也可以用鼠标按琴键'}</div>

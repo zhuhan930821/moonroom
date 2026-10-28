@@ -8,6 +8,8 @@ import { roomState } from './roomState'
 import { activity } from './activity'
 import { currentDiaryPages } from '../ui/DiaryPage'
 import { worldPhysics } from '../worlds/worldState'
+import { journey } from './journey'
+import { appendDrumHit, initialDrumHit } from './drumHitState'
 
 import { DRUM_KEYS } from './drumKeys'
 // Recording timeline uses the page clock: the audio clock can run unevenly when no output
@@ -24,7 +26,7 @@ export function useInteractionSystem(root) {
   const [near, setNear] = useState(null)
   const [foxName, setFoxName] = useState(null)
   const [foxPet, setFoxPet] = useState(null)
-  const [hit, setHit] = useState({ name: null, id: 0 })
+  const [hit, setHit] = useState(initialDrumHit)
   const [ambient, setAmbient] = useState(false)
   const [volume, setVolume] = useState(.42)
   const [audioError, setAudioError] = useState('')
@@ -96,7 +98,7 @@ export function useInteractionSystem(root) {
     // The diary remembers where you spent time (sofa, books, bed, desk, photo wall…).
     // Logged first: pulling a book counts today's page, so the page list must already include it.
     activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos' }[nextMode] || nextMode)
-    if(nextMode==='drums') setHit(old=>({name:null,id:old.id}))
+    if(nextMode==='drums') setHit(old=>({...old,name:null}))
     if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
     if(nextMode==='musicBooks') setScorePage(0)
     if(nextMode==='books') {
@@ -115,7 +117,7 @@ export function useInteractionSystem(root) {
   const pulse = useCallback((name, note) => {
     emitMusic(name, note)
     if (name === 'piano') flashNote(note)
-    else setHit(old => ({ name, id: old.id + 1 }))
+    else setHit(old => appendDrumHit(old, name))
   }, [flashNote])
 
   const stopTake = useCallback(() => { stopPlayback.current?.(); stopPlayback.current = null; setPlayingTake(false) }, [])
@@ -214,6 +216,7 @@ export function useInteractionSystem(root) {
   const noteOn = useCallback(async (id, note) => {
     if (modeRef.current !== 'piano' || heldKeys.current.has(id)) return
     heldKeys.current.set(id, { note, release: null, at: clock() })
+    journey.pianoNote()
     setPianoNotes(old => new Set(old).add(note))
     emitMusic('piano', note)
     activity.log('piano')
@@ -256,7 +259,8 @@ export function useInteractionSystem(root) {
     const item = nearRef.current
     const lamp = INTERACTIONS[item].lamp
     const fox = INTERACTIONS[item].fox
-    if (fox) { setFoxPet(old => ({ name: fox, id: (old?.id || 0) + 1 })); activity.log('fox', fox) }
+    if (item === 'moonTicket') { journey.takeTicket(); activity.log('moonTicket') }
+    else if (fox) { setFoxPet(old => ({ name: fox, id: (old?.id || 0) + 1 })); activity.log('fox', fox) }
     else if (lamp) { roomState.toggleLamp(lamp); activity.log('lamp') }
     else enter(item === 'booksLeft' ? 'books' : item)
   }, [enter])

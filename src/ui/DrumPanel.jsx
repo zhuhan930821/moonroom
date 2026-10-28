@@ -15,12 +15,15 @@ function Elapsed({ since }) {
 
 export default function DrumPanel({ game }) {
   const [recordStartedAt, setRecordStartedAt] = useState(0)
+  const [flashClock, setFlashClock] = useState(0)
   const [pick, setPick] = useState(game.drumTakes[0]?.id)
   useEffect(() => { if (!game.drumTakes.some(take => take.id === pick)) setPick(game.drumTakes[0]?.id) }, [game.drumTakes, pick])
   useEffect(() => { if (game.recording) setRecordStartedAt(performance.now()) }, [Boolean(game.recording)])
+  useEffect(() => { const timer = setInterval(() => setFlashClock(performance.now()), 50); return () => clearInterval(timer) }, [])
+  const activePads = new Set((game.hit.events || []).filter(event => flashClock - event.at < 180).map(event => event.name))
   return <div className={`mode-panel drum-panel ${game.challenge ? 'in-challenge' : ''}`} data-testid="drum-controls" data-recording={game.recording ? '1' : '0'} onClick={event => event.stopPropagation()} onMouseDown={event => event.preventDefault() /* keep focus off buttons so Space/keys stay drum controls */}>
     <span>DRUM SESSION</span>
-    <div className="pad-keys">{ORDER.map(pad => <button key={pad} className={game.hit.name === pad ? 'hit' : ''} onPointerDown={() => game.strike(pad)}><kbd>{KEY_LABEL[pad]}</kbd>{LABEL[pad]}</button>)}</div>
+    <div className="pad-keys">{ORDER.map(pad => <button key={pad} className={activePads.has(pad) ? 'hit' : ''} data-pad={pad} onPointerDown={event => { event.preventDefault(); event.stopPropagation(); game.strike(pad) }}><kbd>{KEY_LABEL[pad]}</kbd>{LABEL[pad]}</button>)}</div>
     <div className="transport">
       <button className={game.recording ? 'rec on' : 'rec'} onClick={game.toggleRecording} data-testid="record-toggle">{game.recording ? <>● REC <Elapsed since={recordStartedAt}/> · {game.recording.hits.length} hits</> : '● Record (R)'}</button>
       <button onClick={game.togglePlayLast} disabled={!game.lastTake && !game.playingTake}>{game.playingTake ? '■ Stop' : `▶ ${game.lastTake ? game.lastTake.name : 'No takes yet'} (Space)`}</button>

@@ -8,6 +8,8 @@ import { RoundedBox, StarField } from './Primitives'
 import { FLAGS } from '../config/flags'
 import { energy, pianoColor } from '../audio/musicBus'
 import { roomState } from '../game/roomState'
+import { journey } from '../game/journey'
+import MoonRiverStation from './MoonRiverStation'
 
 const ARCHITECTURE_URLS = {
   phase1: '/assets/models/architecture/moonroom-architecture-phase1.glb',
@@ -88,7 +90,7 @@ void main() {
 const skyFragment = `
 uniform sampler2D map;
 uniform vec3 zenith, upper, horizon, below;
-uniform float imageArc, totalArc, imageV0, imageV1, dawn, day, castleRise, castleGlow, time;
+uniform float imageArc, totalArc, imageV0, imageV1, dawn, day, castleRise, castleGlow, time, voyage;
 uniform vec3 dawnZenith, dawnUpper, dawnHorizon, dayZenith, dayUpper, dayHorizon;
 varying vec2 vUv;
 varying vec3 vDir;
@@ -103,7 +105,7 @@ void main() {
   float star = step(0.9965, hash(cell)) * smoothstep(0.12, 0.45, h);
   dome += star * vec3(1.0, 0.94, 0.82) * (0.5 + 0.5 * hash(cell + 7.0)) * (1.0 - dawn);
   // Cylinder u runs against screen-right when seen from inside, so flip it.
-  float u = 0.5 - (vUv.x - 0.5) * totalArc / imageArc;
+  float u = 0.5 - (vUv.x - 0.5) * totalArc / imageArc + voyage * .055;
   float v = (vUv.y - imageV0) / (imageV1 - imageV0);
   float fadeU = smoothstep(0.0, 0.14, u) * smoothstep(1.0, 0.86, u);
   float fadeV = smoothstep(0.0, 0.10, v) * smoothstep(1.0, 0.82, v);
@@ -141,7 +143,7 @@ function SkyBackdrop({ sky }) {
         map: { value: sky },
         zenith: { value: new THREE.Color('#0a1846') }, upper: { value: new THREE.Color('#143276') },
         horizon: { value: new THREE.Color('#8a5f99') }, below: { value: new THREE.Color('#5a3d70') },
-        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC }, dawn: { value: 0 }, day: { value: 0 }, castleRise: { value: 0 }, castleGlow: { value: 0 }, time: { value: 0 },
+        imageArc: { value: SKY_IMAGE_ARC }, totalArc: { value: SKY_TOTAL_ARC }, dawn: { value: 0 }, day: { value: 0 }, castleRise: { value: 0 }, castleGlow: { value: 0 }, time: { value: 0 }, voyage: { value: 0 },
         dawnZenith: { value: new THREE.Color('#5d7fd0') }, dawnUpper: { value: new THREE.Color('#e9a3b8') }, dawnHorizon: { value: new THREE.Color('#ffc58c') },
         dayZenith: { value: new THREE.Color('#6fa8ec') }, dayUpper: { value: new THREE.Color('#a9d1f5') }, dayHorizon: { value: new THREE.Color('#f6e9d6') },
         imageV0: { value: (centre - SKY_IMAGE_HEIGHT / 2 + half) / SKY_HEIGHT },
@@ -166,6 +168,7 @@ function SkyBackdrop({ sky }) {
     material.uniforms.castleRise.value = Math.min(1, Math.max(0, age / 3.5))
     material.uniforms.castleGlow.value = age < 0 || age > 16 ? 0 : Math.min(1, age * 3) * Math.min(1, (16 - age) / 2.5)
     material.uniforms.time.value = clock.elapsedTime
+    material.uniforms.voyage.value = journey.progress()
   })
   return <group>
     <mesh material={material} renderOrder={-1}>
@@ -181,7 +184,7 @@ function Outside({ hit, quality, visualBaseline, cinematic }) {
   const clouds=useRef()
   const sky=useLoader(THREE.TextureLoader,'/assets/textures/moon-river-sky.png')
   sky.colorSpace=THREE.SRGBColorSpace
-  useFrame(({clock})=>{if(clouds.current)clouds.current.position.x=Math.sin(clock.elapsedTime*.075)*.35})
+  useFrame(({clock})=>{if(clouds.current){const phase=journey.get().phase;const sailing=phase==='travel'||phase==='arrived';clouds.current.position.x=Math.sin(clock.elapsedTime*.075)*.35+(sailing?Math.sin(clock.elapsedTime*.45)*.25:0);clouds.current.position.z=sailing?journey.progress()*3:0}})
   return <group>
     {visualBaseline
       ? <mesh position={[0,7,-38]}><planeGeometry args={[86,48.4]} /><meshBasicMaterial map={sky} fog={false} toneMapped={false}/></mesh>
@@ -194,6 +197,7 @@ function Outside({ hit, quality, visualBaseline, cinematic }) {
       return <mesh key={i} position={[x, y, z]} scale={[1.8 + i % 4, .38 + i % 3 * .1, 1.25]}><sphereGeometry args={[1, 24, 12]} /><meshBasicMaterial color={cloudColors[i % cloudColors.length]} transparent opacity={.38} depthWrite={false} /></mesh>
     })}</group>
     <MoonRiver hit={hit} />
+    <MoonRiverStation />
     {!cinematic && <pointLight position={[7,3.7,-24]} color="#75f4ff" intensity={hit?.id ? 14 : 6} distance={11} />}
   </group>
 }

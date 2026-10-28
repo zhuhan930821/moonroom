@@ -5,13 +5,13 @@ const NODE_PAD = { Kick:'kick', Snare:'snare', HiHat_Top:'hihat', Tom_One:'tom1'
 const CYMBALS = new Set(['HiHat_Top', 'Crash', 'Ride'])
 
 export function animateKit(root, active) {
-  const target = HIT_NODES[active.name]
   for (const nodeName of Object.keys(NODE_PAD)) {
     const node = root.getObjectByName(nodeName)
     if (!node) continue
-    const amount = nodeName === target ? active.strength : 0
+    const pad = NODE_PAD[nodeName]
+    const amount = pad === 'hihat' ? Math.max(active.hihat || 0, active.hihatOpen || 0) : active[pad] || 0
     const cymbal = CYMBALS.has(nodeName)
-    node.rotation.z = cymbal ? Math.sin(performance.now() * .045) * amount * (active.name === 'hihatOpen' ? .2 : .12) : 0
+    node.rotation.z = cymbal ? Math.sin(performance.now() * .045) * amount * (pad === 'hihat' && active.hihatOpen ? .2 : .12) : 0
     node.scale.y = 1 - amount * (cymbal ? .02 : .08)
   }
 }

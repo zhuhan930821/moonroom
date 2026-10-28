@@ -10,13 +10,11 @@ const DRUM_ANCHORS = [{name:'DrumThrone_Interaction',position:[-.22,1.1,1.4]}]
 export default function DrumKit({ hit, onStrike }) {
   const model = useRef()
   const lastId = useRef(0)
-  const active = useRef({ name:'', strength:0 })
+  const active = useRef({})
   useFrame((_, dt) => {
-    if (hit.id !== lastId.current) {
-      lastId.current = hit.id
-      active.current = { name:hit.name, strength:1 }
-    }
-    active.current.strength = Math.max(0, active.current.strength - dt * 6)
+    for (const event of hit.events || []) if (event.id > lastId.current) active.current[event.name] = 1
+    lastId.current = hit.id
+    for (const pad of Object.keys(active.current)) active.current[pad] = Math.max(0, active.current[pad] - dt * 6)
     const root = model.current
     if (!root) return
     animateKit(root, active.current)
