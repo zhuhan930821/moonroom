@@ -1,6 +1,7 @@
 import { useRef, useState, useSyncExternalStore } from 'react'
 import { BUILTIN_IDS, MAX_HUNG, MAX_UPLOADS, fileToUpload, photoWall } from '../game/photoWall'
 import { builtinThumb } from '../scene/photoArt'
+import { activity } from '../game/activity'
 
 // Pick which photos hang on the wall; add your own from the device.
 export default function PhotoPanel() {
@@ -16,7 +17,7 @@ export default function PhotoPanel() {
     let added = 0
     for (const file of files) {
       if (photoWall.get().uploads.length >= MAX_UPLOADS) { setNote(`最多存 ${MAX_UPLOADS} 张自己的照片`); break }
-      try { photoWall.add(await fileToUpload(file)); added++ } catch (error) { setNote(error.message) }
+      try { photoWall.add(await fileToUpload(file)); added++; activity.log('photoUpload') } catch (error) { setNote(error.message) }
     }
     if (added) setNote(photoWall.saveError() || `挂上了 ${added} 张`)
   }

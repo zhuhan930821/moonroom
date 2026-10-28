@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { FLAGS } from '../config/flags'
 import { playChime } from '../audio/drums'
 import { projectKey, takeStore } from '../audio/takes'
+import { activity } from '../game/activity'
 
 // Moving the curtains brushes a wind chime tuned to the major pentatonic of your latest
 // piano take's key (C when there is none).
@@ -108,6 +109,7 @@ export default function SheerCurtainSample() {
       if (document.querySelector('main')?.dataset.mode !== 'explore') return
       target.current = target.current > 0.5 ? 0 : 0.86
       ringChime()
+      activity.log('curtain')
     }
     const onKey = event => {
       if (event.code !== 'KeyC' || event.repeat) return

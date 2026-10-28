@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore } from 'react'
 import { personalSpace } from '../game/personalSpace'
+import { activity } from '../game/activity'
 
 const DREAMS = [
   ['月亮河', '你沿着发光的河岸走，水面倒映着第二轮月亮。远处的城堡亮起一扇窗，像在等你。'],
@@ -16,6 +17,7 @@ export function BedDreamPanel({ onClose }) {
     const entry = { title: DREAMS[index][0], text: DREAMS[index][1], date: new Date().toLocaleDateString('zh-CN') }
     setCurrent(entry)
     personalSpace.update({ dreams: [entry, ...personalSpace.get().dreams].slice(0, 20) })
+    activity.log('dream', entry.title)
   }
   return <section className="personal-panel dream-panel" data-testid="dream-panel">
     <button className="personal-close" onClick={onClose} aria-label="起床">×</button>
@@ -35,7 +37,7 @@ export function ChairNotePanel({ onClose }) {
     <button className="personal-close" onClick={onClose} aria-label="起身">×</button>
     <span className="eyebrow">DESK NOOK</span><h2>坐下来，写点什么</h2>
     <textarea aria-label="私人笔记" value={draft} maxLength={2000} onChange={e => { setDraft(e.target.value); setSaved(false) }} placeholder="今天的月光让你想起了什么？"/>
-    <div className="personal-actions"><button onClick={() => setSaved(personalSpace.update({ note: draft }))}>保存笔记</button><button onClick={onClose}>起身</button></div>
+    <div className="personal-actions"><button onClick={() => { const ok = personalSpace.update({ note: draft }); setSaved(ok); if (ok && draft.trim()) activity.log('note') }}>保存笔记</button><button onClick={onClose}>起身</button></div>
     <small>{saved ? '已保存在这台浏览器' : '私人笔记不会上传'} · {draft.length}/2000</small>
   </section>
 }

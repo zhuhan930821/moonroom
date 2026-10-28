@@ -1,3 +1,4 @@
+import { activity } from './activity'
 // Small shared room state that scene code reads every frame and UI subscribes to.
 // Time of day, advanced by <TimeOfDay/>: `time` 0 = deep night, 1 = sunrise, 2 = full day;
 // `dawn` (0–1) and `day` (0–1) are its two halves. `timeMode`: 'auto' (sofa cycle) | 'night' | 'dawn' | 'day'.
@@ -11,6 +12,7 @@ export const roomState = {
   celebrate(reason) {
     state.celebrateAt = performance.now() / 1000
     state.celebration = reason
+    activity.log('castle', reason)
     listeners.forEach(listener => listener())
   },
   setTimeMode(mode) { state.timeMode = mode; listeners.forEach(listener => listener()) },

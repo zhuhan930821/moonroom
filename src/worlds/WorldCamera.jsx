@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useThree } from '@react-three/fiber'
 import { MAX_UPLOADS, photoCrop, photoWall } from '../game/photoWall'
 import { worldState } from './worldState'
+import { activity } from '../game/activity'
 
 // A camera for the Anywhere Door: press F (or tap 📷) behind the door and the current view is
 // developed straight onto the photo wall at home. The shutter is a window event so the DOM
@@ -24,6 +25,7 @@ export function WorldShutter() {
       c.getContext('2d').drawImage(from, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, crop.dw, crop.dh)
       const id = `u${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
       photoWall.add({ id, src: c.toDataURL('image/jpeg', .85), aspect: crop.aspect, name: world.name, at: Date.now() })
+      activity.log('photo', world.name)
       snapped({ name: world.name, hung: photoWall.get().hung.includes(id), error: photoWall.saveError() })
     }
     window.addEventListener(SNAP, snap)

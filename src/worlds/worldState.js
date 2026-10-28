@@ -3,6 +3,7 @@
 import { generateOffline, ID_SEA, normalize } from './spec.js'
 import { generateStrollOffline, normalizeStroll } from '../stroll/spec.js'
 import { spend } from '../stroll/wallet.js'
+import { activity } from '../game/activity.js'
 
 const KEY = 'moonroom.souvenirs.v1', COINS = 'moonroom.coins.v1'
 const load = () => { try { const v = JSON.parse(globalThis.localStorage?.getItem(KEY) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }
@@ -35,6 +36,7 @@ export const worldState = {
         state.note = `离线生成 · ${error.message}`
       }
     }
+    activity.log('world', world.name)
     state.world = world; state.status = 'inside'; state.carried = state.souvenirs.some(s => s.worldId === worldId(world)); state.visits++
     emit()
     return world
@@ -44,6 +46,7 @@ export const worldState = {
     const s = state.world.souvenir
     const item = { id: `souvenir-${Date.now().toString(36)}`, worldId: worldId(state.world), worldName: state.world.name, ...s, world: state.world, at: Date.now() }
     state.souvenirs = [item, ...state.souvenirs]; state.carried = true; persist(); emit()
+    activity.log('souvenir', item.name)
     return item
   },
   close() { state.world = null; state.status = 'idle'; emit() },
@@ -54,6 +57,7 @@ export const worldState = {
     const result = spend(state.coins, good.price, this.owns(world, good))
     if (!result.ok) return result
     state.coins = result.coins
+    activity.log('souvenir', good.name)
     state.souvenirs = [{ id: `souvenir-${Date.now().toString(36)}`, worldId: worldId(world), goodId: good.id, worldName: `${world.name} · ${shop.name}`,
       name: good.name, story: good.story, shape: good.shape, color: good.color, glow: .6, world, at: Date.now() }, ...state.souvenirs]
     persist(); emit()

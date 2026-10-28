@@ -5,6 +5,8 @@ import { countIn, startGroove, playDrum, playPiano, playTake, prepareAudio, prep
 import { finishRecording, takeStore } from '../audio/takes'
 import { emitMusic } from '../audio/musicBus'
 import { roomState } from './roomState'
+import { activity } from './activity'
+import { currentDiaryPages } from '../ui/DiaryPage'
 import { worldPhysics } from '../worlds/worldState'
 
 import { DRUM_KEYS } from './drumKeys'
@@ -91,6 +93,9 @@ export function useInteractionSystem(root) {
   }, [])
 
   const enter = useCallback(nextMode => {
+    // The diary remembers where you spent time (sofa, books, bed, desk, photo wall…).
+    // Logged first: pulling a book counts today's page, so the page list must already include it.
+    activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos' }[nextMode] || nextMode)
     if(nextMode==='drums') setHit(old=>({name:null,id:old.id}))
     if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
     if(nextMode==='musicBooks') setScorePage(0)
@@ -137,6 +142,7 @@ export function useInteractionSystem(root) {
     if (!current.hits.length) return
     const name = `${current.hits.some(hit => hit.pad === 'piano') ? 'Piano' : 'Drums'} ${takeStore.getAll().length + 1}`
     const take = takeStore.add(finishRecording({ startedAt: current.startedAt, hits: current.hits, bpm, name, now: Date.now() }))
+    activity.log('take', take.name)
     setLastTake(take)
   }, [bpm, stopTake])
 
@@ -149,12 +155,14 @@ export function useInteractionSystem(root) {
     stopPlayback.current = await playTake(take, { onHit: pulse, onEnd: () => { stopPlayback.current = null; setPlayingTake(false) } })
   }, [pulse, stopTake])
 
-  // Each shelf has one authored diary book; E turns to another page.
   const [book, setBook] = useState(null) // { index, page }
   const [scorePage, setScorePage] = useState(0)
   const [activeBookShelf, setActiveBookShelf] = useState('right')
+  // Opens on an unread page, else the newest (the room's own pages come first); E turns pages.
   const pullBook = useCallback(() => setBook(old => {
-    return { index: 0, page: ((old?.page ?? Math.floor(Math.random() * 8)) + 1) % 8 }
+    const pages = currentDiaryPages()
+    if (old) return { index: 0, page: (old.page + 1) % pages.length }
+    return { index: 0, page: Math.max(0, pages.findIndex(page => page.fresh)) } // an unread page first
   }), [])
   const vinylToken = useRef(0)
   const stopVinyl = useCallback(() => { vinylToken.current++; stopVinylRef.current?.(); stopVinylRef.current = null; setVinyl(null) }, [])
@@ -164,6 +172,7 @@ export function useInteractionSystem(root) {
     if (!take?.events.length) return
     const token = vinylToken.current
     setVinyl({ id })
+    activity.log('vinyl', take.name)
     // Let the arm swing over before the needle drops; a stop or another record in the
     // meantime cancels this one.
     await new Promise(resolve => setTimeout(resolve, 900))
@@ -186,6 +195,7 @@ export function useInteractionSystem(root) {
     const beat = 60 / take.bpm
     countIn(take.bpm, 4)
     setChallenge({ take, startAt: clock() + .05 + 4 * beat })
+    activity.log('challenge')
   }, [stopTake])
   const endChallenge = useCallback(() => setChallenge(null), [])
 
@@ -206,6 +216,7 @@ export function useInteractionSystem(root) {
     heldKeys.current.set(id, { note, release: null, at: clock() })
     setPianoNotes(old => new Set(old).add(note))
     emitMusic('piano', note)
+    activity.log('piano')
     try {
       const voice = await playPiano(note)
       const held = heldKeys.current.get(id)
@@ -245,8 +256,8 @@ export function useInteractionSystem(root) {
     const item = nearRef.current
     const lamp = INTERACTIONS[item].lamp
     const fox = INTERACTIONS[item].fox
-    if (fox) setFoxPet(old => ({ name: fox, id: (old?.id || 0) + 1 }))
-    else if (lamp) roomState.toggleLamp(lamp)
+    if (fox) { setFoxPet(old => ({ name: fox, id: (old?.id || 0) + 1 })); activity.log('fox', fox) }
+    else if (lamp) { roomState.toggleLamp(lamp); activity.log('lamp') }
     else enter(item === 'booksLeft' ? 'books' : item)
   }, [enter])
 
@@ -259,6 +270,7 @@ export function useInteractionSystem(root) {
       const at = clock()
       strikeListeners.current.forEach(listener => listener(name, at))
       await playDrum(name)
+      activity.log('drums')
       setRecording(current => current && at >= current.startedAt ? { ...current, hits: [...current.hits, { pad: name, at }] } : current)
       pulse(name)
     } catch (error) { setAudioError(error.message) }

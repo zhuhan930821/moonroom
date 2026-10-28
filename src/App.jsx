@@ -14,7 +14,7 @@ import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import PhotoPanel from './ui/PhotoPanel'
-import DiaryPage from './ui/DiaryPage'
+import DiaryPage, { currentDiaryPages } from './ui/DiaryPage'
 import ScorePage from './ui/ScorePage'
 import { BedDreamPanel, ChairNotePanel } from './ui/PersonalSpacePanels'
 import { MobileExploreControls, MobilePianoKeys } from './ui/MobileControls'
@@ -127,6 +127,15 @@ export default function App() {
   const world = useSyncExternalStore(worldState.subscribe, () => worldState.get().world) // Anywhere Door
   const worldNear = useSyncExternalStore(worldPrompt.subscribe, worldPrompt.get) // touch button label behind the door
   const inExplore = game.mode === 'explore'
+  // First visit of a new day: the room wrote a page about last time; point at the bookshelf.
+  const [diaryHint, setDiaryHint] = useState(false)
+  useEffect(() => {
+    if (!game.started || captureEnabled) return
+    if (!currentDiaryPages().some(page => page.fresh)) return
+    setDiaryHint(true)
+    const timer = setTimeout(() => setDiaryHint(false), 9000)
+    return () => clearTimeout(timer)
+  }, [game.started, captureEnabled])
   const prompt = game.mode === 'beanbag' ? '起身' : inExplore && game.near ? INTERACTIONS[game.near].label : null
 
   return <main ref={root} className={isTouch ? 'touch-layout' : ''} onClick={() => game.started && inExplore && !isTouch && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
@@ -160,6 +169,7 @@ export default function App() {
       {inExplore && <div className="reticle"/>}
       {!whiteModel && <div className={`prompt ${prompt ? 'show' : ''}`} data-testid="interaction-prompt">{prompt && <><kbd>E</kbd><span>{prompt}</span></>}</div>}
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
+      {inExplore && diaryHint && <div className="diary-hint" data-testid="diary-hint">✦ 书架上多了一页新日记 · 房间记下了你上次做的事</div>}
       {game.foxPet && <div key={game.foxPet.id} className="fox-pet-toast">✦ {game.foxPet.name === '眠眠' ? '眠眠半睁着眼，轻轻蹭了蹭你的手' : '云团开心地摇起尾巴'}</div>}
       {celebrating && <div className="castle-toast" data-testid="castle-toast">✦ {roomState.get().celebration} · 窗外的城堡为你亮起来了</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
