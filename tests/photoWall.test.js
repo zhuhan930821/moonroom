@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { layoutPhotoWall } from '../src/scene/photoWallLayout.js'
-import { BUILTIN_IDS, MAX_HUNG, addUpload, builtinAspect, hungItems, normalize, removeUpload, shuffle, toggle } from '../src/game/photoWall.js'
+import { BUILTIN_IDS, MAX_HUNG, addUpload, photoCrop, builtinAspect, hungItems, normalize, removeUpload, shuffle, toggle } from '../src/game/photoWall.js'
 
 const corners = p => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => {
   const x = sx * p.w / 2, y = sy * p.h / 2
@@ -37,7 +37,7 @@ test('choosing which photos hang', () => {
   s = toggle(s, s.hung[0]); assert.ok(!s.hung.includes('b0'))
   s = toggle(s, 'b0'); assert.equal(s.hung.at(-1), 'b0')
   s = addUpload(s, { id: 'u1', src: 'data:x', aspect: 1.5 })
-  assert.deepEqual(hungItems(s).at(-1), { id: 'u1', aspect: 1.5, src: 'data:x' })
+  assert.deepEqual(hungItems(s).at(-1), { id: 'u1', aspect: 1.5, src: 'data:x', featured: true })
   s = removeUpload(s, 'u1'); assert.ok(!s.hung.includes('u1') && !s.uploads.length)
   assert.equal(shuffle(s).seed, s.seed + 1)
   let full = { ...s, hung: [] }
@@ -45,4 +45,13 @@ test('choosing which photos hang', () => {
   for (let i = 0; i < 20; i++) full = addUpload(full, { id: `u${i}`, src: 'x' })
   assert.equal(full.hung.length, MAX_HUNG)
   assert.deepEqual(normalize({ hung: ['b1', 'nope', 'b1'], uploads: [{ id: 'u9', src: 'x' }], seed: 3 }).hung, ['b1'])
+})
+
+test('scenery snapshots are cropped to a photo shape', () => {
+  const wide = photoCrop(1600, 900)
+  assert.equal(wide.aspect, 1.5); assert.equal(wide.sw, 1350); assert.equal(wide.sx, 125); assert.equal(wide.dw, 512)
+  const tall = photoCrop(390, 844)
+  assert.equal(tall.aspect, .75); assert.equal(tall.sw, 390); assert.equal(tall.sh, 520); assert.equal(tall.sy, 162); assert.equal(tall.dh, 512)
+  const small = photoCrop(300, 300)
+  assert.deepEqual([small.dw, small.dh, small.aspect], [300, 300, 1])
 })

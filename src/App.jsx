@@ -21,6 +21,7 @@ import WorldScene from './worlds/WorldScene'
 import AnywhereDoor from './worlds/AnywhereDoor'
 import SouvenirShelf from './worlds/SouvenirShelf'
 import WorldHud from './worlds/WorldHud'
+import { WorldCameraButton, WorldShutter } from './worlds/WorldCamera'
 import PortalPanel from './worlds/PortalPanel'
 import SouvenirPanel from './worlds/SouvenirPanel'
 import { worldState } from './worlds/worldState'
@@ -129,6 +130,7 @@ export default function App() {
 
   return <main ref={root} className={isTouch ? 'touch-layout' : ''} onClick={() => game.started && inExplore && !isTouch && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
     <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state;if(captureEnabled)window.__moonroomCaptureScene=state.scene}}>
+      {world && <WorldShutter/>}
       {world ? <WorldScene world={world}/> : whiteModel ? <>
         <color attach="background" args={['#44444a']}/>
         <ambientLight intensity={1.8}/>
@@ -175,6 +177,7 @@ export default function App() {
       {game.mode === 'portal' && <PortalPanel onDone={game.leave}/>}
       {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
+      <WorldCameraButton active={inExplore}/>
       {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
       {game.mode === 'musicBooks' && <ScorePage page={game.scorePage} onNext={game.nextScore} onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}

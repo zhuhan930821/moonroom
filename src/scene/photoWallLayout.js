@@ -8,7 +8,7 @@ export const FRAMES = ['polaroid', 'wood', 'black', 'gold', 'cream']
 const BORDER = { polaroid: .035, wood: .03, black: .018, gold: .028, cream: .04 }
 const SIZES = { large: .58, medium: .42, small: .3 } // picture heights before scaling to fit
 
-// items: [{ id, aspect }] in hanging order. Returns [{ id, x, y, w, h, pw, ph, rot, frame }]:
+// items: [{ id, aspect, featured? }] in hanging order. Returns [{ id, x, y, w, h, pw, ph, rot, frame }]:
 // x/y are the frame centre on the wall (x along the wall, y up from the wall centre), w/h the
 // outer frame size, pw/ph the picture inside it.
 export function layoutPhotoWall(items, { seed = 1, width = 5, height = 1.9, gap = .09 } = {}) {
@@ -19,7 +19,8 @@ export function layoutPhotoWall(items, { seed = 1, width = 5, height = 1.9, gap 
     const frame = FRAMES[Math.floor(local() * FRAMES.length)]
     // One large anchor near the middle, a few medium, the rest small.
     const mid = Math.abs(i - (items.length - 1) / 2) < .6
-    const size = mid ? 'large' : local() < .38 ? 'medium' : 'small'
+    const roll = local()
+    const size = mid ? 'large' : item.featured || roll < .38 ? 'medium' : 'small' // your own photos never hang small
     const aspect = Math.min(1.8, Math.max(.55, item.aspect || 1))
     const ph = SIZES[size] * (aspect > 1.2 ? .82 : 1)
     const pw = ph * aspect

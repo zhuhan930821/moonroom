@@ -35,7 +35,7 @@ export const shuffle = state => ({ ...state, seed: state.seed + 1 })
 // The hung photos as layout input, in hanging order.
 export const hungItems = state => state.hung.map(id => {
   const upload = state.uploads.find(u => u.id === id)
-  return upload ? { id, aspect: upload.aspect || 1, src: upload.src } : { id, aspect: builtinAspect(id) }
+  return upload ? { id, aspect: upload.aspect || 1, src: upload.src, featured: true } : { id, aspect: builtinAspect(id) }
 })
 
 const load = () => { try { return normalize(JSON.parse(globalThis.localStorage?.getItem(KEY) || 'null')) } catch { return defaults() } }
@@ -59,6 +59,14 @@ export const photoWall = {
   remove: id => commit(removeUpload(state, id)),
   shuffle: () => commit(shuffle(state)),
   reset: () => commit({ ...defaults(), uploads: state.uploads }),
+}
+
+// Centre-crops a rendered frame to a photo shape (never wider than 3:2 or taller than 3:4) at ≤ 512px.
+export function photoCrop(width, height) {
+  const aspect = Math.min(1.5, Math.max(.75, width / height))
+  const w = Math.min(width, height * aspect), h = w / aspect
+  const k = Math.min(1, 512 / Math.max(w, h))
+  return { sx: (width - w) / 2, sy: (height - h) / 2, sw: w, sh: h, dw: Math.round(w * k), dh: Math.round(h * k), aspect }
 }
 
 // Shrinks a picked image file to a JPEG data URL (long side ≤ 512px) so many fit in storage.
