@@ -15,6 +15,7 @@ import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import DiaryPage from './ui/DiaryPage'
 import ScorePage from './ui/ScorePage'
+import { BedDreamPanel, ChairNotePanel } from './ui/PersonalSpacePanels'
 import { MobileExploreControls, MobilePianoKeys } from './ui/MobileControls'
 import WorldScene from './worlds/WorldScene'
 import AnywhereDoor from './worlds/AnywhereDoor'
@@ -136,11 +137,11 @@ export default function App() {
       </> : <LightingProvider value={{ cinematic, decorationLights: !cinematic }}>
         <Environment hit={game.hit} quality={quality} cinematic={cinematic}/>
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
-        <Furniture hit={game.hit} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
+        <Furniture hit={game.hit} foxPet={game.foxPet} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
           records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index} activeBookShelf={game.activeBookShelf}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
-        <TimeOfDay resting={game.mode === 'beanbag'}/>
+        <TimeOfDay resting={game.mode === 'beanbag' || game.mode === 'bed'}/>
         <AnywhereDoor/><SouvenirShelf/>
         {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
         {cinematic && <CinematicPostFX enabled={quality === 'high' && BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>}
@@ -156,6 +157,7 @@ export default function App() {
       {inExplore && <div className="reticle"/>}
       {!whiteModel && <div className={`prompt ${prompt ? 'show' : ''}`} data-testid="interaction-prompt">{prompt && <><kbd>E</kbd><span>{prompt}</span></>}</div>}
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
+      {game.foxPet && <div key={game.foxPet.id} className="fox-pet-toast">✦ {game.foxPet.name === '眠眠' ? '眠眠半睁着眼，轻轻蹭了蹭你的手' : '云团开心地摇起尾巴'}</div>}
       {celebrating && <div className="castle-toast" data-testid="castle-toast">✦ {roomState.get().celebration} · 窗外的城堡为你亮起来了</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
       {inExplore && !isTouch && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
@@ -175,6 +177,8 @@ export default function App() {
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
       {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
       {game.mode === 'musicBooks' && <ScorePage page={game.scorePage} onNext={game.nextScore} onClose={game.leave}/>}
+      {game.mode === 'bed' && <BedDreamPanel onClose={game.leave}/>}
+      {game.mode === 'deskChair' && <ChairNotePanel onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}

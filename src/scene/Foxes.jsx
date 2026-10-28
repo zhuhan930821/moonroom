@@ -3,6 +3,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { activity, energy, loudness } from '../audio/musicBus'
+import { INTERACTIONS } from '../config/scene'
 
 // 眠眠 sleeps at the foot of the bed: ears twitch to piano, a loud stretch of drumming wakes it
 // for a yawn and a new curl, then it dozes off again. 云团 pads over to sit beside the sofa
@@ -37,11 +38,12 @@ useGLTF.preload('/assets/models/collectibles/fox-sit.glb')
 useGLTF.preload('/assets/models/collectibles/fox-sleep.glb')
 const rest = node => node?.userData.rest
 
-function SleepingFox() {
+function SleepingFox({ pet }) {
   const root = useRef(), body = useRef(), head = useRef(), ears = useRef([]), eyes = useRef(), closed = useRef(), tail = useRef()
-  const state = useRef({ phase: 'sleep', since: 0, cooldown: 0, yaw: SLEEPER.rotation, curl: 0 })
+  const state = useRef({ phase: 'sleep', since: 0, cooldown: 0, yaw: SLEEPER.rotation, curl: 0, lastPet: 0 })
   useFrame(({ clock }, dt) => {
     const t = clock.elapsedTime, s = state.current
+    if (pet?.name === '眠眠' && pet.id !== s.lastPet) { s.lastPet = pet.id; s.phase = 'wake'; s.since = 0 }
     s.since += dt; s.cooldown = Math.max(0, s.cooldown - dt)
     if (s.phase === 'sleep' && s.cooldown === 0 && loudness() > 5.5) { s.phase = 'wake'; s.since = 0 }
     if (s.phase === 'wake' && s.since > 4.2) { s.phase = 'sleep'; s.since = 0; s.cooldown = 18; s.curl = (s.curl + 1) % 3 }
@@ -65,12 +67,13 @@ function SleepingFox() {
   return <group ref={root} position={SLEEPER.position} scale={FOX_SCALE}><FoxModel url={awakeUrl(state)} body={body} head={head} ears={ears} eyes={eyes} closed={closed} tail={tail}/></group>
 }
 
-function ListeningFox() {
+function ListeningFox({ pet }) {
   const root = useRef(), body = useRef(), head = useRef(), ears = useRef([]), eyes = useRef(), tail = useRef()
-  const state = useRef({ pos: new THREE.Vector3(...LISTENER.home), yaw: LISTENER.homeYaw, listening: false, quiet: 0 })
+  const state = useRef({ pos: new THREE.Vector3(...LISTENER.home), yaw: LISTENER.homeYaw, listening: false, quiet: 0, lastPet: 0, petTime: -100 })
   const target = useRef(new THREE.Vector3())
   useFrame(({ clock }, dt) => {
     const t = clock.elapsedTime, s = state.current
+    if (pet?.name === '云团' && pet.id !== s.lastPet) { s.lastPet = pet.id; s.petTime = t }
     const playing = activity(6) > .5
     s.quiet = playing ? 0 : s.quiet + dt
     if (playing) s.listening = true
@@ -88,17 +91,19 @@ function ListeningFox() {
       s.yaw += Math.atan2(Math.sin(rest - s.yaw), Math.cos(rest - s.yaw)) * (1 - Math.exp(-dt * 2))
     }
     if (root.current) { root.current.position.copy(s.pos); root.current.position.y = walking ? Math.abs(Math.sin(t * 9)) * .05 : 0; root.current.rotation.y = s.yaw }
+    INTERACTIONS.foxListening.position[0] = s.pos.x
+    INTERACTIONS.foxListening.position[2] = s.pos.z
     if (rest(body.current)) body.current.scale.y = rest(body.current).scale.y * (1 + Math.sin(t * 1.7 + 1.8) * .025)
     // Nod on the beat while listening, a little head tilt, and a happy tail swish.
     const beat = Math.max(energy('kick', 7), energy('snare', 7) * .7, energy('piano', 6) * .6)
     const h = rest(head.current)
-    if (h) { head.current.rotation.x = h.rotation.x + (s.listening && !walking ? beat * .25 : 0); head.current.rotation.y = h.rotation.y + (s.listening ? Math.sin(t * .7) * .18 : 0) }
+    if (h) { head.current.rotation.x = h.rotation.x + (s.listening && !walking ? beat * .25 : 0) - Math.max(0, 1 - (t - s.petTime) / 2) * .18; head.current.rotation.y = h.rotation.y + (s.listening ? Math.sin(t * .7) * .18 : 0) }
     ears.current.forEach(ear => { if (rest(ear)) ear.rotation.x = rest(ear).rotation.x - energy('any', 6) * .25 })
     const tl = rest(tail.current)
-    if (tl) tail.current.rotation.z = tl.rotation.z + Math.sin(t * (s.listening ? 3.2 : 1.1)) * (s.listening ? .18 : .06)
+    if (tl) tail.current.rotation.z = tl.rotation.z + Math.sin(t * (s.listening ? 3.2 : 1.1)) * (s.listening ? .18 : .06) + Math.max(0, 1 - (t - s.petTime) / 2) * Math.sin(t * 15) * .26
     if (eyes.current) eyes.current.scale.z = Math.sin(t * 1.35 + 1.8) < .985 ? 1 : .1 // blink
   })
   return <group ref={root} position={LISTENER.home} scale={FOX_SCALE}><FoxModel url="/assets/models/collectibles/fox-sit.glb" body={body} head={head} ears={ears} eyes={eyes} tail={tail}/></group>
 }
 
-export default function Foxes() { return <><SleepingFox/><ListeningFox/></> }
+export default function Foxes({ pet }) { return <><SleepingFox pet={pet}/><ListeningFox pet={pet}/></> }

@@ -104,6 +104,10 @@ export const INTERACTIONS = {
   musicBooks: { position: [-9.72, 0, 5.2], radius: 1.25, label: '翻阅乐谱' },
   portal: { position: [-4.5, 0, 6.85], radius: 1.3, label: '打开任意门' },
   souvenirs: { position: [-6.6, 0, 6.95], radius: 1.0, label: '看看纪念品' },
+  bed: { position: [5.85, 0, 4.75], radius: 1.45, label: '躺下做梦' },
+  deskChair: { position: [-.3, 0, -2.52], radius: 1.15, label: '坐下写点什么' },
+  foxSleeping: { position: [6.0, 0, 6.7], radius: 1.35, label: '轻轻摸摸眠眠', fox: '眠眠' },
+  foxListening: { position: [3.25, 0, 4.45], radius: 1.25, label: '摸摸云团', fox: '云团' },
 }
 
 export const FOX_HINTS = [
@@ -123,4 +127,6 @@ export const CAMERA_POSES = {
   musicBooks: { position: [-8.85, 1.8, 5.2], lookAt: [-9.72, 1.55, 5.2] },
   portal: { position: [-4.5, 1.75, 5.2], lookAt: [-4.5, 1.6, 7.9] },
   souvenirs: { position: [-6.6, 1.75, 5.8], lookAt: [-6.6, 1.5, 7.85] },
+  bed: { position: [7.6, 1.15, 4.7], lookAt: [5.7, 4.6, -5.4] },
+  deskChair: { position: [-.3, 1.45, -2.52], lookAt: [-.4, 1.45, -4.5] },
 }

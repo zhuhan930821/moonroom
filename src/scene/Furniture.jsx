@@ -101,7 +101,7 @@ function Details({ quality }){const { decorationLights } = useLighting(); return
   {decorationLights && <pointLight position={[9.4,2.14,.7]} color="#ffc47b" intensity={1.2} distance={2.9}/>}
 </>}
 
-export default function Furniture({hit, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook, activeBookShelf, quality = 'high'}) {
+export default function Furniture({hit, foxPet, onStrike, pianoNotes, onNoteOn, onNoteOff, records, vinylId, pulledBook, activeBookShelf, quality = 'high'}) {
   const candidateDrums = FLAGS.drumCandidate
-  return <><Details quality={quality}/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes/><ReferenceDecor/></>
+  return <><Details quality={quality}/><Bed/><Bookshelves pulledBook={pulledBook} activeShelf={activeBookShelf}/><Workstation/><DrumCorner/>{candidateDrums ? <CandidateDrumKit hit={hit} onStrike={onStrike}/> : <DrumKit hit={hit} onStrike={onStrike}/>}<Lounge/><DreamLoungeProps/><Piano notes={pianoNotes} onNoteOn={onNoteOn} onNoteOff={onNoteOff}/><RecordPlayer records={records} playingId={vinylId}/><Foxes pet={foxPet}/><ReferenceDecor/></>
 }

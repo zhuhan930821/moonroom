@@ -21,6 +21,7 @@ export function useInteractionSystem(root) {
   const [mode, setMode] = useState('explore')
   const [near, setNear] = useState(null)
   const [foxName, setFoxName] = useState(null)
+  const [foxPet, setFoxPet] = useState(null)
   const [hit, setHit] = useState({ name: null, id: 0 })
   const [ambient, setAmbient] = useState(false)
   const [volume, setVolume] = useState(.42)
@@ -243,7 +244,9 @@ export function useInteractionSystem(root) {
     if (modeRef.current !== 'explore' || !nearRef.current) return
     const item = nearRef.current
     const lamp = INTERACTIONS[item].lamp
-    if (lamp) roomState.toggleLamp(lamp)
+    const fox = INTERACTIONS[item].fox
+    if (fox) setFoxPet(old => ({ name: fox, id: (old?.id || 0) + 1 }))
+    else if (lamp) roomState.toggleLamp(lamp)
     else enter(item === 'booksLeft' ? 'books' : item)
   }, [enter])
 
@@ -279,10 +282,14 @@ export function useInteractionSystem(root) {
   useEffect(() => {
     const onKey = event => {
       if (!started || (event.repeat && event.code === 'KeyE')) return
-      if (event.target?.closest?.('input, textarea')) return // typing in a panel isn't playing
       const current = modeRef.current
       if (event.code === 'Escape') {
         if (current !== 'explore') { event.preventDefault(); leave() }
+        return
+      }
+      if (event.target?.closest?.('input, textarea')) return // typing in a panel isn't playing
+      if (['bed', 'deskChair'].includes(current)) {
+        if (event.code === 'KeyE') { event.preventDefault(); leave() }
         return
       }
       if (current === 'drums') {
@@ -336,7 +343,7 @@ export function useInteractionSystem(root) {
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', releaseAllNotes) }
   }, [interact, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge])
 
-  return { started, locked, mode, near, foxName, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, interact, strike, toggleAmbient, changeVolume,
+  return { started, locked, mode, near, foxName, foxPet, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, interact, strike, toggleAmbient, changeVolume,
     records, vinyl, playVinyl, stopVinyl, book, pullBook, activeBookShelf, scorePage, nextScore: () => setScorePage(page => (page + 1) % 3),
     drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
     milo, inviteMilo, toggleMiloJam,
