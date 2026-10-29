@@ -548,7 +548,7 @@ function GuitarStrings({ kind }) {
     <mesh position={[0, .45, .0755]}><circleGeometry args={[.055, 16]}/><meshStandardMaterial ref={hole} color="#1a1418" emissive="#ffb070" emissiveIntensity={0}/></mesh>
   </group>
 }
-function Guitar({ position, color, rot = 0, kind }) {
+export function Guitar({ position, color, rot = 0, kind }) {
   return <group position={position} rotation={[0, -Math.PI / 2, rot]}>
     <mesh position-y={.32} scale={[1, 1.15, .32]} castShadow><sphereGeometry args={[.22, 18, 12]}/><meshStandardMaterial color={color} roughness={.4}/></mesh>
     <mesh position-y={.6} scale={[.85, .95, .3]}><sphereGeometry args={[.17, 16, 10]}/><meshStandardMaterial color={color} roughness={.4}/></mesh>

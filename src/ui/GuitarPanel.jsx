@@ -1,7 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { CHORD_KEYS, CHORD_NAMES, STRING_KEYS, chordNotes } from '../game/guitarChords'
-import { GUITARS, guitarStore, muteAll, pluckString, prepareGuitar, setGuitar, strum } from '../audio/guitar'
-import { activity } from '../game/activity'
+import { GUITARS, guitarStore, prepareGuitar } from '../audio/guitar'
+import { muteAll, pickChord, pluckNow, strumNow, switchGuitar } from '../game/guitarActions'
 
 const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'e']
 
@@ -13,10 +13,7 @@ export default function GuitarPanel() {
 
   useEffect(() => { prepareGuitar(CHORD_NAMES.map(chordNotes)).catch(() => {}) }, [])
 
-  // Read the chord from the store, not React state: a strum right after a chord key must use the new chord.
-  const doStrum = dir => { const now = guitarStore.get().chord; strum(now, dir); activity.log('guitar'); activity.log('chord', now) }
-  const pick = name => guitarStore.set({ chord: name })
-  const switchGuitar = () => setGuitar(guitarStore.get().guitar === 'acoustic' ? 'electric' : 'acoustic')
+  const doStrum = strumNow, pick = pickChord
 
   useEffect(() => {
     const onKey = event => {
@@ -29,7 +26,7 @@ export default function GuitarPanel() {
       else if (event.code === 'KeyK') { event.preventDefault(); doStrum('up') }
       else if (event.code === 'KeyM') { event.preventDefault(); muteAll() }
       else if (event.code === 'Tab') { event.preventDefault(); switchGuitar() }
-      else if (STRING_KEYS[event.code] != null) { event.preventDefault(); pluckString(STRING_KEYS[event.code], chordNotes(guitarStore.get().chord)); activity.log('guitar') }
+      else if (STRING_KEYS[event.code] != null) { event.preventDefault(); pluckNow(STRING_KEYS[event.code]) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)

@@ -15,6 +15,13 @@ import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import PhotoPanel from './ui/PhotoPanel'
 import GuitarPanel from './ui/GuitarPanel'
+import BandHud from './ui/BandHud'
+import AudioUnlockHint from './ui/AudioUnlockHint'
+import BandStage from './scene/BandStage'
+import { band } from './game/band'
+import { gamepads } from './game/gamepad'
+import { PAD_HELP } from './game/padMaps'
+import { useGamepadControls } from './game/useGamepadControls'
 import DiaryPage, { currentDiaryPages } from './ui/DiaryPage'
 import ScorePage from './ui/ScorePage'
 import { BedDreamPanel, ChairNotePanel } from './ui/PersonalSpacePanels'
@@ -132,6 +139,12 @@ export default function App() {
   const world = useSyncExternalStore(worldState.subscribe, () => worldState.get().world) // Anywhere Door
   const worldNear = useSyncExternalStore(worldPrompt.subscribe, worldPrompt.get) // touch button label behind the door
   const inExplore = game.mode === 'explore'
+  // Controllers: walking, instruments, and band mode (src/game/useGamepadControls.js).
+  useGamepadControls(game, { world })
+  const pads = useSyncExternalStore(gamepads.subscribe, gamepads.connected)
+  const bandPhase = useSyncExternalStore(band.subscribe, () => band.get().phase)
+  useEffect(() => { if (game.mode !== 'band' && band.get().phase !== 'off') band.close() }, [game.mode])
+  const openBand = () => { setShowSettings(false); game.enter('band'); band.open() }
   // First visit of a new day: the room wrote a page about last time; point at the bookshelf.
   const [diaryHint, setDiaryHint] = useState(false)
   useEffect(() => {
@@ -160,6 +173,7 @@ export default function App() {
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
         <TimeOfDay resting={game.mode === 'beanbag' || game.mode === 'bed'}/>
         <AnywhereDoor/><SouvenirShelf/>
+        <BandStage/>
         {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
         {cinematic && <CinematicPostFX enabled={quality === 'high' && BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>}
       </LightingProvider>}
@@ -178,7 +192,7 @@ export default function App() {
       {game.foxPet && <div key={game.foxPet.id} className="fox-pet-toast">✦ {game.foxPet.name === '眠眠' ? '眠眠半睁着眼，轻轻蹭了蹭你的手' : '云团开心地摇起尾巴'}</div>}
       {celebrating && <div className="castle-toast" data-testid="castle-toast">✦ {roomState.get().celebration} · 窗外的城堡为你亮起来了</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
-      {inExplore && !isTouch && !game.locked && !FLAGS.demo && <div className="unlock">点击画面继续探索</div>}
+      {inExplore && !isTouch && !game.locked && !FLAGS.demo && <div className="unlock">{pads.length ? '点击画面用鼠标 · 或直接用手柄' : '点击画面继续探索'}</div>}
       {isTouch && inExplore && <MobileExploreControls input={touchInput} near={world ? worldNear : game.near ? INTERACTIONS[game.near].label : null}
         onInteract={() => world ? window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })) : game.interact()}
         onCurtain={() => window.dispatchEvent(new Event('moonroom:toggle-curtain'))}/>}
@@ -192,6 +206,9 @@ export default function App() {
       {game.mode === 'record' && <RecordPanel game={game}/>}
       {game.mode === 'photos' && <PhotoPanel/>}
       {game.mode === 'guitar' && <GuitarPanel/>}
+      {game.mode === 'band' && <BandHud/>}
+      {pads.length > 0 && !FLAGS.demo && <AudioUnlockHint started={game.started}/>}
+      {pads.length > 0 && !isTouch && PAD_HELP[game.mode] && bandPhase === 'off' && <div className="pad-help" data-testid="pad-help">🎮 {PAD_HELP[game.mode]}</div>}
       {game.mode === 'portal' && <PortalPanel onDone={game.leave}/>}
       {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
@@ -204,7 +221,7 @@ export default function App() {
       {!whiteModel && !world && <JourneyHud/>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
-      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}</section>}
+      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}{inExplore && !world && <button onClick={openBand} data-testid="open-band">🎮 乐队模式（手柄）</button>}</section>}
       {showLightingDebug && !whiteModel && <section className="lighting-debug" onClick={e=>e.stopPropagation()}>
         <header><span>LIGHTING PASS 01</span><button onClick={()=>setLightingPass(value=>value === 'current' ? 'bloom' : 'current')}>{lightingPass === 'current' ? '查看升级版' : '对比原版'}</button></header>
         <label>渲染层<select value={lightingPass} onChange={e=>setLightingPass(e.target.value)}><option value="current">Current</option><option value="moon">Moon only</option><option value="warm">Warm only</option><option value="combined">Combined</option><option value="bloom">Combined + Bloom</option><option value="golden">Golden (warm)</option></select></label>

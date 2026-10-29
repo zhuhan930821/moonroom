@@ -99,7 +99,8 @@ export function useInteractionSystem(root) {
     // Logged first: pulling a book counts today's page, so the page list must already include it.
     activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos', guitar: 'guitarPickUp' }[nextMode] || nextMode)
     if(nextMode==='drums') setHit(old=>({...old,name:null}))
-    if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
+    if(nextMode==='piano' || nextMode==='band') preparePiano().catch(error => setAudioError(error.message))
+    if(nextMode==='band') prepareAudio().catch(error => setAudioError(error.message))
     if(nextMode==='musicBooks') setScorePage(0)
     if(nextMode==='books') {
       setActiveBookShelf(nearRef.current === 'booksLeft' ? 'left' : 'right')
@@ -214,7 +215,7 @@ export function useInteractionSystem(root) {
   const changeBpm = useCallback(delta => setBpm(value => Math.max(50, Math.min(180, value + delta))), [])
 
   const noteOn = useCallback(async (id, note) => {
-    if (modeRef.current !== 'piano' || heldKeys.current.has(id)) return
+    if ((modeRef.current !== 'piano' && modeRef.current !== 'band') || heldKeys.current.has(id)) return
     heldKeys.current.set(id, { note, release: null, at: clock() })
     journey.pianoNote()
     setPianoNotes(old => new Set(old).add(note))
@@ -266,7 +267,7 @@ export function useInteractionSystem(root) {
   }, [enter])
 
   const strike = useCallback(async name => {
-    if (modeRef.current !== 'drums') return
+    if (modeRef.current !== 'drums' && modeRef.current !== 'band') return
     // Short per-pad guard against double-fired input (key + click on the same pad).
     if (performance.now() - (lastHit.current[name] || 0) < 35) return
     lastHit.current[name] = performance.now()
