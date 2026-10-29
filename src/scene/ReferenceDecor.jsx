@@ -9,14 +9,11 @@ import { builtinCanvas } from './photoArt'
 import GLBAsset from './AssetModel'
 import { guitarAmpLevel, guitarVisual } from '../audio/guitar'
 
-// Decor pass 03: the layer of the 2D reference that the room still lacked — ivy curtains over
-// the arches and along the loft, a photo wall + neon moon-fox on the left wall, hanging stars and
-// a glass orb, desk greenery/crystals/lamp, a desk chair with a star blanket, a coffee table
-// setting with floor cushions, headphones and open books, guitars by the bed, lanterns and
-// candles. Leaves, blossoms, candles and crystals are instanced; few real lights.
+// Decor pass 03: photo wall, neon, hanging stars, desk props, floor cushions,
+// guitars, lanterns and candles. Botanical props use textured GLBs; the dedicated
+// Blender dressing asset supplies ceiling and window greenery.
 
 const rand = seed => { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 1e6) / 1e6 } }
-const LEAF_GREENS = ['#4f7a52', '#5f8b5c', '#3f6648', '#7aa070', '#6a8f62']
 const BLOSSOMS = ['#f4a6c4', '#ffd0e0', '#e88ab4', '#fff2f6', '#c9a3e8']
 
 // Colliders for the pieces you could otherwise walk through (pushed once, on import).
@@ -28,122 +25,17 @@ DECOR_COLLIDERS.push(
   box(-.76, .16, -2.94, -2.11), // pulled-out desk chair
 )
 
-// ---------- ivy: strands hanging from points, leaves + blossoms instanced ----------
-function leafGeometry() {
-  const s = new THREE.Shape()
-  s.moveTo(0, 0); s.bezierCurveTo(.05, .03, .06, .1, 0, .15); s.bezierCurveTo(-.06, .1, -.05, .03, 0, 0)
-  const g = new THREE.ShapeGeometry(s, 4); g.translate(0, -.01, 0); return g
+// Browser-facing plants are actual textured GLB assets, not procedural leaf meshes.
+const BOTANICAL = '/assets/models/botanical/'
+function Plant({ position, scale = 1, bush = 'leafy', seed = 1 }) {
+  const small = bush === 'vase' || seed % 3 === 0
+  const tall = bush === 'tall'
+  const file = tall ? 'potted_plant_01-polyhaven.glb' : small ? 'potted_plant_04-polyhaven.glb' : 'potted-plant-02-polyhaven.glb'
+  const size = tall ? scale * .76 : small ? scale * 1.05 : scale * .6
+  return <GLBAsset url={BOTANICAL + file} position={position} rotation={[0, seed * 1.73 % (Math.PI * 2), 0]} scale={size} axisCorrection={false} castShadow={false}/>
 }
-const LEAF = leafGeometry(), BLOOM = new THREE.IcosahedronGeometry(.045, 0)
-const BROAD_LEAF = (() => {
-  const s = new THREE.Shape()
-  s.moveTo(0, -.31)
-  s.bezierCurveTo(-.11, -.28, -.31, -.11, -.31, .05)
-  s.bezierCurveTo(-.32, .19, -.17, .29, -.045, .21)
-  s.quadraticCurveTo(0, .13, .045, .21)
-  s.bezierCurveTo(.17, .29, .32, .19, .31, .05)
-  s.bezierCurveTo(.31, -.11, .11, -.28, 0, -.31)
-  return new THREE.ShapeGeometry(s, 12)
-})()
-
-function strandsFor(seed) {
-  const r = rand(seed), out = []
-  // Over each arch: strands from the arch curve and the beam above it.
-  for (const [cx, w] of [[-5.25, 4.6], [0, 4.85], [5.25, 4.6]]) {
-    for (let i = 0; i < 16; i++) {
-      const a = Math.PI * (.05 + .9 * r())
-      out.push({ x: cx + Math.cos(a) * w / 2 * (1 + (r() - .5) * .1), y: 4.1 + Math.sin(a) * 3.4, z: -7.25 - r() * .2, len: .6 + r() * (a > .6 && a < 2.5 ? 1.6 : 3.2), bloom: .35 })
-    }
-  }
-  for (let i = 0; i < 26; i++) out.push({ x: -9.6 + r() * 19.2, y: 7.75, z: -7.0 - r() * .5, len: .5 + r() * 2.2, bloom: .25 })
-  // Loft front rail (x≈-6.1, z .7–7.8, y 5.3) and its underside.
-  for (let i = 0; i < 26; i++) out.push({ x: -6.05 + (r() - .5) * .2, y: 5.25, z: .8 + r() * 6.9, len: .5 + r() * 2.0, bloom: .3 })
-  // Right wall shelf + corner by the bed.
-  for (let i = 0; i < 10; i++) out.push({ x: 9.75, y: 3.5 + r() * .2, z: -1.6 + r() * 1.5, len: .4 + r() * 1.3, bloom: .2 })
-  return out.map(s => ({ ...s, seed: Math.floor(r() * 1e6) }))
-}
-
-function Ivy() {
-  const leaves = useRef(), blooms = useRef()
-  const { L, B } = useMemo(() => {
-    const L = [], B = []
-    for (const s of strandsFor(7)) {
-      const r = rand(s.seed), n = Math.round(s.len / .1)
-      let x = s.x, z = s.z
-      for (let i = 0; i < n; i++) {
-        const y = s.y - i * .1
-        x += (r() - .5) * .03; z += (r() - .5) * .02
-        for (const side of [-1, 1]) L.push({ p: [x + side * .03, y, z], rot: [(r() - .5) * .9, r() * 6.28, side * (.6 + r() * .6) + Math.PI], k: .7 + r() * .7 * (1 - i / n * .5), c: LEAF_GREENS[Math.floor(r() * LEAF_GREENS.length)] })
-        if (r() < s.bloom * (i < 6 ? 1.6 : .7)) B.push({ p: [x + (r() - .5) * .1, y, z + .04], k: .45 + r() * .5, c: BLOSSOMS[Math.floor(r() * BLOSSOMS.length)] })
-      }
-    }
-    return { L, B }
-  }, [])
-  useLayoutEffect(() => {
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color()
-    L.forEach((l, i) => { leaves.current.setMatrixAt(i, m.compose(new THREE.Vector3(...l.p), q.setFromEuler(e.set(...l.rot)), new THREE.Vector3(l.k, l.k, l.k))); leaves.current.setColorAt(i, c.set(l.c)) })
-    B.forEach((b, i) => { blooms.current.setMatrixAt(i, m.compose(new THREE.Vector3(...b.p), q.identity(), new THREE.Vector3(b.k, b.k, b.k))); blooms.current.setColorAt(i, c.set(b.c)) })
-    for (const ref of [leaves, blooms]) { ref.current.instanceMatrix.needsUpdate = true; ref.current.instanceColor.needsUpdate = true }
-  }, [L, B])
-  return <>
-    <instancedMesh ref={leaves} args={[LEAF, null, L.length]} frustumCulled={false}><meshStandardMaterial side={THREE.DoubleSide} roughness={.8}/></instancedMesh>
-    <instancedMesh ref={blooms} args={[BLOOM, null, B.length]} frustumCulled={false}><meshStandardMaterial roughness={.7} emissive="#ff9ec7" emissiveIntensity={.12}/></instancedMesh>
-  </>
-}
-
-// ---------- potted plants & flower vases (one prototype, many placements) ----------
-function Plant({ position, scale = 1, pot = '#e8dccb', bush = 'leafy', flowers = 0, seed = 1 }) {
-  const r = useMemo(() => rand(seed), [seed])
-  const parts = useMemo(() => Array.from({ length: bush === 'tall' ? 9 : bush === 'vase' ? 10 : 7 }, () => [r(), r(), r()]), [r, bush])
-  const leafy = useRef()
-  const leafParts = useMemo(() => bush === 'vase' ? [] : parts.flatMap(([a, b, c], i) => [-1, 1].map(side => ({
-    p: [(a - .5) * .19 + side * (.06 + c * .025), .36 + b * (bush === 'tall' ? .66 : .25) + side * .045, (c - .5) * .16],
-    r: [-(.15 + b * .35), a * Math.PI * 2 + (side < 0 ? .35 : -.35), side * (.55 + c * .3)],
-    k: bush === 'tall' ? 1.3 + c * .7 : .85 + c * .48,
-    color: LEAF_GREENS[(i + (side > 0 ? 2 : 0)) % LEAF_GREENS.length],
-  }))), [parts, bush])
-  useLayoutEffect(() => {
-    if (!leafy.current || !leafParts.length) return
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color()
-    leafParts.forEach((leaf, i) => {
-      leafy.current.setMatrixAt(i, m.compose(new THREE.Vector3(...leaf.p), q.setFromEuler(e.set(...leaf.r)), new THREE.Vector3(leaf.k, leaf.k, leaf.k)))
-      leafy.current.setColorAt(i, c.set(leaf.color))
-    })
-    leafy.current.instanceMatrix.needsUpdate = true; leafy.current.instanceColor.needsUpdate = true
-  }, [leafParts])
-  return <group position={position} scale={scale}>
-    <mesh position-y={.14} castShadow><cylinderGeometry args={[.16, .12, .28, 14]}/><meshStandardMaterial color={pot} roughness={.86}/></mesh>
-    {bush === 'vase' ? <>
-      <mesh position-y={.14}><cylinderGeometry args={[.1, .14, .28, 14]}/><meshPhysicalMaterial color="#ffffff" transparent opacity={.35} roughness={.05}/></mesh>
-      {parts.map(([a, b, c], i) => <group key={i} rotation={[(a - .5) * .7, b * 6, (c - .5) * .7]}>
-        <mesh position-y={.4}><cylinderGeometry args={[.006, .006, .45, 4]}/><meshStandardMaterial color="#5f8b5c"/></mesh>
-        {[0, 1, 2].map(k => <mesh key={k} position={[(k - 1) * .025, .6 + k * .03 + a * .06, (k % 2) * .02]}><sphereGeometry args={[.022 + c * .012, 6, 5]}/><meshStandardMaterial color={BLOSSOMS[(i + k) % BLOSSOMS.length]} roughness={.7}/></mesh>)}
-        <mesh position={[.03, .45, 0]} rotation-z={-.8} scale={[.5, 1, .2]}><sphereGeometry args={[.05, 6, 4]}/><meshStandardMaterial color="#5f8b5c"/></mesh>
-      </group>)}
-    </> : <>
-      {parts.map(([a, b, c], i) => <mesh key={i} position={[(a - .5) * .13, .29 + b * (bush === 'tall' ? .35 : .15), (c - .5) * .13]} rotation-z={(a - .5) * .5}>
-        <cylinderGeometry args={[.007, .01, .35 + b * (bush === 'tall' ? .55 : .2), 5]}/><meshStandardMaterial color="#4e6548" roughness={1}/>
-      </mesh>)}
-      <instancedMesh ref={leafy} args={[LEAF, null, leafParts.length]} frustumCulled={false}>
-        <meshStandardMaterial side={THREE.DoubleSide} roughness={.92}/>
-      </instancedMesh>
-    </>}
-    {flowers > 0 && parts.slice(0, flowers).map(([a, b], i) => <mesh key={`f${i}`} position={[(b - .5) * .3, .5 + a * .3, (a - .5) * .3]}><sphereGeometry args={[.04, 8, 6]}/><meshStandardMaterial color={BLOSSOMS[i % 3]}/></mesh>)}
-  </group>
-}
-
 function Monstera({ position, scale = 1, seed = 3 }) {
-  const r = useMemo(() => rand(seed), [seed])
-  const leaves = useMemo(() => Array.from({ length: 9 }, (_, i) => ({ a: i / 9 * Math.PI * 2 + r() * .4, tilt: .5 + r() * .5, h: .7 + r() * .7 })), [r])
-  return <group position={position} scale={scale}>
-    <mesh position-y={.25} castShadow><cylinderGeometry args={[.28, .22, .5, 16]}/><meshStandardMaterial color="#c98a6a" roughness={.7}/></mesh>
-    {leaves.map((l, i) => <group key={i} rotation-y={l.a}>
-      <mesh position={[0, l.h * .5 + .4, .05]} rotation-x={.2}><cylinderGeometry args={[.012, .015, l.h, 5]}/><meshStandardMaterial color="#4f7a52"/></mesh>
-      <mesh geometry={BROAD_LEAF} position={[0, l.h + .45, .35]} rotation-x={-l.tilt} scale={[.95, 1.15, 1]} castShadow>
-        <meshStandardMaterial color={LEAF_GREENS[i % 3]} side={THREE.DoubleSide} roughness={.88}/>
-      </mesh>
-    </group>)}
-  </group>
+  return <GLBAsset url={BOTANICAL + 'potted_plant_01-polyhaven.glb'} position={position} rotation={[0, seed * .51 % (Math.PI * 2), 0]} scale={scale * .9} axisCorrection={false} castShadow={false}/>
 }
 
 // ---------- candles & crystals (instanced) ----------
@@ -333,36 +225,9 @@ function WallShelf({ side, z, y, width = 1.45, seed = 1 }) {
     {items.map((item, i) => <mesh key={i} position={[x, y + .028 + item.h / 2, item.z]} rotation-x={(i - 2) * .025} castShadow>
       <boxGeometry args={[.19, item.h, .075]}/><meshStandardMaterial color={item.color} roughness={.91}/>
     </mesh>)}
-    <Plant position={[x, y + .035, z + width * .3]} scale={.52} pot="#d7b2aa" seed={seed + 13}/>
+    <Plant position={[x, y + .035, z + width * .3]} scale={.52} seed={seed + 13}/>
     <mesh position={[x, y + .16, z - width * .28]}><sphereGeometry args={[.085, 12, 8]}/><meshStandardMaterial color="#f6d9bd" emissive="#e8aa68" emissiveIntensity={.4} roughness={.6}/></mesh>
-    <ShelfVines side={side} x={x} z={z + width * .3} y={y - .02} seed={seed}/>
   </group>
-}
-
-function ShelfVines({ side, x, y, z, seed }) {
-  const leaves = useRef()
-  const strands = useMemo(() => {
-    const r = rand(seed * 53)
-    return Array.from({ length: 4 }, (_, strand) => Array.from({ length: 9 + strand * 2 }, (_, i) => ({
-      x: x + (side === 'left' ? .12 : -.12) + Math.sin(i * .34 + strand) * .05,
-      y: y - i * .085,
-      z: z + (strand - 1.5) * .075 + Math.sin(i * .48 + strand) * .045,
-      scale: .55 + r() * .52,
-      turn: r() * Math.PI * 2,
-      color: LEAF_GREENS[(strand + i) % LEAF_GREENS.length],
-    }))).flat()
-  }, [side, x, y, z, seed])
-  useLayoutEffect(() => {
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color()
-    strands.forEach((l, i) => {
-      leaves.current.setMatrixAt(i, m.compose(new THREE.Vector3(l.x, l.y, l.z), q.setFromEuler(e.set(0, l.turn, .5)), new THREE.Vector3(l.scale, l.scale, l.scale)))
-      leaves.current.setColorAt(i, c.set(l.color))
-    })
-    leaves.current.instanceMatrix.needsUpdate = true; leaves.current.instanceColor.needsUpdate = true
-  }, [strands])
-  return <instancedMesh ref={leaves} args={[LEAF, null, strands.length]} frustumCulled={false}>
-    <meshStandardMaterial side={THREE.DoubleSide} roughness={.9}/>
-  </instancedMesh>
 }
 
 function ReadingNookNeon() {
@@ -560,7 +425,7 @@ function MusicWall({ guitarHit, guitarTone }) {
     </group>
     {/* wall shelf above with plants, a fox figurine and crystals */}
     <mesh position={[9.78, 3.5, -.8]}><boxGeometry args={[.36, .05, 1.8]}/><meshStandardMaterial color="#7a5038"/></mesh>
-    <Plant position={[9.75, 3.52, -1.5]} scale={.7} pot="#d8a0b0" seed={31}/>
+    <Plant position={[9.75, 3.52, -1.5]} scale={.7} seed={31}/>
     <Plant position={[9.75, 3.52, .0]} scale={.65} bush="vase" seed={32}/>
     <group position={[9.72, 3.53, -.75]} rotation-y={-Math.PI / 2} scale={.5}>
       <mesh position-y={.2} scale={[1, 1.1, 1]}><sphereGeometry args={[.18, 14, 10]}/><meshStandardMaterial color="#e0783a"/></mesh>
@@ -573,7 +438,6 @@ function MusicWall({ guitarHit, guitarTone }) {
 
 export default function ReferenceDecor({ guitarHit, guitarTone }) {
   return <group>
-    <Ivy/>
     <PhotoWall/>
     <NeonSign/>
     <SideWallGallery/>
@@ -590,7 +454,7 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <DeskChair/>
     <DeskLamp/>
     {/* desk greenery + flowers */}
-    <Plant position={[-3.85, 1.31, -4.65]} scale={.9} seed={41} flowers={3}/>
+    <Plant position={[-3.85, 1.31, -4.65]} scale={.9} seed={41}/>
     <Plant position={[-1.6, 1.31, -4.8]} scale={.75} bush="vase" seed={42}/>
     <Plant position={[1.35, 1.31, -4.8]} scale={.7} seed={43}/>
     <Plant position={[3.3, 1.31, -4.8]} scale={.8} bush="vase" seed={44}/>
@@ -598,7 +462,7 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <Monstera position={[-6.8, 0, -7.0]} scale={1.1} seed={51}/>
     <Monstera position={[6.9, 0, -7.0]} scale={1.05} seed={52}/>
     <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[9.3, 0, 7.2]} scale={1.7} axisCorrection={false}/>
-    <Plant position={[-4.6, 0, -6.95]} scale={1.6} bush="tall" pot="#d8a0b0" seed={54}/>
+    <Plant position={[-4.6, 0, -6.95]} scale={1.6} bush="tall" seed={54}/>
     <Plant position={[4.4, 0, -6.95]} scale={1.6} bush="tall" seed={55}/>
     <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[-9.4, 0, 6.9]} rotation={[0, 1.2, 0]} scale={1.7} axisCorrection={false}/>
     <pointLight position={[-8.9, 1.35, 6.85]} color="#ffd1a0" intensity={2.4} distance={2.4} decay={2}/>
