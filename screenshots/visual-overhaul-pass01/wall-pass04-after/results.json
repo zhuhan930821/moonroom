@@ -1,0 +1,15 @@
+{
+  "results": {
+    "hero-desktop": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.11296371605318638,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 885,
+        "textures": 44
+      }
+    }
+  },
+  "errors": []
+}

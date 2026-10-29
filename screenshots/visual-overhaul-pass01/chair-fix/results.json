@@ -1,0 +1,15 @@
+{
+  "results": {
+    "desk-chair": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.07408614737242607,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 704,
+        "textures": 33
+      }
+    }
+  },
+  "errors": []
+}

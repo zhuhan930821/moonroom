@@ -1,0 +1,15 @@
+{
+  "results": {
+    "wall-right-bed": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.12316939486731622,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 658,
+        "textures": 29
+      }
+    }
+  },
+  "errors": []
+}

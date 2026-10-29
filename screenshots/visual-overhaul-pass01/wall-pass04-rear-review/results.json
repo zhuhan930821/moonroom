@@ -1,0 +1,25 @@
+{
+  "results": {
+    "wall-left-rear": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.16154566895937078,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 685,
+        "textures": 28
+      }
+    },
+    "wall-right-bed": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.10853756485147587,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 658,
+        "textures": 29
+      }
+    }
+  },
+  "errors": []
+}
