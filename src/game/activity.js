@@ -3,7 +3,7 @@
 
 const KEY = 'moonroom.activity.v1'
 const KEEP_DAYS = 30
-const LIST_KINDS = ['take', 'vinyl', 'world', 'souvenir', 'photo', 'dream', 'castle', 'fox']
+const LIST_KINDS = ['take', 'vinyl', 'world', 'souvenir', 'photo', 'dream', 'castle', 'fox', 'chord']
 
 export const dayKey = (time = Date.now()) => {
   const d = new Date(time)

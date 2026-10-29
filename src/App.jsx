@@ -14,6 +14,7 @@ import PianoPanel from './ui/PianoPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import PhotoPanel from './ui/PhotoPanel'
+import GuitarPanel from './ui/GuitarPanel'
 import DiaryPage, { currentDiaryPages } from './ui/DiaryPage'
 import ScorePage from './ui/ScorePage'
 import { BedDreamPanel, ChairNotePanel } from './ui/PersonalSpacePanels'
@@ -106,7 +107,7 @@ export default function App() {
   useEffect(() => {
     if (!captureEnabled || game.started) return
     game.startPreview()
-    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos'].includes(captureMode)) game.enter(captureMode)
+    if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar'].includes(captureMode)) game.enter(captureMode)
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (!captureEnabled) return
@@ -190,6 +191,7 @@ export default function App() {
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave} milo={game.milo} onInviteMilo={game.inviteMilo}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
       {game.mode === 'photos' && <PhotoPanel/>}
+      {game.mode === 'guitar' && <GuitarPanel/>}
       {game.mode === 'portal' && <PortalPanel onDone={game.leave}/>}
       {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>

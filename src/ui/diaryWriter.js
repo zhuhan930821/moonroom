@@ -33,6 +33,10 @@ export function writeDiaryEntry(key, day) {
     if (l.take?.length) s += `，还录下了${names(l.take.slice(-2))}`
     lines.push(s + (c.piano > 200 ? '。手指到现在还记得那些琴键。' : '。'))
   }
+  if (c.guitar) {
+    const chords = (l.chord || []).slice(0, 3).join('、')
+    lines.push(c.guitar > 30 ? `抱着吉他扫了 ${c.guitar} 下${chords ? `，${chords} 来回换` : ''}，指尖有点疼。` : `拿起吉他弹了几下${chords ? `，${chords}` : ''}，弦的声音比想象中温柔。`)
+  }
   if (l.vinyl?.length) lines.push(`唱片机转着${names(l.vinyl.slice(-2))}，我走开了它也没有停。`)
   if (c.challenge) lines.push(pick(['试了一次节奏挑战，拍子比想象中难追。', '跟着光点打了一遍鼓，有几拍差一点点。'], 'ch'))
 

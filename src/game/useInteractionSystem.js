@@ -97,7 +97,7 @@ export function useInteractionSystem(root) {
   const enter = useCallback(nextMode => {
     // The diary remembers where you spent time (sofa, books, bed, desk, photo wall…).
     // Logged first: pulling a book counts today's page, so the page list must already include it.
-    activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos' }[nextMode] || nextMode)
+    activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos', guitar: 'guitarPickUp' }[nextMode] || nextMode)
     if(nextMode==='drums') setHit(old=>({...old,name:null}))
     if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
     if(nextMode==='musicBooks') setScorePage(0)
@@ -304,6 +304,7 @@ export function useInteractionSystem(root) {
         return
       }
       if (event.target?.closest?.('input, textarea')) return // typing in a panel isn't playing
+      if (current === 'guitar') { if (event.code === 'KeyE') { event.preventDefault(); leave() } return } // GuitarPanel plays the rest
       if (['bed', 'deskChair'].includes(current)) {
         if (event.code === 'KeyE') { event.preventDefault(); leave() }
         return

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { RoundedBox as SoftBox, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { DECOR_COLLIDERS } from '../game/collision'
+import { guitarState } from '../audio/guitar'
 import { hungItems, photoWall } from '../game/photoWall'
 import { layoutPhotoWall } from './photoWallLayout'
 import { builtinCanvas } from './photoArt'
@@ -521,19 +522,46 @@ function Lantern({ position, scale = 1, light = false }) {
 }
 
 // ---------- right wall: guitars, amp, a wall shelf ----------
-function Guitar({ position, color, rot = 0 }) {
+// Strings run from the bridge to the nut; the one you play shakes and its sound hole glows
+// (state comes from src/audio/guitar.js, read per frame so playing never re-renders React).
+const STRING_Y0 = .2, STRING_Y1 = 1.37
+function GuitarStrings({ kind }) {
+  const strings = useRef([]), hole = useRef()
+  useFrame(({ clock }) => {
+    const t = performance.now() / 1000, mine = guitarState.guitar === kind
+    let glow = 0
+    strings.current.forEach((mesh, i) => {
+      if (!mesh) return
+      const a = mine ? guitarState.amp[i] * Math.exp(-(t - guitarState.pluckAt[i]) * 2.6) : 0
+      glow = Math.max(glow, a)
+      mesh.position.x = mesh.userData.x + Math.sin(clock.elapsedTime * (70 + i * 9)) * a * .007
+    })
+    if (hole.current) hole.current.emissiveIntensity = glow * 1.4
+  })
+  return <group>
+    {Array.from({ length: 6 }, (_, i) => {
+      const x = (i - 2.5) * .0095, len = STRING_Y1 - STRING_Y0
+      return <mesh key={i} ref={m => { strings.current[i] = m; if (m) m.userData.x = x }} position={[x, (STRING_Y0 + STRING_Y1) / 2, .05]} rotation-x={-.035}>
+        <cylinderGeometry args={[.0016 + (5 - i) * .0003, .0016 + (5 - i) * .0003, len, 4]}/><meshStandardMaterial color="#e8dcc0" metalness={.8} roughness={.3}/>
+      </mesh>
+    })}
+    <mesh position={[0, .45, .0755]}><circleGeometry args={[.055, 16]}/><meshStandardMaterial ref={hole} color="#1a1418" emissive="#ffb070" emissiveIntensity={0}/></mesh>
+  </group>
+}
+function Guitar({ position, color, rot = 0, kind }) {
   return <group position={position} rotation={[0, -Math.PI / 2, rot]}>
     <mesh position-y={.32} scale={[1, 1.15, .32]} castShadow><sphereGeometry args={[.22, 18, 12]}/><meshStandardMaterial color={color} roughness={.4}/></mesh>
     <mesh position-y={.6} scale={[.85, .95, .3]}><sphereGeometry args={[.17, 16, 10]}/><meshStandardMaterial color={color} roughness={.4}/></mesh>
-    <mesh position={[0, .45, .075]}><circleGeometry args={[.055, 16]}/><meshStandardMaterial color="#1a1418"/></mesh>
     <mesh position-y={1.05}><boxGeometry args={[.05, .62, .03]}/><meshStandardMaterial color="#5a3a26"/></mesh>
     <mesh position-y={1.42}><boxGeometry args={[.08, .14, .03]}/><meshStandardMaterial color="#3a2a1e"/></mesh>
+    <mesh position={[0, STRING_Y0, .072]}><boxGeometry args={[.08, .015, .01]}/><meshStandardMaterial color="#2a1e18"/></mesh>
+    <GuitarStrings kind={kind}/>
   </group>
 }
 function MusicWall() {
   return <group>
-    <Guitar position={[9.62, 0, -1.45]} color="#e8a060" rot={.12}/>
-    <Guitar position={[9.62, 0, -.35]} color="#8a2a3a" rot={-.1}/>
+    <Guitar position={[9.62, 0, -1.45]} color="#e8a060" rot={.12} kind="acoustic"/>
+    <Guitar position={[9.62, 0, -.35]} color="#8a2a3a" rot={-.1} kind="electric"/>
     <group position={[9.4, 0, -.9]}>
       <mesh position-y={.32} castShadow><boxGeometry args={[.45, .64, .55]}/><meshStandardMaterial color="#2a2428" roughness={.7}/></mesh>
       <mesh position={[-.226, .28, 0]} rotation-y={-Math.PI / 2}><planeGeometry args={[.46, .4]}/><meshStandardMaterial color="#6a5a50" roughness={1}/></mesh>

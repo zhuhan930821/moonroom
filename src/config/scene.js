@@ -109,7 +109,8 @@ export const INTERACTIONS = {
   deskChair: { position: [-.3, 0, -2.52], radius: 1.15, label: '坐下写点什么' },
   foxSleeping: { position: [6.0, 0, 6.7], radius: 1.35, label: '轻轻摸摸眠眠', fox: '眠眠' },
   foxListening: { position: [3.25, 0, 4.45], radius: 1.25, label: '摸摸云团', fox: '云团' },
-  photos: { position: [-7.55, 0, 1.05], radius: .75, label: '整理照片墙' }, // in front of the wall, clear of piano + drums
+  photos: { position: [-7.55, 0, 1.05], radius: .75, label: '整理照片墙' },
+  guitar: { position: [8.35, 0, -.85], radius: 1.1, label: '拿起吉他' }, // the two guitars + amp on the right wall // in front of the wall, clear of piano + drums
 }
 
 export const FOX_HINTS = [
@@ -134,4 +135,5 @@ export const CAMERA_POSES = {
   bed: { position: [8.35, 1.75, 3.0], lookAt: [4.9, 2.85, -4.8] },
   deskChair: { position: [-.3, 1.45, -2.52], lookAt: [-.4, 1.45, -4.5] },
   photos: { position: [-7.6, 2.95, 2.78], lookAt: [-9.9, 2.85, 2.78] },
+  guitar: { position: [8.2, 1.3, -.9], lookAt: [9.62, .2, -.9] }, // low, so both guitars sit above the panel
 }
