@@ -16,6 +16,8 @@ export const roomState = {
     listeners.forEach(listener => listener())
   },
   setTimeMode(mode) { state.timeMode = mode; listeners.forEach(listener => listener()) },
+  // Band mode dims the house lights and puts them back afterwards.
+  setLamps(lamps) { state.lamps = { ...state.lamps, ...lamps }; listeners.forEach(listener => listener()) },
   toggleLamp(id) {
     state.lamps = { ...state.lamps, [id]: !state.lamps[id] }
     listeners.forEach(listener => listener())
