@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { gamepads, startGamepads } from './gamepad'
-import { DRUM_PAD, PIANO_PAD, PIANO_PAD_BASE, guitarChordFor, partOf } from './padMaps'
-import { GUITAR_CHORDS } from '../audio/guitarChords'
+import { DRUM_PAD, KEYBOARD, PIANO_PAD, PIANO_PAD_BASE, guitarChordFor, partOf } from './padMaps'
+import { DRUM_KEYS } from './drumKeys'
+import { DEFAULT_PIANO_BASE, PIANO_KEYS } from './pianoKeys'
+import { GUITAR_CHORDS, PICK_STRINGS } from '../audio/guitarChords'
 import { band } from './band'
 
 // Routes controller buttons to the room: walking + A to interact in explore, B to back out,
@@ -80,5 +82,35 @@ export function useGamepadControls(game, { world }) {
         else if (['beanbag', 'bed', 'deskChair'].includes(mode)) game.leave()
       }
     })
+  }, [])
+
+  // The keyboard as a band member: Enter joins in the lobby (Enter again starts, ←/→ switches,
+  // Backspace leaves); while playing it uses its instrument's usual keys.
+  useEffect(() => {
+    const down = event => {
+      const b = band.get()
+      if (b.phase === 'off' || event.target?.closest?.('input, textarea')) return
+      const { game } = ref.current
+      if (b.phase === 'lobby') {
+        const seated = partOf(b.seats, KEYBOARD)
+        if (event.code === 'Enter') { event.preventDefault(); seated ? band.play() : band.join(KEYBOARD) }
+        else if (seated && (event.code === 'ArrowLeft' || event.code === 'ArrowRight')) { event.preventDefault(); band.switchPart(KEYBOARD, event.code === 'ArrowLeft' ? -1 : 1) }
+        else if (seated && event.code === 'Backspace') { event.preventDefault(); band.leave(KEYBOARD) }
+        return
+      }
+      const part = partOf(b.seats, KEYBOARD)
+      if (!part || event.metaKey || event.ctrlKey) return
+      if (part === 'drums') { const pad = DRUM_KEYS[event.code]; if (pad) { event.preventDefault(); if (!event.repeat) game.strike(pad) } return }
+      if (part === 'piano') { const offset = PIANO_KEYS[event.code]; if (offset != null) { event.preventDefault(); if (!event.repeat) game.noteOn(`kb:${event.code}`, DEFAULT_PIANO_BASE + offset) } return }
+      if (event.repeat) return
+      const chord = /^Digit([1-8])$/.exec(event.code)
+      if (chord) { event.preventDefault(); game.setGuitarChord(Number(chord[1]) - 1) }
+      else if (event.code === 'Space') { event.preventDefault(); game.strumGuitar(event.shiftKey) }
+      else if (event.code === 'KeyM') { event.preventDefault(); game.releaseGuitarChord() }
+      else { const string = ['KeyJ', 'KeyK', 'KeyL', 'Semicolon'].indexOf(event.code); if (string >= 0) { event.preventDefault(); game.pluckGuitar(PICK_STRINGS[string]) } }
+    }
+    const up = event => { if (band.get().phase === 'playing' && partOf(band.get().seats, KEYBOARD) === 'piano') ref.current.game.noteOff(`kb:${event.code}`) }
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
   }, [])
 }

@@ -144,7 +144,8 @@ export default function App() {
   const pads = useSyncExternalStore(gamepads.subscribe, gamepads.connected)
   const bandPhase = useSyncExternalStore(band.subscribe, () => band.get().phase)
   useEffect(() => { if (game.mode !== 'band' && band.get().phase !== 'off') band.close() }, [game.mode])
-  const openBand = () => { setShowSettings(false); game.enter('band'); band.open() }
+  // Blur the settings button: Space / Enter on a focused button would click it again mid-song.
+  const openBand = () => { document.activeElement?.blur?.(); setShowSettings(false); game.enter('band'); band.open() }
   // First visit of a new day: the room wrote a page about last time; point at the bookshelf.
   const [diaryHint, setDiaryHint] = useState(false)
   useEffect(() => {
