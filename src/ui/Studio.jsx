@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import { PADS, PIANO, beatLength, makeTake, noteName, quantize, takeLength, takeStore, toggleStep } from '../audio/takes'
+import { PADS, PIANO, GUITAR, beatLength, makeTake, mergeTakes, noteName, quantize, takeLength, takeStore, toggleStep } from '../audio/takes'
 import { playTake, playDrum, playPiano, renderTakeWav } from '../audio/drums'
+import { playGuitarNote } from '../audio/guitar'
 import { isBlackKey } from '../game/pianoKeys'
 import { midiToTake, takeToMidi } from '../audio/midi'
 import { mugoOutbox } from '../game/mugoBridge'
@@ -12,9 +13,11 @@ const STEPS_PER_BEAT = 4 // grid resolution: 1/16 notes
 // piano rows spanning the notes used (at least two octaves, C3–C5 for an empty piano project).
 function lanesFor(take) {
   const piano = take.events.filter(event => event.pad === PIANO)
-  const hasDrums = take.events.some(event => event.pad !== PIANO)
+  const guitar = take.events.filter(event => event.pad === GUITAR)
+  const hasDrums = take.events.some(event => event.pad !== PIANO && event.pad !== GUITAR)
   const showPiano = piano.length > 0 || take.kind === 'piano'
-  const showDrums = hasDrums || !showPiano
+  const showGuitar = guitar.length > 0 || take.kind === 'guitar'
+  const showDrums = hasDrums || take.kind === 'drums' || !(showPiano || showGuitar)
   let rows = []
   if (showPiano) {
     const notes = piano.map(event => event.note)
@@ -22,7 +25,9 @@ function lanesFor(take) {
     if (notes.length) { low = Math.min(...notes) - 3; high = Math.max(...notes) + 3; while (high - low < 24) { low--; high++ } }
     for (let note = high; note >= low; note--) rows.push({ id: `n${note}`, pad: PIANO, note, label: noteName(note), black: isBlackKey(note) })
   }
-  return [...(showDrums ? PADS.map(pad => ({ id: pad.id, pad: pad.id, label: pad.label })) : []), ...rows]
+  const guitarNotes = guitar.length ? [...new Set(guitar.map(event => event.note))].sort((a, b) => b - a) : [64, 59, 55, 52, 47, 40]
+  return [...(showDrums ? PADS.map(pad => ({ id: pad.id, pad: pad.id, label: pad.label })) : []),
+    ...rows, ...(showGuitar ? guitarNotes.map(note => ({ id: `g${note}`, pad: GUITAR, note, label: `G ${noteName(note)}` })) : [])]
 }
 
 // CRT "Studio": opens takes recorded at the drum kit as editable music projects.
@@ -36,6 +41,7 @@ export default function Studio({ onHit, onOpenInMugo }) {
   // Playhead moves via the DOM, not React state, so playback doesn't re-render the grid each frame.
   const setPosition = value => { if (playheadRef.current) playheadRef.current.style.left = `calc(var(--label) + (100% - var(--label)) * ${value})` }
   const [busy, setBusy] = useState('')
+  const [layerId, setLayerId] = useState('')
   const stopRef = useRef(null)
 
   const stop = () => { stopRef.current?.(); stopRef.current = null; setPlaying(false); setPosition(0) }
@@ -63,7 +69,7 @@ export default function Studio({ onHit, onOpenInMugo }) {
   }, [take, loop])
 
   const newProject = kind => {
-    const created = takeStore.add({ ...makeTake({ name: `${kind === 'piano' ? 'Piano' : 'Drums'} ${takes.length + 1}`, bpm: 90, bars: 2 }), kind })
+    const created = takeStore.add({ ...makeTake({ name: `${kind === 'piano' ? 'Piano' : kind === 'guitar' ? 'Guitar' : 'Drums'} ${takes.length + 1}`, bpm: 90, bars: 2 }), kind })
     setSelectedId(created.id)
   }
   const download = (blob, extension) => {
@@ -92,10 +98,11 @@ export default function Studio({ onHit, onOpenInMugo }) {
   return <section className="desktop-window studio" role="dialog" aria-label="Studio" data-testid="studio-window"
     onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const file = event.dataTransfer.files[0]; if (file) importMidi(file) }}>
     <aside className="studio-list">
-      <div className="studio-new"><button className="win-button" onClick={() => newProject('drums')}>+ Drums</button><button className="win-button" onClick={() => newProject('piano')}>+ Piano</button></div>
+      <div className="studio-new"><button className="win-button" onClick={() => newProject('drums')}>+ Drums</button><button className="win-button" onClick={() => newProject('piano')}>+ Piano</button><button className="win-button" onClick={() => newProject('guitar')}>+ Guitar</button></div>
+      {take && takes.length > 1 && <div className="studio-layer"><select aria-label="选择要叠加的作品" value={layerId} onChange={event => setLayerId(event.target.value)}><option value="">叠加另一条录音…</option>{takes.filter(item => item.id !== take.id).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="win-button" disabled={!layerId || layerId === take.id} onClick={() => { const layer = takes.find(item => item.id === layerId); if (!layer) return; takeStore.update(take.id, current => mergeTakes(current, layer)); setNotice(`已将「${layer.name}」叠加到「${take.name}」`); setLayerId('') }}>叠加轨道</button></div>}
       <label className="win-button studio-import">⤒ 导入 MIDI<input id="studio-midi" type="file" accept=".mid,.midi,audio/midi" onChange={event => { const file = event.target.files[0]; if (file) importMidi(file); event.target.value = '' }}/></label>
       {notice && <p className="studio-notice" role="status">{notice}</p>}
-      {takes.length === 0 && <p className="studio-empty">还没有工程。<br/>坐到鼓凳按 R 录一段，或点上面新建。</p>}
+      {takes.length === 0 && <p className="studio-empty">还没有工程。<br/>在鼓、钢琴或吉他前录一段，或点上面新建。</p>}
       {takes.map(item => <button key={item.id} className={`studio-item ${item.id === take?.id ? 'active' : ''}`} onClick={() => setSelectedId(item.id)}>
         <strong>{item.name}</strong><small>{item.bpm} BPM · {Math.round(takeLength(item) / (4 * beatLength(item.bpm)))} bars · {item.events.length} hits</small>
       </button>)}
@@ -115,7 +122,7 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
   const [name, setName] = useState(take.name)
 
   const lanes = useMemo(() => lanesFor(take), [take])
-  const audition = lane => lane.pad === PIANO ? playPiano(lane.note).then(voice => setTimeout(voice.release, 350)) : playDrum(lane.pad)
+  const audition = lane => lane.pad === PIANO ? playPiano(lane.note).then(voice => setTimeout(voice.release, 350)) : lane.pad === GUITAR ? playGuitarNote(lane.note) : playDrum(lane.pad)
   const onGridClick = (lane, event) => {
     const rect = event.currentTarget.getBoundingClientRect()
     const index = Math.min(steps - 1, Math.max(0, Math.floor((event.clientX - rect.left) / rect.width * steps)))
@@ -148,7 +155,7 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
       <button className="win-button danger" onClick={onDelete}>Delete</button>
     </div>
     <div className="studio-grid" style={{ '--steps': steps, '--beats': steps / STEPS_PER_BEAT, '--bars': bars }}>
-      {lanes.map(lane => <div key={lane.id} className={`studio-lane ${lane.pad === PIANO ? 'piano' : ''} ${lane.black ? 'black' : ''} ${lane.note % 12 === 0 ? 'c' : ''}`}>
+      {lanes.map(lane => <div key={lane.id} className={`studio-lane ${lane.pad === PIANO ? 'piano' : ''} ${lane.pad === GUITAR ? 'guitar' : ''} ${lane.black ? 'black' : ''} ${lane.note % 12 === 0 ? 'c' : ''}`}>
         <span className="lane-label" onClick={() => audition(lane)}>{lane.label}</span>
         <div className="lane-track" onClick={event => onGridClick(lane, event)}>
           {take.events.filter(event => event.pad === lane.pad && event.note === lane.note).map((event, i) =>
@@ -157,6 +164,6 @@ function ProjectView({ take, playing, playheadRef, loop, busy, onPlay, onLoop, o
       </div>)}
       <div ref={playheadRef} className="playhead" style={{ display: playing ? 'block' : 'none', left: 'var(--label)' }}/>
     </div>
-    <small className="studio-hint">点格子添加或删除鼓点 · 点左侧名字试听 · 播放时房间里的鼓也会跟着动</small>
+    <small className="studio-hint">鼓、钢琴、吉他可叠加到同一作品 · 点格子编辑 · 点左侧名字试听</small>
   </div>
 }

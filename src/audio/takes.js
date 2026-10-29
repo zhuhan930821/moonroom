@@ -16,9 +16,10 @@ export const PADS = [
 export const PAD_IDS = PADS.map(pad => pad.id)
 // Piano events use pad 'piano' plus a MIDI `note` and a held duration `d` (seconds).
 export const PIANO = 'piano'
+export const GUITAR = 'guitar'
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 export const noteName = note => `${NOTE_NAMES[note % 12]}${Math.floor(note / 12) - 1}`
-const isEvent = event => PAD_IDS.includes(event.pad) || (event.pad === PIANO && Number.isFinite(event.note))
+const isEvent = event => PAD_IDS.includes(event.pad) || ([PIANO, GUITAR].includes(event.pad) && Number.isFinite(event.note))
 const eventKey = (event, t) => `${event.pad}:${event.note ?? ''}@${t.toFixed(4)}`
 
 export const beatLength = bpm => 60 / bpm
@@ -43,7 +44,8 @@ export function makeTake({ name, bpm = 90, events = [], bars, now = Date.now() }
 export function finishRecording({ startedAt, hits, bpm, name, now }) {
   const events = hits.filter(isEvent).map(hit => {
     const event = { t: Math.max(0, hit.at - startedAt), pad: hit.pad }
-    if (hit.pad === PIANO) Object.assign(event, { note: hit.note, d: Math.max(.08, (hit.until ?? hit.at + .4) - hit.at) })
+    if (hit.pad === PIANO || hit.pad === GUITAR) Object.assign(event, { note: hit.note, d: Math.max(.08, (hit.until ?? hit.at + (hit.pad === GUITAR ? 1.1 : .4)) - hit.at) })
+    if (hit.pad === GUITAR && hit.tone === 'electric') event.tone = 'electric'
     return event
   })
   return makeTake({ name, bpm, events, now })
@@ -58,7 +60,7 @@ export function quantize(take, division = 4) {
     const key = eventKey(event, t)
     if (seen.has(key)) continue
     seen.add(key)
-    events.push(event.pad === PIANO ? { ...event, t, d: Math.max(step, Math.round(event.d / step) * step) } : { t, pad: event.pad })
+    events.push(event.pad === PIANO || event.pad === GUITAR ? { ...event, t, d: Math.max(step, Math.round(event.d / step) * step) } : { t, pad: event.pad })
   }
   return { ...take, events: events.sort((a, b) => a.t - b.t), original: take.original || take.events }
 }
@@ -69,10 +71,17 @@ export function toggleStep(take, pad, step, division = 4, note) {
   const size = beatLength(take.bpm) / division
   const t = step * size
   const hit = take.events.findIndex(event => event.pad === pad && event.note === note &&
-    (pad === PIANO ? t >= event.t - size / 2 && t < event.t + Math.max(event.d, size) : Math.abs(event.t - t) < size / 2))
-  const added = pad === PIANO ? { t, pad, note, d: size * 2 } : { t, pad }
+    (pad === PIANO || pad === GUITAR ? t >= event.t - size / 2 && t < event.t + Math.max(event.d, size) : Math.abs(event.t - t) < size / 2))
+  const added = pad === PIANO || pad === GUITAR ? { t, pad, note, d: size * 2 } : { t, pad }
   const events = hit >= 0 ? take.events.filter((_, i) => i !== hit) : [...take.events, added].sort((a, b) => a.t - b.t)
   return { ...take, events }
+}
+
+// Align the other take by beat, not by wall-clock seconds, when their BPM differs.
+export function mergeTakes(base, layer) {
+  const scale = layer.bpm / base.bpm
+  const events = [...base.events, ...layer.events.map(event => ({ ...event, t: event.t * scale, ...(event.d ? { d: event.d * scale } : {}) }))].sort((a, b) => a.t - b.t)
+  return { ...base, events, bars: Math.max(base.bars || 0, Math.ceil(takeLength(layer) * scale / barLength(base.bpm))), original: undefined }
 }
 
 // Key of the music you've been making: Krumhansl–Schmuckler major-key profile correlated with

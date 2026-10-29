@@ -7,6 +7,7 @@ import { hungItems, photoWall } from '../game/photoWall'
 import { layoutPhotoWall } from './photoWallLayout'
 import { builtinCanvas } from './photoArt'
 import GLBAsset from './AssetModel'
+import { guitarAmpLevel, guitarVisual } from '../audio/guitar'
 
 // Decor pass 03: the layer of the 2D reference that the room still lacked — ivy curtains over
 // the arches and along the loft, a photo wall + neon moon-fox on the left wall, hanging stars and
@@ -520,20 +521,38 @@ function Lantern({ position, scale = 1, light = false }) {
   </group>
 }
 
-// ---------- right wall: guitars, amp, a wall shelf ----------
-function Guitar({ position, color, rot = 0 }) {
-  return <group position={position} rotation={[0, -Math.PI / 2, rot]}>
-    <mesh position-y={.32} scale={[1, 1.15, .32]} castShadow><sphereGeometry args={[.22, 18, 12]}/><meshStandardMaterial color={color} roughness={.4}/></mesh>
-    <mesh position-y={.6} scale={[.85, .95, .3]}><sphereGeometry args={[.17, 16, 10]}/><meshStandardMaterial color={color} roughness={.4}/></mesh>
-    <mesh position={[0, .45, .075]}><circleGeometry args={[.055, 16]}/><meshStandardMaterial color="#1a1418"/></mesh>
-    <mesh position-y={1.05}><boxGeometry args={[.05, .62, .03]}/><meshStandardMaterial color="#5a3a26"/></mesh>
-    <mesh position-y={1.42}><boxGeometry args={[.08, .14, .03]}/><meshStandardMaterial color="#3a2a1e"/></mesh>
+// ---------- right wall: CC0 acoustic guitar, amp, a wall shelf ----------
+function Guitar({ strumId = 0, z = -1.35, red = false, active = false }) {
+  const group = useRef()
+  const model = useRef()
+  const lastStrum = useRef(0)
+  useEffect(() => { if (strumId) lastStrum.current = performance.now() }, [strumId])
+  useFrame(() => {
+    if (!group.current) return
+    const age = (performance.now() - lastStrum.current) / 1000
+    group.current.rotation.z = active && age < 1.1 ? Math.sin(age * 19) * .025 * Math.exp(-age * 4) : 0
+    const strings = model.current?.getObjectByName('acoustic-guitar_strings')
+    if (strings) {
+      const latest = Math.max(...guitarVisual[red ? 'electric' : 'acoustic'])
+      const vibration = Math.exp(-Math.max(0, performance.now() - latest) / 240)
+      strings.rotation.z = active ? Math.sin(performance.now() * .085) * .007 * vibration : 0
+    }
+  })
+  return <group ref={group} position={[9.5, .8, z]} rotation-y={-Math.PI / 2}>
+    <GLBAsset ref={model} url="/assets/models/acoustic-guitar-cc0.glb" axisCorrection={false} fallbackScale={.35} materialOverrides={red ? { 'acoustic-guitar_body_pbr': { color: new THREE.Color('#aa3d50') } } : undefined}/>
+    <mesh position={[0, .98, -.025]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[.045, .012, 8, 16, Math.PI]}/><meshStandardMaterial color="#8a6755" metalness={.45} roughness={.48}/></mesh>
   </group>
 }
-function MusicWall() {
+function AmpSignal() {
+  const bulb = useRef()
+  useFrame(() => { if (bulb.current) bulb.current.material.emissiveIntensity = .18 + guitarAmpLevel() * 2.2 })
+  return <mesh ref={bulb} position={[9.162, .47, -.9]} rotation-y={-Math.PI / 2}><circleGeometry args={[.026, 12]}/><meshStandardMaterial color="#ffc67a" emissive="#ff9c39" emissiveIntensity={.18}/></mesh>
+}
+function MusicWall({ guitarHit, guitarTone }) {
   return <group>
-    <Guitar position={[9.62, 0, -1.45]} color="#e8a060" rot={.12}/>
-    <Guitar position={[9.62, 0, -.35]} color="#8a2a3a" rot={-.1}/>
+    <Guitar strumId={guitarHit} active={guitarTone === 'acoustic'}/>
+    <Guitar strumId={guitarHit} z={-.15} red active={guitarTone === 'electric'}/>
+    <AmpSignal/>
     <group position={[9.4, 0, -.9]}>
       <mesh position-y={.32} castShadow><boxGeometry args={[.45, .64, .55]}/><meshStandardMaterial color="#2a2428" roughness={.7}/></mesh>
       <mesh position={[-.226, .28, 0]} rotation-y={-Math.PI / 2}><planeGeometry args={[.46, .4]}/><meshStandardMaterial color="#6a5a50" roughness={1}/></mesh>
@@ -552,7 +571,7 @@ function MusicWall() {
   </group>
 }
 
-export default function ReferenceDecor() {
+export default function ReferenceDecor({ guitarHit, guitarTone }) {
   return <group>
     <Ivy/>
     <PhotoWall/>
@@ -592,6 +611,6 @@ export default function ReferenceDecor() {
     <Lantern position={[9.3, 0, 6.3]} light/>
     <Lantern position={[-2.8, 0, 7.4]} scale={.9}/>
     <Lantern position={[-8.6, 0, 4.9]} scale={.8}/>
-    <MusicWall/>
+    <MusicWall guitarHit={guitarHit} guitarTone={guitarTone}/>
   </group>
 }

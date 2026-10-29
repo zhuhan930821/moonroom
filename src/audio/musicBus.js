@@ -3,7 +3,7 @@
 // to music never re-renders React.
 import * as THREE from 'three'
 
-const CHANNEL = { kick: 'kick', snare: 'snare', hihat: 'hat', hihatOpen: 'hat', tom1: 'tom', tom2: 'tom', floor: 'tom', crash: 'cymbal', ride: 'cymbal', piano: 'piano' }
+const CHANNEL = { kick: 'kick', snare: 'snare', hihat: 'hat', hihatOpen: 'hat', tom1: 'tom', tom2: 'tom', floor: 'tom', crash: 'cymbal', ride: 'cymbal', piano: 'piano', guitar: 'piano' }
 const last = { kick: -1e9, snare: -1e9, hat: -1e9, tom: -1e9, cymbal: -1e9, piano: -1e9, any: -1e9 }
 export const pianoColor = new THREE.Color('#ffd0a0')
 const LOW = new THREE.Color('#ffa257'), HIGH = new THREE.Color('#9cc6ff')
@@ -21,7 +21,7 @@ export function emitMusic(pad, note) {
   last.any = now
   loudLevel = loudness() + LOUD[channel]; loudAt = now
   recent.push(now); while (recent.length && recent[0] < now - 8) recent.shift()
-  if (pad === 'piano' && Number.isFinite(note)) pianoColor.copy(LOW).lerpHSL(HIGH, THREE.MathUtils.clamp((note - 40) / 44, 0, 1))
+  if ((pad === 'piano' || pad === 'guitar') && Number.isFinite(note)) pianoColor.copy(LOW).lerpHSL(HIGH, THREE.MathUtils.clamp((note - 40) / 44, 0, 1))
 }
 
 // 1 right after a hit on `channel`, falling off exponentially at `rate` per second.

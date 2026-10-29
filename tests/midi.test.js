@@ -16,6 +16,15 @@ test('a take survives a MIDI round trip: tempo, drums on GM notes, piano pitches
   assert.deepEqual(norm(back.events), norm(take.events))
 })
 
+test('guitar, piano and drum tracks survive one MIDI export', () => {
+  const take = makeTake({ name: 'Trio', bpm: 100, events: [
+    { t: 0, pad: 'kick' }, { t: .2, pad: 'guitar', note: 52, d: .8 }, { t: .4, pad: 'piano', note: 64, d: .3 },
+  ] })
+  const restored = midiToTake(takeToMidi(take).buffer, 'Trio')
+  assert.deepEqual(restored.events.map(event => event.pad), ['kick', 'guitar', 'piano'])
+  assert.equal(restored.events[1].note, 52)
+})
+
 test('drum notes use the General MIDI numbers Mugo maps', () => {
   assert.deepEqual(GM_NOTE, { kick: 36, snare: 38, hihat: 42, hihatOpen: 46, tom1: 50, tom2: 47, floor: 43, crash: 49, ride: 51 })
 })

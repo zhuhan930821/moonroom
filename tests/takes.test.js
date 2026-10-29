@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { finishRecording, makeTake, quantize, takeLength, toggleStep } from '../src/audio/takes.js'
+import { finishRecording, makeTake, mergeTakes, quantize, takeLength, toggleStep } from '../src/audio/takes.js'
 import { DRUM_KEYS } from '../src/game/drumKeys.js'
 
 test('recording stores hits relative to the start and drops unknown pads', () => {
@@ -47,6 +47,19 @@ test('piano notes keep pitch and held length through recording, quantize, and st
   assert.deepEqual(edited.events, [{ t: .25, pad: 'piano', note: 64, d: .25 }])
   assert.equal(toggleStep(edited, 'piano', 3, 4, 64).events.length, 0, 'clicking inside the held note removes it')
   assert.equal(toggleStep(edited, 'piano', 3, 4, 65).events.length, 2, 'another pitch is a new note')
+})
+
+test('guitar strings record as pitched notes and can layer with piano and drums', () => {
+  const guitar = finishRecording({ startedAt: 10, bpm: 120, name: 'Guitar', now: 2, hits: [
+    { pad: 'guitar', note: 40, at: 10.2 }, { pad: 'guitar', note: 47, at: 10.218 },
+  ] })
+  assert.deepEqual(guitar.events.map(event => [event.pad, event.note]), [['guitar', 40], ['guitar', 47]])
+  assert.equal(quantize(guitar, 4).events[0].note, 40)
+  const drumsAndPiano = makeTake({ name: 'Room', bpm: 90, bars: 2, events: [{ t: 0, pad: 'kick' }, { t: .5, pad: 'piano', note: 60, d: .5 }] })
+  const mixed = mergeTakes(drumsAndPiano, guitar)
+  assert.equal(mixed.events.length, 4)
+  assert.deepEqual(new Set(mixed.events.map(event => event.pad)), new Set(['kick', 'piano', 'guitar']))
+  assert.ok(Math.abs(mixed.events[1].t - .2 * 120 / 90) < .001)
 })
 
 test('project key follows the latest piano take', async () => {

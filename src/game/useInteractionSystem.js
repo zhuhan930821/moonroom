@@ -10,6 +10,8 @@ import { currentDiaryPages } from '../ui/DiaryPage'
 import { worldPhysics } from '../worlds/worldState'
 import { journey } from './journey'
 import { appendDrumHit, initialDrumHit } from './drumHitState'
+import { muteGuitar, playGuitarString, playGuitarStrum } from '../audio/guitar'
+import { GUITAR_CHORDS, PICK_STRINGS } from '../audio/guitarChords'
 
 import { DRUM_KEYS } from './drumKeys'
 // Recording timeline uses the page clock: the audio clock can run unevenly when no output
@@ -17,7 +19,7 @@ import { DRUM_KEYS } from './drumKeys'
 const clock = () => performance.now() / 1000
 import { DEFAULT_PIANO_BASE, PIANO_HIGH, PIANO_KEYS, PIANO_LOW } from './pianoKeys'
 export { DRUM_KEYS }
-const SESSIONS = ['drums', 'piano']
+const SESSIONS = ['drums', 'piano', 'guitar']
 
 export function useInteractionSystem(root) {
   const [started, setStarted] = useState(false)
@@ -63,6 +65,13 @@ export function useInteractionSystem(root) {
   // Piano session: octave base, notes currently held (for the 3D keys), and their releases.
   const [pianoBase, setPianoBase] = useState(DEFAULT_PIANO_BASE)
   const [pianoNotes, setPianoNotes] = useState(() => new Set())
+  const [guitarChord, setGuitarChord] = useState(0)
+  const [guitarTone, setGuitarTone] = useState('acoustic')
+  const guitarChordRef = useRef(0)
+  const guitarToneRef = useRef('acoustic')
+  const heldChordKey = useRef(null)
+  const heldChordAt = useRef(null)
+  const [guitarHit, setGuitarHit] = useState(0)
   const heldKeys = useRef(new Map()) // key code / pointer id -> { note, release }
   const pianoBaseRef = useRef(pianoBase)
   pianoBaseRef.current = pianoBase
@@ -97,7 +106,7 @@ export function useInteractionSystem(root) {
   const enter = useCallback(nextMode => {
     // The diary remembers where you spent time (sofa, books, bed, desk, photo wall…).
     // Logged first: pulling a book counts today's page, so the page list must already include it.
-    activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos' }[nextMode] || nextMode)
+    activity.log({ beanbag: 'rest', books: 'books', musicBooks: 'books', deskChair: 'desk', photos: 'photos', guitar: 'guitarPickUp' }[nextMode] || nextMode)
     if(nextMode==='drums') setHit(old=>({...old,name:null}))
     if(nextMode==='piano') preparePiano().catch(error => setAudioError(error.message))
     if(nextMode==='musicBooks') setScorePage(0)
@@ -117,6 +126,7 @@ export function useInteractionSystem(root) {
   const pulse = useCallback((name, note) => {
     emitMusic(name, note)
     if (name === 'piano') flashNote(note)
+    else if (name === 'guitar') setGuitarHit(id => id + 1)
     else setHit(old => appendDrumHit(old, name))
   }, [flashNote])
 
@@ -142,7 +152,8 @@ export function useInteractionSystem(root) {
     }
     setRecording(null)
     if (!current.hits.length) return
-    const name = `${current.hits.some(hit => hit.pad === 'piano') ? 'Piano' : 'Drums'} ${takeStore.getAll().length + 1}`
+    const instrument = current.hits.some(hit => hit.pad === 'piano') ? 'Piano' : current.hits.some(hit => hit.pad === 'guitar') ? 'Guitar' : 'Drums'
+    const name = `${instrument} ${takeStore.getAll().length + 1}`
     const take = takeStore.add(finishRecording({ startedAt: current.startedAt, hits: current.hits, bpm, name, now: Date.now() }))
     activity.log('take', take.name)
     setLastTake(take)
@@ -187,7 +198,7 @@ export function useInteractionSystem(root) {
   // A record deleted or un-pressed in Studio stops spinning.
   useEffect(() => { if (vinyl && !records.some(take => take.id === vinyl.id)) stopVinyl() }, [vinyl, records, stopVinyl])
 
-  const drumTakes = takes.filter(take => take.events.some(event => event.pad !== 'piano'))
+  const drumTakes = takes.filter(take => take.events.some(event => event.pad !== 'piano' && event.pad !== 'guitar'))
   const startChallenge = useCallback(async takeId => {
     const take = takeStore.getAll().find(item => item.id === takeId) || takeStore.getAll().find(item => item.events.some(event => event.pad !== 'piano'))
     if (!take) return
@@ -245,6 +256,7 @@ export function useInteractionSystem(root) {
 
   const leave = useCallback(() => {
     releaseAllNotes()
+    muteGuitar()
     if (recordingRef.current) toggleRecording()
     stopTake()
     setMetronome(false)
@@ -289,6 +301,36 @@ export function useInteractionSystem(root) {
     setMasterVolume(value)
   }, [])
 
+  const strumGuitar = useCallback((upward = false) => {
+    if (modeRef.current !== 'guitar') return
+    const at = clock()
+    const notes = playGuitarStrum(guitarChordRef.current, upward, guitarToneRef.current === 'electric')
+    if (notes.length) {
+      setGuitarHit(id => id + 1); activity.log('guitar')
+      emitMusic('guitar', notes[0].note)
+      setRecording(current => current && at >= current.startedAt ? { ...current, hits: [...current.hits, ...notes.map(({ note, offset }) => ({ pad: 'guitar', note, tone: guitarToneRef.current, at: at + offset }))] } : current)
+    }
+  }, [])
+  const pluckGuitar = useCallback(string => {
+    if (modeRef.current !== 'guitar') return
+    const at = clock()
+    const note = playGuitarString(guitarChordRef.current, string, .7, guitarToneRef.current === 'electric')
+    if (note !== false) {
+      setGuitarHit(id => id + 1); activity.log('guitar')
+      emitMusic('guitar', note)
+      setRecording(current => current && at >= current.startedAt ? { ...current, hits: [...current.hits, { pad: 'guitar', note, tone: guitarToneRef.current, at }] } : current)
+    }
+  }, [])
+  const releaseGuitarChord = useCallback(() => {
+    const since = heldChordAt.current
+    heldChordAt.current = null
+    if (since != null) {
+      const until = clock()
+      setRecording(current => current ? { ...current, hits: current.hits.map(hit => hit.pad === 'guitar' && hit.at >= since && hit.at <= until ? { ...hit, until } : hit) } : current)
+    }
+    muteGuitar()
+  }, [])
+
   useEffect(() => {
     const onLockChange = () => setLocked(document.pointerLockElement === root.current)
     document.addEventListener('pointerlockchange', onLockChange)
@@ -304,6 +346,19 @@ export function useInteractionSystem(root) {
         return
       }
       if (event.target?.closest?.('input, textarea')) return // typing in a panel isn't playing
+      if (current === 'guitar') {
+        if (event.repeat) return
+        if (event.code === 'KeyE') { event.preventDefault(); leave(); return }
+        if (event.code === 'Enter') { event.preventDefault(); toggleRecording(); return }
+        const chord = /^Digit([1-8])$/.exec(event.code)
+        if (chord) { event.preventDefault(); heldChordKey.current = event.code; heldChordAt.current = clock(); guitarChordRef.current = Number(chord[1]) - 1; setGuitarChord(guitarChordRef.current); activity.log('chord', GUITAR_CHORDS[guitarChordRef.current].name); return }
+        if (event.code === 'Space') { event.preventDefault(); strumGuitar(event.shiftKey); return }
+        if (event.code === 'KeyM') { event.preventDefault(); releaseGuitarChord(); return }
+        if (event.code === 'Tab') { event.preventDefault(); muteGuitar(); guitarToneRef.current = guitarToneRef.current === 'acoustic' ? 'electric' : 'acoustic'; setGuitarTone(guitarToneRef.current); return }
+        const string = ['KeyJ', 'KeyK', 'KeyL', 'Semicolon'].indexOf(event.code)
+        if (string >= 0) { event.preventDefault(); pluckGuitar(PICK_STRINGS[string]) }
+        return
+      }
       if (['bed', 'deskChair'].includes(current)) {
         if (event.code === 'KeyE') { event.preventDefault(); leave() }
         return
@@ -352,14 +407,19 @@ export function useInteractionSystem(root) {
         interact()
       }
     }
-    const onKeyUp = event => { if (modeRef.current === 'piano') noteOff(event.code) }
+    const onKeyUp = event => {
+      if (modeRef.current === 'piano') noteOff(event.code)
+      if (modeRef.current === 'guitar' && event.code === heldChordKey.current) { heldChordKey.current = null; releaseGuitarChord() }
+    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('keyup', onKeyUp)
-    window.addEventListener('blur', releaseAllNotes)
-    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', releaseAllNotes) }
-  }, [interact, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge])
+    const onBlur = () => { releaseAllNotes(); releaseGuitarChord(); heldChordKey.current = null }
+    window.addEventListener('blur', onBlur)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', onBlur) }
+  }, [interact, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge, strumGuitar, pluckGuitar, releaseGuitarChord])
 
   return { started, locked, mode, near, foxName, foxPet, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, interact, strike, toggleAmbient, changeVolume,
+    guitarChord, guitarTone, guitarHit, setGuitarTone: tone => { muteGuitar(); guitarToneRef.current = tone === 'electric' ? 'electric' : 'acoustic'; setGuitarTone(guitarToneRef.current) }, muteGuitar, holdGuitarChord: index => { heldChordAt.current = clock(); guitarChordRef.current = index; setGuitarChord(index); activity.log('chord', GUITAR_CHORDS[index]?.name) }, releaseGuitarChord, setGuitarChord: index => { const next = Math.max(0, Math.min(GUITAR_CHORDS.length - 1, index)); guitarChordRef.current = next; setGuitarChord(next); activity.log('chord', GUITAR_CHORDS[next].name) }, strumGuitar, pluckGuitar,
     records, vinyl, playVinyl, stopVinyl, book, pullBook, activeBookShelf, scorePage, nextScore: () => setScorePage(page => (page + 1) % 3),
     drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
     milo, inviteMilo, toggleMiloJam,

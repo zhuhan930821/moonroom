@@ -1,4 +1,5 @@
 import { takeLength } from './takes'
+import { scheduleGuitarNote } from './guitarSynth'
 import { FLAGS } from '../config/flags'
 
 // All CC0 (Virtuosity Drums, see ASSETS.md). Floor tom reuses the low tom pitched down.
@@ -254,6 +255,7 @@ export async function playTake(take, { loop = false, onHit, onEnd, onPosition } 
   const schedule = () => {
     for (const event of take.events) {
       if (event.pad === 'piano') pianoVoice(bus, audio, roots, event.note, start + event.t, event.d)
+      else if (event.pad === 'guitar') scheduleGuitarNote(audio, bus, event.note, start + event.t, .7, { electric: event.tone === 'electric' }).mute(start + event.t + (event.d || 1.1))
       else voice(bus, audio, samples[event.pad], start + event.t, 1, event.pad)
       later(() => !stopped && onHit?.(event.pad, event.note), start + event.t)
     }
@@ -284,6 +286,7 @@ export async function renderTakeWav(take) {
   const out = offline.createGain(); out.gain.value = .85; out.connect(offline.destination)
   for (const event of take.events) {
     if (event.pad === 'piano') pianoVoice(out, offline, roots, event.note, event.t, event.d)
+    else if (event.pad === 'guitar') scheduleGuitarNote(offline, out, event.note, event.t, .7, { electric: event.tone === 'electric' }).mute(event.t + (event.d || 1.1))
     else voice(out, offline, samples[event.pad], event.t)
   }
   return wavBlob(await offline.startRendering())

@@ -19,6 +19,7 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
   const position = useRef(new THREE.Vector3(...(QA_SPAWNS[spawnName] || START)))
   const target = useRef(new THREE.Vector3())
   const desired = useRef(new THREE.Quaternion())
+  const poseLook = useRef(new THREE.Camera())
   const returning = useRef(false)
 
   // Anywhere Door: worlds place the player at their spawn and back at the door on return.
@@ -66,10 +67,9 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
       if (!pose) return
       target.current.set(...pose.position)
       camera.position.lerp(target.current, 1 - Math.exp(-dt * 3.1))
-      const poseCamera = camera.clone()
-      poseCamera.position.copy(target.current)
-      poseCamera.lookAt(...pose.lookAt)
-      camera.quaternion.slerp(poseCamera.quaternion, 1 - Math.exp(-dt * 3.1))
+      poseLook.current.position.copy(target.current)
+      poseLook.current.lookAt(...pose.lookAt)
+      camera.quaternion.slerp(poseLook.current.quaternion, 1 - Math.exp(-dt * 3.1))
       returning.current = true
       return
     }
@@ -98,7 +98,11 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
     if (returning.current) {
       camera.position.lerp(position.current, 1 - Math.exp(-dt * 4.3))
       camera.quaternion.slerp(desired.current, 1 - Math.exp(-dt * 4.3))
-      if (camera.position.distanceTo(position.current) < .025) returning.current = false
+      // Do not snap to the explore camera until both translation and rotation
+      // have converged. Some poses are almost at the player's position but
+      // face a very different direction.
+      if (camera.position.distanceTo(position.current) < .025 &&
+          camera.quaternion.angleTo(desired.current) < .015) returning.current = false
     } else {
       camera.position.copy(position.current)
       camera.quaternion.copy(desired.current)

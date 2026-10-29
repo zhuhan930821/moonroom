@@ -1,7 +1,7 @@
 // Standard MIDI files for takes, so music moves between Moonroom's Studio and Mugo
 // (Mugo: 乐谱库 → 导入 MIDI 文件… / ↓ 导出 MIDI). Drums use General MIDI on channel 10 with
 // the same note map Mugo reads; piano is channel 1. No dependencies.
-import { PAD_IDS, PIANO, makeTake } from './takes.js'
+import { PAD_IDS, PIANO, GUITAR, makeTake } from './takes.js'
 
 export const GM_NOTE = { kick: 36, snare: 38, hihat: 42, hihatOpen: 46, tom1: 50, tom2: 47, floor: 43, crash: 49, ride: 51 }
 const GM_PAD = { 35: 'kick', 36: 'kick', 37: 'snare', 38: 'snare', 40: 'snare', 42: 'hihat', 44: 'hihat', 46: 'hihatOpen',
@@ -33,8 +33,10 @@ export function takeToMidi(take) {
     { tick: ticks(t + d), order: 0, bytes: [0x80 | channel, note, 0] }])
   const drums = take.events.filter(event => GM_NOTE[event.pad]).map(event => ({ note: GM_NOTE[event.pad], t: event.t, d: DRUM_GATE }))
   const piano = take.events.filter(event => event.pad === PIANO).map(event => ({ note: event.note, t: event.t, d: event.d }))
+  const guitar = take.events.filter(event => event.pad === GUITAR).map(event => ({ note: event.note, t: event.t, d: event.d || .6 }))
   const tracks = [meta]
   if (piano.length) tracks.push(track([{ tick: 0, order: 0, bytes: [0xc0, 0] }, ...notes(0, piano)]))
+  if (guitar.length) tracks.push(track([{ tick: 0, order: 0, bytes: [0xc1, 25] }, ...notes(1, guitar)]))
   if (drums.length) tracks.push(track(notes(9, drums)))
   return new Uint8Array([...chunk('MThd', [0, 1, 0, tracks.length, (PPQ >> 8) & 255, PPQ & 255]), ...tracks.flat()])
 }
@@ -52,6 +54,7 @@ export function midiToTake(buffer, name, now = Date.now()) {
   pos = headerStart + headerLength
   const tempos = [{ tick: 0, us: 500000 }]
   const raw = [] // { tick, on, channel, note }
+  const programs = new Map()
   while (pos < bytes.length) {
     const type = tag(), length = read32(), end = pos + length
     if (type !== 'MTrk') { pos = end; continue }
@@ -64,7 +67,8 @@ export function midiToTake(buffer, name, now = Date.now()) {
       if (status === 0xf0 || status === 0xf7) { pos += readVlq(); continue }
       const kind = status & 0xf0, channel = status & 0x0f
       if (kind === 0x90 || kind === 0x80) { const note = bytes[pos++], velocity = bytes[pos++]; raw.push({ tick, on: kind === 0x90 && velocity > 0, channel, note }) }
-      else pos += kind === 0xc0 || kind === 0xd0 ? 1 : 2
+      else if (kind === 0xc0) programs.set(channel, bytes[pos++])
+      else pos += kind === 0xd0 ? 1 : 2
     }
     pos = end
   }
@@ -76,8 +80,8 @@ export function midiToTake(buffer, name, now = Date.now()) {
     if (event.channel === 9) { if (event.on && GM_PAD[event.note]) events.push({ t: seconds(event.tick), pad: GM_PAD[event.note] }); continue }
     const key = `${event.channel}:${event.note}`
     if (event.on) open.set(key, event.tick)
-    else if (open.has(key)) { const start = open.get(key); open.delete(key); events.push({ t: seconds(start), pad: PIANO, note: event.note, d: Math.max(.05, seconds(event.tick) - seconds(start)) }) }
+    else if (open.has(key)) { const start = open.get(key); open.delete(key); events.push({ t: seconds(start), pad: event.channel === 1 && [24, 25].includes(programs.get(1)) ? GUITAR : PIANO, note: event.note, d: Math.max(.05, seconds(event.tick) - seconds(start)) }) }
   }
-  const take = makeTake({ name, bpm: Math.max(50, Math.min(180, bpm || 120)), events: events.filter(e => e.pad === PIANO || PAD_IDS.includes(e.pad)), now })
+  const take = makeTake({ name, bpm: Math.max(50, Math.min(180, bpm || 120)), events: events.filter(e => e.pad === PIANO || e.pad === GUITAR || PAD_IDS.includes(e.pad)), now })
   return { ...take, events: take.events.map(e => ({ ...e, t: Math.round(e.t * 1e4) / 1e4, ...(e.d ? { d: Math.round(e.d * 1e4) / 1e4 } : {}) })) }
 }

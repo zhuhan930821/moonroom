@@ -11,6 +11,7 @@ import Desktop from './ui/Desktop'
 import DrumPanel from './ui/DrumPanel'
 import RhythmOverlay from './ui/RhythmOverlay'
 import PianoPanel from './ui/PianoPanel'
+import GuitarPanel from './ui/GuitarPanel'
 import MugoScreen from './ui/MugoScreen'
 import RecordPanel from './ui/RecordPanel'
 import PhotoPanel from './ui/PhotoPanel'
@@ -155,7 +156,7 @@ export default function App() {
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
         <Furniture hit={game.hit} foxPet={game.foxPet} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
-          records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index} activeBookShelf={game.activeBookShelf}/>
+          records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index} activeBookShelf={game.activeBookShelf} guitarHit={game.guitarHit} guitarTone={game.guitarTone}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}
         <TimeOfDay resting={game.mode === 'beanbag' || game.mode === 'bed'}/>
         <AnywhereDoor/><SouvenirShelf/>
@@ -186,6 +187,7 @@ export default function App() {
       {game.mode === 'drums' && <DrumPanel game={game}/>}
       {game.mode === 'drums' && game.challenge && <RhythmOverlay challenge={game.challenge} subscribeStrikes={game.subscribeStrikes} onRetry={() => game.startChallenge(game.challenge.take.id)} onClose={game.endChallenge}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}
+      {game.mode === 'guitar' && <GuitarPanel game={game}/>}
       {isTouch && game.mode === 'piano' && <MobilePianoKeys game={game}/>}
       {game.mode === 'mugo' && <MugoScreen onExit={game.leave} milo={game.milo} onInviteMilo={game.inviteMilo}/>}
       {game.mode === 'record' && <RecordPanel game={game}/>}
