@@ -5,6 +5,7 @@ import { band } from '../game/band'
 import { chooseShot } from '../game/padMaps'
 import { sincePlayed } from '../audio/musicBus'
 import { Guitar } from './ReferenceDecor'
+import LiveHouse from './LiveHouse'
 
 // The little stage in the left corner: the drums and piano already live there, the guitar comes
 // over on a stand between them, and each instrument gets a spotlight that flares when it plays.
@@ -15,7 +16,7 @@ export const STAGE = {
 }
 // Camera shots for the auto director (position, look-at).
 export const SHOTS = {
-  wide: { position: [-.6, 2.7, -.4], lookAt: [-7.6, .9, -.6] },
+  wide: { position: [-.6, 2.7, -.4], lookAt: [-7.6, 1.45, -.6] }, // high enough to catch the mirror ball
   drums: { position: [-4.4, 1.85, -1.2], lookAt: [-7.2, .95, -2.9] },
   guitar: { position: [-5.2, 1.35, .75], lookAt: [-7.3, .8, .05] },
   piano: { position: [-6.1, 1.9, 1.5], lookAt: [-8.8, 1.0, 2.7] },
@@ -82,6 +83,7 @@ export default function BandStage({ guitarTone, guitarHit }) {
     {Object.keys(STAGE).map(part => <Spotlight key={part} part={part}/>)}
     <StageEdge/>
     <GuitarOnStand tone={guitarTone} strumId={guitarHit}/>
+    <LiveHouse/>
     <Director/>
   </group>
 }

@@ -23,6 +23,14 @@ export const PAD_HELP = {
 // ---------- band mode ----------
 export const BAND_PARTS = ['drums', 'guitar', 'piano']
 export const PART_NAMES = { drums: '鼓', guitar: '吉他', piano: '钢琴' }
+// The keyboard can take a seat too, so one or two controllers + the keyboard make a trio.
+export const KEYBOARD = 'kb'
+export const playerLabel = id => id === KEYBOARD ? '键盘' : `手柄 ${id + 1}`
+export const KEYBOARD_HELP = {
+  drums: 'J K L ; 底鼓 军鼓 踩镲 开镲 · U I O 通鼓 · Y H 镲片',
+  guitar: '1–8 换和弦 · 空格 扫弦 · Shift+空格 反扫 · J K L ; 分解 · M 闷音',
+  piano: 'Z…/ 下排 · Q…P 上排 · S D / 2 3 行是黑键',
+}
 
 // seats: { drums: padIndex | null, ... }. A pad joins the first free part.
 export function joinBand(seats, pad) {

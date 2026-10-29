@@ -1,12 +1,11 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { band } from '../game/band'
 import { gamepads } from '../game/gamepad'
-import { BAND_PARTS, PAD_HELP, PART_NAMES } from '../game/padMaps'
+import { BAND_PARTS, KEYBOARD, KEYBOARD_HELP, PAD_HELP, PART_NAMES, playerLabel } from '../game/padMaps'
 import { sincePlayed } from '../audio/musicBus'
 import { GUITAR_CHORDS } from '../audio/guitarChords'
 
 const ICONS = { drums: '🥁', guitar: '🎸', piano: '🎹' }
-const playerLabel = pad => `手柄 ${pad + 1}`
 
 function Lobby({ seats, pads }) {
   const seated = Object.values(seats).filter(p => p != null).length
@@ -16,8 +15,8 @@ function Lobby({ seats, pads }) {
     <div className="band-slots">{BAND_PARTS.map(part => <div key={part} className={`band-slot ${seats[part] != null ? 'on' : ''}`} data-part={part}>
       <i>{ICONS[part]}</i><b>{PART_NAMES[part]}</b><span>{seats[part] != null ? playerLabel(seats[part]) : '空位'}</span>
     </div>)}</div>
-    <p>{pads.length === 0 ? '还没检测到手柄：用数据线或蓝牙连上，然后按手柄上任意一个键。' : `已连接 ${pads.length} 个手柄 · 每人按 A 加入，←/→ 换乐器，B 退出`}</p>
-    <div className="band-start">{seated ? '按 Start 开始演奏' : '至少一个人加入才能开始'} · Esc 离开</div>
+    <p>{pads.length === 0 ? '还没检测到手柄：用数据线或蓝牙连上，然后按手柄上任意一个键。' : `已连接 ${pads.length} 个手柄 · 每人按 A 加入，←/→ 换乐器，B 退出`}<br/>⌨️ 键盘也能当一个队员：按 Enter 加入（←/→ 换乐器，Backspace 退出）</p>
+    <div className="band-start">{seated ? '手柄按 Start 或键盘按 Enter 开始演奏' : '至少一个人加入才能开始'} · Esc 离开</div>
   </section>
 }
 
@@ -32,7 +31,7 @@ function PlayerStrip({ part, pad, game }) {
   }, [part])
   return <div ref={el} className={`band-strip ${pad == null ? 'empty' : ''}`} data-part={part}>
     <header><i>{ICONS[part]}</i><b>{PART_NAMES[part]}</b><span>{pad == null ? '空位' : playerLabel(pad)}</span>{part === 'guitar' && pad != null && <em>{guitar}</em>}</header>
-    <small>{pad == null ? '按 Back 回到大厅让朋友加入' : PAD_HELP[part].replace(/ · B (起身|放下)$/, '')}</small>
+    <small>{pad == null ? '按 Back 回到大厅让朋友加入' : (pad === KEYBOARD ? KEYBOARD_HELP[part] : PAD_HELP[part].replace(/ · B (起身|放下)$/, ''))}</small>
   </div>
 }
 
