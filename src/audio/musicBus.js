@@ -12,12 +12,16 @@ const LOW = new THREE.Color('#ffa257'), HIGH = new THREE.Color('#9cc6ff')
 const LOUD = { kick: .5, snare: .35, cymbal: .8, tom: .3, hat: .1, piano: .12 }
 let loudLevel = 0, loudAt = 0
 const recent = [] // emit times for activity()
+// Per instrument (the band camera cuts to whoever is playing).
+const played = { drums: -1e9, piano: -1e9, guitar: -1e9 }
+export const sincePlayed = part => performance.now() / 1000 - played[part]
 
 export function emitMusic(pad, note) {
   const now = performance.now() / 1000
   const channel = CHANNEL[pad]
   if (!channel) return
   last[channel] = now
+  played[pad === 'piano' || pad === 'guitar' ? pad : 'drums'] = now
   last.any = now
   loudLevel = loudness() + LOUD[channel]; loudAt = now
   recent.push(now); while (recent.length && recent[0] < now - 8) recent.shift()

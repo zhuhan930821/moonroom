@@ -522,7 +522,7 @@ function Lantern({ position, scale = 1, light = false }) {
 }
 
 // ---------- right wall: CC0 acoustic guitar, amp, a wall shelf ----------
-function Guitar({ strumId = 0, z = -1.35, red = false, active = false }) {
+export function Guitar({ strumId = 0, z = -1.35, red = false, active = false, position = [9.5, .8, z] }) {
   const group = useRef()
   const model = useRef()
   const lastStrum = useRef(0)
@@ -538,7 +538,7 @@ function Guitar({ strumId = 0, z = -1.35, red = false, active = false }) {
       strings.rotation.z = active ? Math.sin(performance.now() * .085) * .007 * vibration : 0
     }
   })
-  return <group ref={group} position={[9.5, .8, z]} rotation-y={-Math.PI / 2}>
+  return <group ref={group} position={position} rotation-y={-Math.PI / 2}>
     <GLBAsset ref={model} url="/assets/models/acoustic-guitar-cc0.glb" axisCorrection={false} fallbackScale={.35} materialOverrides={red ? { 'acoustic-guitar_body_pbr': { color: new THREE.Color('#aa3d50') } } : undefined}/>
     <mesh position={[0, .98, -.025]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[.045, .012, 8, 16, Math.PI]}/><meshStandardMaterial color="#8a6755" metalness={.45} roughness={.48}/></mesh>
   </group>

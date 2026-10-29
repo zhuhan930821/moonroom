@@ -5,6 +5,7 @@ import { CAMERA_POSES, PLAYER, QA_LOOKS, QA_SPAWNS, START, START_LOOK } from '..
 import { movePlayer } from './collision'
 import { FLAGS } from '../config/flags'
 import { worldPhysics } from '../worlds/worldState'
+import { padInput } from './gamepad'
 
 export const playerRig = { teleport: null }
 
@@ -64,7 +65,7 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
     const dt = Math.min(delta, 0.05)
     if (mode !== 'explore') {
       const pose = mode === 'books' && activeBookShelf === 'left' ? CAMERA_POSES.booksLeft : CAMERA_POSES[mode]
-      if (!pose) return
+      if (!pose) { returning.current = true; return } // e.g. band mode: the auto camera drives
       target.current.set(...pose.position)
       camera.position.lerp(target.current, 1 - Math.exp(-dt * 3.1))
       poseLook.current.position.copy(target.current)
@@ -80,13 +81,19 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
       touch.lookX = 0
       touch.lookY = 0
     }
-    if (locked || touchEnabled) {
+    // Controller: right stick looks (rate per second), left stick walks like the touch stick.
+    const pad = padInput.active
+    if (pad) {
+      yaw.current -= padInput.lookX * 2.6 * dt
+      pitch.current = THREE.MathUtils.clamp(pitch.current - padInput.lookY * 1.9 * dt, -1.25, 1.25)
+    }
+    if (locked || touchEnabled || pad) {
       const keyboardF = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0)
       const keyboardS = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0)
-      const f = keyboardF || (touchEnabled ? touch?.forward || 0 : 0)
-      const s = keyboardS || (touchEnabled ? touch?.strafe || 0 : 0)
+      const f = keyboardF || (touchEnabled ? touch?.forward || 0 : 0) || (pad ? padInput.forward : 0)
+      const s = keyboardS || (touchEnabled ? touch?.strafe || 0 : 0) || (pad ? padInput.strafe : 0)
       if (f || s) {
-        const speed = keys.has('ShiftLeft') || keys.has('ShiftRight') || touch?.sprint ? PLAYER.sprint : PLAYER.speed
+        const speed = keys.has('ShiftLeft') || keys.has('ShiftRight') || touch?.sprint || (pad && padInput.sprint) ? PLAYER.sprint : PLAYER.speed
         const strength = keyboardF || keyboardS ? 1 : Math.min(1, Math.hypot(f, s))
         const next = movePlayer(position.current, yaw.current, f, s, speed, dt)
         position.current.x += (next.x - position.current.x) * strength
