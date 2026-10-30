@@ -360,6 +360,31 @@ function DeskLamp() {
   </group>
 }
 
+// ---------- sofa throw: a folded knit blanket on the sofa's left seat, one end unfolded ----------
+function knitTexture() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 256
+  const g = c.getContext('2d'); g.fillStyle = '#f3e3dc'; g.fillRect(0, 0, 256, 256)
+  // wide plum and rose bands with a thin gold line, like a striped wool throw
+  for (const [y, h, col] of [[22, 30, '#6e4a86'], [56, 6, '#e3b46a'], [150, 30, '#6e4a86'], [184, 6, '#e3b46a'], [96, 14, '#e9a7bd'], [224, 14, '#e9a7bd']]) { g.fillStyle = col; g.fillRect(0, y, 256, h) }
+  // knit stitches: rows of small chevrons in a slightly darker tone
+  g.strokeStyle = 'rgba(70,40,70,.16)'; g.lineWidth = 1.2
+  for (let y = 0; y < 256; y += 6) for (let x = 0; x < 256; x += 8) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + 4, y + 4); g.lineTo(x + 8, y); g.stroke() }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t
+}
+function SofaThrow() {
+  const tex = useMemo(knitTexture, [])
+  const [sx, , sz] = FURNITURE.beanbag.position
+  const wool = <meshStandardMaterial map={tex} roughness={1} color="#ffffff"/>
+  // the sofa is turned π-.12 to face the window; its left seat (as you sit) is on the -x side
+  return <group position={[sx - .78, .79, sz - .02]} rotation-y={-.12}>
+    {/* folded stack: two layers, the top one a little askew */}
+    <SoftBox args={[.66, .09, .5]} radius={.04} smoothness={4} position-y={.045} castShadow receiveShadow>{wool}</SoftBox>
+    <SoftBox args={[.62, .08, .46]} radius={.035} smoothness={4} position={[.02, .12, .01]} rotation-y={.08} castShadow>{wool}</SoftBox>
+    {/* the loose end, unfolded across the rest of the cushion */}
+    <SoftBox args={[.6, .03, .38]} radius={.012} smoothness={3} position={[-.03, .015, -.43]} rotation-y={-.04} castShadow receiveShadow>{wool}</SoftBox>
+  </group>
+}
+
 // ---------- the lounge: coffee table, cushions, headphones, books ----------
 function CoffeeTable() {
   return <group position={[0, 0, 1.2]}>
@@ -570,6 +595,7 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <pointLight position={[-8.9, 1.35, 6.85]} color="#ffd1a0" intensity={2.4} distance={2.4} decay={2}/>
     <Monstera position={[-9.2, 0, .55]} scale={.93} seed={63}/>
     <CoffeeTable/>
+    <SofaThrow/>
     <FlowerCushion position={[-4.2, 0, 1.5]}/>
     <FloorBits/>
     <Lantern position={[-5.5, 0, -6.4]} light/>

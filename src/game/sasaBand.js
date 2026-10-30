@@ -37,7 +37,7 @@ export const MEMBERS = [
   {
     id: 'linche', name: '林澈', part: 'piano', role: '编曲 · 键盘 · 作词', tint: '#a9c8ff',
     image: '/assets/band/linche.webp', play: '/assets/band/linche-play.webp', position: [-6.85, 4.35], // between the piano and the record player
-    seat: [-8.0, 3.7], faces: [-8.9, 3.7], // while playing: at the piano's upper end, facing the keys
+    seat: [-7.75, 3.6], faces: [-8.9, 3.6], maxTurn: Math.PI / 2, // while playing: at the piano's upper end, squarely facing the keys
     quote: '我可以一直在你身边，但我不想一直假装我对你和对其他人一样。',
     lines: ['你刚才那段，我记下来了。', '累了就去沙发上躺会儿。', '这首的副歌，我想换个和弦。'],
     playing: '左手轻一点，会更温柔。',

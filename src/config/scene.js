@@ -124,7 +124,7 @@ export const CAMERA_POSES = {
   computer: { position: [-2.65, 1.75, -2.6], lookAt: [-2.65, 1.45, -4.35] },
   drums: { position: [-7.05, 1.72, -.15], lookAt: [-7.05, 1.1, -2.85] },
   beanbag: { position: [1.3, 1.36, 4.12], lookAt: [.4, 3.0, -13] },
-  piano: { position: [-7.0, 2.4, 2.6], lookAt: [-8.9, 1.0, 2.6] },
+  piano: { position: [-7.0, 2.3, 2.25], lookAt: [-8.9, 1.0, 2.8] }, // a little right of centre: room on your left for a duet partner
   guitar: { position: [7.55, 1.55, -.5], lookAt: [9.5, 1.35, -1.35] },
   mugo: { position: [1.35, 1.95, -2.35], lookAt: [1.35, 1.8, -4.5] },
   record: { position: [-6.45, 1.65, 5.7], lookAt: [-7.6, .52, 5.6] },

@@ -130,7 +130,11 @@ function Ghost({ member, map, playMap, on, index }) {
         // image's right at the real instrument, showing the front to you (mirrored if needed).
         let yaw = Math.atan2(-(member.faces[1] - z), member.faces[0] - x)
         if (Math.cos(yaw - face) < 0) { yaw += Math.PI; mirror = -1 }
-        want = face + Math.max(-MAX_TURN, Math.min(MAX_TURN, wrap(yaw - face))) * st.play
+        // Full turn (maxTurn) when you're close — sitting at their instrument — easing back to
+        // MAX_TURN from further away, where a square profile would read as a sliver.
+        const near = 1 - Math.min(1, Math.max(0, (Math.hypot(camera.position.x - x, camera.position.z - z) - 1.8) / 1.4))
+        const limit = MAX_TURN + ((member.maxTurn ?? MAX_TURN) - MAX_TURN) * near
+        want = face + Math.max(-limit, Math.min(limit, wrap(yaw - face))) * st.play
       }
       if (playMesh.current) playMesh.current.scale.x = mirror
       st.yaw += wrap(want - st.yaw) * (1 - Math.exp(-dt * (1.2 + st.awake * 2)))
