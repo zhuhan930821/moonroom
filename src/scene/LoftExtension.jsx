@@ -10,6 +10,9 @@ export const LOFT_SHIFT = -7.16
 export const LOFT_PART = /^ARCH_(West_Loft_|Loft_)/
 // The far end post's clone would land right beside the original near post at the join.
 const SKIP = /^ARCH_Loft_End_Post_753$/
+// The soffit is 16 cm shorter than the deck, so a straight copy leaves a gap under the join;
+// shift it a little less so it butts up against the original.
+const SHIFT_FOR = name => name === 'ARCH_West_Loft_Soffit' ? LOFT_SHIFT + .16 : LOFT_SHIFT
 
 export default function LoftExtension() {
   const scene = useThree(state => state.scene)
@@ -20,7 +23,6 @@ export default function LoftExtension() {
     scene.traverse(o => { if (o.isMesh && LOFT_PART.test(o.name) && !o.userData.loftClone) parts.push(o) })
     if (!parts.some(p => p.name === 'ARCH_West_Loft_Deck')) return // architecture still loading
     done.current = true
-    const shift = new THREE.Matrix4().makeTranslation(0, 0, LOFT_SHIFT)
     const group = new THREE.Group(); group.name = 'LoftExtension'
     for (const part of parts) {
       if (SKIP.test(part.name)) continue
@@ -29,7 +31,7 @@ export default function LoftExtension() {
       copy.name = `${part.name}_ext`; copy.userData.loftClone = true
       copy.castShadow = part.castShadow; copy.receiveShadow = part.receiveShadow
       copy.matrixAutoUpdate = false
-      copy.matrix.multiplyMatrices(shift, part.matrixWorld)
+      copy.matrix.multiplyMatrices(new THREE.Matrix4().makeTranslation(0, 0, SHIFT_FOR(part.name)), part.matrixWorld)
       group.add(copy)
     }
     scene.add(group)
