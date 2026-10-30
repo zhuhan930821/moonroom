@@ -168,7 +168,7 @@ export default function App() {
       </> : <LightingProvider value={{ cinematic, decorationLights: !cinematic }}>
         <Environment hit={game.hit} quality={quality} cinematic={cinematic}/>
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
-        <Furniture hit={game.hit} foxPet={game.foxPet} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
+        <Furniture hit={game.hit} foxPet={game.foxPet} lounging={game.mode === 'beanbag'} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
           pianoNotes={game.pianoNotes} onNoteOn={game.mode === 'piano' ? game.noteOn : null} onNoteOff={game.noteOff}
           records={game.records} vinylId={game.vinyl?.id} pulledBook={game.book?.index} activeBookShelf={game.activeBookShelf} guitarHit={game.guitarHit} guitarTone={game.guitarTone}/>
         {FLAGS.fairyLights && <FairyLights quality={quality}/>}

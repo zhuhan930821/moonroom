@@ -75,9 +75,9 @@ export const FURNITURE = {
   bookshelfLeft: { position: [-8.15, 0, -5.8], size: [1.65, 2.2, 1.8] },
   desk: { position: [0.1, 0, -4.25], size: [8.2, 1.25, 1.7] },
   drums: { position: [-7.1, 0, -2.8], size: [4.2, 2.2, 3.8] },
-  beanbag: { position: [1.3, 0, 3.0], size: [2.85, 1.0, 1.9] },
+  beanbag: { position: [1.3, 0, 3.9], size: [3.1, 1.1, 2.07] }, // back half of the rug, clear of the coffee table
   keyboard: { position: [-8.9, 0, 2.6], size: [1.4, 1.5, 3.25] },
-  record: { position: [-7.6, 0, 5.5], size: [1.55, 1.15, 1.6] },
+  record: { position: [-7.6, 0, 5.5], size: [1.12, .83, 1.15] }, // drawn at RECORD_SCALE (.72)
   musicShelf: { position: [-9.72, 0, 5.2], size: [.56, 2.6, 2.1] },
 }
 
@@ -89,14 +89,14 @@ export const COLLIDERS = Object.values(FURNITURE).map(({ position, size }) => ({
 })).concat([
   { minX: -10, maxX: -9.22, minZ: -6.25, maxZ: -4.95 },
   { minX: -9.92, maxX: -9.18, minZ: -3.45, maxZ: -2.55 },
-  { minX: -7.9, maxX: -7.0, minZ: 6.3, maxZ: 6.9 }, // record crate beside the turntable
+  { minX: -7.8, maxX: -7.2, minZ: 6.1, maxZ: 6.45 }, // record crate beside the turntable
 ])
 
 export const INTERACTIONS = {
   computer: { position: [-2.65, 0, -3.1], radius: 1.8, label: '使用电脑' },
   moonTicket: { position: [-3.65, 0, -2.62], radius: .85, label: '拿起月亮河车票' },
   drums: { position: [-6.6, 0, -.15], radius: 1.95, label: '坐到鼓凳' },
-  beanbag: { position: [1.3, 0, 3.0], radius: 2.25, label: '躺下' },
+  beanbag: { position: [1.3, 0, 3.9], radius: 2.35, label: '躺下' },
   piano: { position: [-7.7, 0, 2.6], radius: 1.6, label: '弹钢琴' },
   guitar: { position: [8.7, 0, -1.35], radius: 1.25, label: '弹吉他' },
   mugo: { position: [1.35, 0, -3.1], radius: 1.4, label: '打开 Mugo' },
@@ -123,11 +123,11 @@ export const FOX_HINTS = [
 export const CAMERA_POSES = {
   computer: { position: [-2.65, 1.75, -2.6], lookAt: [-2.65, 1.45, -4.35] },
   drums: { position: [-7.05, 1.72, -.15], lookAt: [-7.05, 1.1, -2.85] },
-  beanbag: { position: [1.3, 1.3, 3.2], lookAt: [.4, 3.0, -13] },
+  beanbag: { position: [1.3, 1.36, 4.12], lookAt: [.4, 3.0, -13] },
   piano: { position: [-7.0, 2.4, 2.6], lookAt: [-8.9, 1.0, 2.6] },
   guitar: { position: [7.55, 1.55, -.5], lookAt: [9.5, 1.35, -1.35] },
   mugo: { position: [1.35, 1.95, -2.35], lookAt: [1.35, 1.8, -4.5] },
-  record: { position: [-6.15, 2.0, 5.75], lookAt: [-7.55, .7, 5.65] },
+  record: { position: [-6.45, 1.65, 5.7], lookAt: [-7.6, .52, 5.6] },
   books: { position: [5.6, 2.15, -2.7], lookAt: [9.0, 1.8, -3.1] },
   booksLeft: { position: [-5.8, 1.95, -5.8], lookAt: [-8.15, 1.2, -5.8] },
   musicBooks: { position: [-8.85, 1.8, 5.2], lookAt: [-9.72, 1.55, 5.2] },

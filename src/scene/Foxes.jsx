@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { activity, energy, loudness } from '../audio/musicBus'
-import { INTERACTIONS } from '../config/scene'
+import { FURNITURE, INTERACTIONS } from '../config/scene'
 
 // 眠眠 sleeps at the foot of the bed: ears twitch to piano, a loud stretch of drumming wakes it
 // for a yawn and a new curl, then it dozes off again. 云团 pads over to sit beside the sofa
@@ -106,4 +106,38 @@ function ListeningFox({ pet }) {
   return <group ref={root} position={LISTENER.home} scale={FOX_SCALE}><FoxModel url="/assets/models/collectibles/fox-sit.glb" body={body} head={head} ears={ears} eyes={eyes} tail={tail}/></group>
 }
 
-export default function Foxes({ pet }) { return <><SleepingFox pet={pet}/><ListeningFox pet={pet}/></> }
+// A little fox that lives on the sofa's end cushion; lie down and it climbs into your arms
+// (just below the lounge camera), then hops back to its cushion when you get up.
+const SOFA_FOX_SCALE = .5
+function sofaFoxSeat() {
+  const [x, , z] = FURNITURE.beanbag.position
+  return { position: new THREE.Vector3(x + .78, .75, z - .11), yaw: 2.6 } // end seat cushion at SOFA_SCALE .85
+}
+// Low and to the right of the lounge camera, so the window and the panel stay clear.
+const SOFA_FOX_HUG = { position: new THREE.Vector3(FURNITURE.beanbag.position[0] + .22, .96, FURNITURE.beanbag.position[2] - .34), yaw: -.35, scale: .4 }
+function SofaFox({ lounging }) {
+  const root = useRef(), body = useRef(), head = useRef(), ears = useRef([]), eyes = useRef(), tail = useRef()
+  const seat = useMemo(sofaFoxSeat, [])
+  const state = useRef({ pos: seat.position.clone(), yaw: seat.yaw, hug: 0 })
+  useFrame(({ clock }, dt) => {
+    const t = clock.elapsedTime, s = state.current
+    s.hug += ((lounging ? 1 : 0) - s.hug) * (1 - Math.exp(-dt * 2.6))
+    s.pos.lerpVectors(seat.position, SOFA_FOX_HUG.position, s.hug)
+    s.yaw = seat.yaw + (SOFA_FOX_HUG.yaw - seat.yaw) * s.hug
+    if (root.current) {
+      root.current.position.copy(s.pos)
+      root.current.position.y += Math.sin(s.hug * Math.PI) * .18 // a little hop on the way
+      root.current.rotation.set(-.22 * s.hug, s.yaw, 0) // leans back against you
+      root.current.scale.setScalar(SOFA_FOX_SCALE + (SOFA_FOX_HUG.scale - SOFA_FOX_SCALE) * s.hug)
+    }
+    if (rest(body.current)) body.current.scale.y = rest(body.current).scale.y * (1 + Math.sin(t * (lounging ? 1.1 : 1.7)) * .03)
+    const h = rest(head.current)
+    if (h) { head.current.rotation.x = h.rotation.x + s.hug * .12; head.current.rotation.z = h.rotation.z + s.hug * Math.sin(t * .5) * .1 }
+    const tl = rest(tail.current)
+    if (tl) tail.current.rotation.z = tl.rotation.z + Math.sin(t * (lounging ? .8 : 1.3)) * .1
+    if (eyes.current) eyes.current.scale.z = Math.sin(t * 1.1 + .6) < .985 ? 1 : .1 // blink
+  })
+  return <group ref={root} position={seat.position.toArray()} scale={SOFA_FOX_SCALE}><FoxModel url="/assets/models/collectibles/fox-sit.glb" body={body} head={head} ears={ears} eyes={eyes} tail={tail}/></group>
+}
+
+export default function Foxes({ pet, lounging = false }) { return <><SleepingFox pet={pet}/><ListeningFox pet={pet}/><SofaFox lounging={lounging}/></> }

@@ -6,7 +6,7 @@ import GLBAsset from './AssetModel'
 
 // F01: low cloud sofa, seat facing the window so the `beanbag` camera pose looks out over the arches.
 // Sofa is drawn at SOFA_SCALE; collider/anchor sizes below are in the unscaled model space.
-const SOFA_SCALE = .78
+const SOFA_SCALE = .85
 const SOFA_COLLIDERS = [{name:'Lounge_Collider',position:[0,.55,0],size:[3.6,1.1,2.35]}]
 const LEGACY_COLLIDERS = [{name:'Lounge_Collider',position:[0,.7,0],size:[3.35,1.4,3.45]}]
 const LOUNGE_ANCHORS = [{name:'Lounge_Interaction',position:[0,1,1.4]}]

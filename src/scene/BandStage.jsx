@@ -48,7 +48,7 @@ function StageEdge() {
 function GuitarOnStand({ tone, strumId }) {
   const [x, , z] = STAGE.guitar.stand
   return <group position={[x, 0, z]}>
-    <group rotation-y={Math.PI}><Guitar position={[0, .84, 0]} red={tone === 'electric'} active strumId={strumId}/></group>
+    <group rotation-y={Math.PI}><Guitar position={[0, .1, 0]} red={tone === 'electric'} active strumId={strumId}/></group>
     {/* a simple A-frame stand and a small round riser */}
     {[-1, 1].map(s => <mesh key={s} position={[.12, .22, s * .12]} rotation={[s * .35, 0, -.25]}><cylinderGeometry args={[.012, .012, .5, 6]}/><meshStandardMaterial color="#2a2428" metalness={.6}/></mesh>)}
     <mesh position-y={.03}><cylinderGeometry args={[.62, .66, .06, 32]}/><meshStandardMaterial color="#6a4632" roughness={.7}/></mesh>
