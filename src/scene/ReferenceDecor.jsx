@@ -9,6 +9,7 @@ import { layoutPhotoWall } from './photoWallLayout'
 import { builtinCanvas } from './photoArt'
 import GLBAsset from './AssetModel'
 import { guitarAmpLevel, guitarVisual } from '../audio/guitar'
+import { pushTap, sasaBand } from '../game/sasaBand'
 
 // Decor pass 03: photo wall, neon, hanging stars, desk props, floor cushions,
 // guitars, lanterns and candles. Botanical props use textured GLBs; the dedicated
@@ -273,7 +274,11 @@ function NeonSign() {
   const fox = useMemo(() => tube([[.2, -.42], [.22, -.05], [.3, .18], [.28, .38], [.36, .26], [.44, .32], [.44, .16], [.5, .05], [.46, -.05], [.56, -.2], [.66, -.42], [.62, -.15], [.78, -.1], [.82, -.3], [.74, -.44], [.2, -.42]]), [])
   const glow = useRef(), mat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff5ab8').multiplyScalar(1.3), toneMapped: false }), [])
   useFrame(({ clock }) => { const k = .92 + Math.sin(clock.elapsedTime * 2.2) * .04 + (Math.sin(clock.elapsedTime * 13) > .97 ? -.3 : 0); mat.color.setRGB(1.35 * k, .32 * k, .95 * k); if (glow.current) glow.current.intensity = 5 * k })
+  // Three quick taps on the sign (the phone way in) toggle the hidden band (src/game/sasaBand.js).
+  const taps = useRef([])
+  const onTap = event => { event.stopPropagation(); const r = pushTap(taps.current, performance.now() / 1000); taps.current = r.taps; if (r.hit) sasaBand.toggle() }
   return <group position={[-9.9, 3.55, 5.2]} rotation-y={Math.PI / 2} scale={1.3}>
+    <mesh position={[.22, 0, .03]} onClick={onTap}><planeGeometry args={[1.35, 1.1]}/><meshBasicMaterial transparent opacity={0} depthWrite={false}/></mesh>
     <mesh geometry={moon} material={mat}/>
     <mesh geometry={fox} material={mat}/>
     <pointLight ref={glow} position={[.2, 0, .5]} color="#ff7ac8" intensity={5} distance={4.5} decay={2}/>

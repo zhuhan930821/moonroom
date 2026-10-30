@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Environment from './scene/Environment'
 import Furniture from './scene/Furniture'
 import PlayerController from './game/PlayerController'
@@ -43,6 +43,8 @@ import FairyLights from './scene/FairyLights'
 import TimeOfDay from './scene/TimeOfDay'
 import Milo from './scene/Milo'
 import { FLAGS } from './config/flags'
+import SasaBand from './scene/SasaBand'
+import { pushSecretKey, sasaBand } from './game/sasaBand'
 import JourneyHud from './ui/JourneyHud'
 import { journey } from './game/journey'
 
@@ -140,6 +142,19 @@ export default function App() {
   const [, rerender] = useState(0)
   useEffect(() => { const timer = setTimeout(() => rerender(n => n + 1), 7000); return () => clearTimeout(timer) }, [celebrateAt])
   const celebrating = performance.now() / 1000 - celebrateAt < 7
+  // Hidden mode: typing "sasa" while exploring brings Sasa's band into the room (src/game/sasaBand.js).
+  const sasa = useSyncExternalStore(sasaBand.subscribe, sasaBand.get)
+  const secretKeys = useRef([])
+  useEffect(() => {
+    const onKey = event => {
+      if (event.repeat || event.target?.closest?.('input, textarea')) return
+      const r = pushSecretKey(secretKeys.current, event.code, performance.now() / 1000)
+      secretKeys.current = r.keys
+      if (r.hit && game.mode === 'explore') sasaBand.toggle()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [game.mode])
   const world = useSyncExternalStore(worldState.subscribe, () => worldState.get().world) // Anywhere Door
   const worldNear = useSyncExternalStore(worldPrompt.subscribe, worldPrompt.get) // touch button label behind the door
   const inExplore = game.mode === 'explore'
@@ -179,6 +194,7 @@ export default function App() {
         <TimeOfDay resting={game.mode === 'beanbag' || game.mode === 'bed'}/>
         <AnywhereDoor/><SouvenirShelf/>
         <BandStage guitarTone={game.guitarTone} guitarHit={game.guitarHit}/>
+        {sasa.discovered && <Suspense fallback={null}><SasaBand/></Suspense>}
         {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
         {cinematic && <CinematicPostFX enabled={quality === 'high' && BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>}
       </LightingProvider>}
@@ -195,6 +211,8 @@ export default function App() {
       {inExplore && game.foxName && <div className="fox-hint">✦ {game.foxName}</div>}
       {inExplore && diaryHint && <div className="diary-hint" data-testid="diary-hint">✦ 书架上多了一页新日记 · 房间记下了你上次做的事</div>}
       {game.foxPet && <div key={game.foxPet.id} className="fox-pet-toast">✦ {game.foxPet.name === '眠眠' ? '眠眠半睁着眼，轻轻蹭了蹭你的手' : '云团开心地摇起尾巴'}</div>}
+      {sasa.toast && <div key={sasa.toast.id} className="fox-pet-toast sasa-toast">✦ {sasa.toast.on ? 'Sasa 的乐队显形了' : '他们悄悄隐去了'}</div>}
+      {sasa.on && sasa.talk && inExplore && <div className="band-bubble" data-testid="band-bubble" style={{ '--tint': sasa.talk.tint }}><b>{sasa.talk.name}</b><small>{sasa.talk.role}</small><p>{sasa.talk.line}</p></div>}
       {celebrating && <div className="castle-toast" data-testid="castle-toast">✦ {roomState.get().celebration} · 窗外的城堡为你亮起来了</div>}
       {inExplore && game.milo.visiting && <div className="milo-hint">Milo 来串门了 · 坐到钢琴前，他会给你伴奏</div>}
       {inExplore && !isTouch && !game.locked && !FLAGS.demo && <div className="unlock">{pads.length ? '点击画面用鼠标 · 或直接用手柄' : '点击画面继续探索'}</div>}
@@ -226,7 +244,7 @@ export default function App() {
       {!whiteModel && !world && <JourneyHud/>}
       <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
-      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}{inExplore && !world && <button onClick={openBand} data-testid="open-band">🎮 乐队模式（手柄）</button>}</section>}
+      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}{inExplore && !world && <button onClick={openBand} data-testid="open-band">🎮 乐队模式（手柄）</button>}{sasa.discovered && <button onClick={sasaBand.toggle} data-testid="sasa-band-toggle">{sasa.on ? '✦ 让 Sasa 乐队隐去' : '✦ 召唤 Sasa 乐队'}</button>}</section>}
       {showLightingDebug && !whiteModel && <section className="lighting-debug" onClick={e=>e.stopPropagation()}>
         <header><span>LIGHTING PASS 01</span><button onClick={()=>setLightingPass(value=>value === 'current' ? 'bloom' : 'current')}>{lightingPass === 'current' ? '查看升级版' : '对比原版'}</button></header>
         <label>渲染层<select value={lightingPass} onChange={e=>setLightingPass(e.target.value)}><option value="current">Current</option><option value="moon">Moon only</option><option value="warm">Warm only</option><option value="combined">Combined</option><option value="bloom">Combined + Bloom</option><option value="golden">Golden (warm)</option></select></label>
