@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { energy, loudness } from '../audio/musicBus'
 import { roomState } from '../game/roomState'
 import { ROOM } from '../config/scene'
+import GLBAsset from './AssetModel'
 
 // Band mode turns the room into a little live house: the room lamps go out, a mirror ball over
 // the stage scatters spots across walls, ceiling and floor, four moving heads sweep the stage,
@@ -32,7 +33,7 @@ function facetDirections(n) {
 }
 
 function MirrorBall() {
-  const ball = useRef(), spots = useRef(), glint = useRef()
+  const ball = useRef(), spots = useRef()
   const dirs = useMemo(() => facetDirections(150), [])
   const origin = useMemo(() => new THREE.Vector3(...BALL), [])
   const tmp = useMemo(() => ({ m: new THREE.Matrix4(), q: new THREE.Quaternion(), s: new THREE.Vector3(), d: new THREE.Vector3(), z: new THREE.Vector3(0, 0, 1), c: new THREE.Color(), spin: new THREE.Quaternion(), axis: new THREE.Vector3(0, 1, 0) }), [])
@@ -40,7 +41,6 @@ function MirrorBall() {
     const t = clock.elapsedTime, kick = energy('kick', 5), loud = Math.min(1, loudness() / 5)
     const angle = t * (.35 + loud * .5)
     if (ball.current) ball.current.rotation.y = angle
-    if (glint.current) glint.current.material.opacity = .35 + kick * .6
     tmp.spin.setFromAxisAngle(tmp.axis, angle)
     dirs.forEach((dir, i) => {
       tmp.d.copy(dir).applyQuaternion(tmp.spin)
@@ -58,8 +58,9 @@ function MirrorBall() {
   })
   return <group>
     <mesh position={[BALL[0], (BALL[1] + CEILING) / 2, BALL[2]]}><cylinderGeometry args={[.008, .008, CEILING - BALL[1], 4]}/><meshStandardMaterial color="#888" metalness={.8}/></mesh>
-    <mesh ref={ball} position={BALL}><icosahedronGeometry args={[.34, 3]}/><meshStandardMaterial color="#e8e8f0" metalness={1} roughness={.12} flatShading emissive="#4a4a66" emissiveIntensity={.5}/></mesh>
-    <mesh ref={glint} position={BALL}><sphereGeometry args={[.5, 16, 12]}/><meshBasicMaterial color="#cfd8ff" transparent opacity={.4} depthWrite={false} blending={THREE.AdditiveBlending}/></mesh>
+    <group ref={ball} position={BALL}>
+      <GLBAsset url="/assets/models/lighting/disco-ball-globe.glb" scale={3.35} axisCorrection={false} castShadow={false} fallbackScale={.32}/>
+    </group>
     <instancedMesh ref={spots} args={[null, null, dirs.length]} frustumCulled={false}>
       <circleGeometry args={[1, 10]}/><meshBasicMaterial transparent opacity={.85} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false}/>
     </instancedMesh>

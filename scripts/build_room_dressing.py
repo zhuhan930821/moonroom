@@ -321,17 +321,8 @@ def main():
     brass = mat('Fixture_Brushed_Champagne_Brass',(.54,.35,.19),.4,.72)
     glass = mat('Fixture_Frosted_Ivory_Glass',(.58,.42,.30),.42,0,((.95,.52,.27),.10))
     glow = mat('Fixture_Warm_Emissive',(.58,.30,.12),.55,0,((1,.48,.20),.75))
-    for i,(loc,scale) in enumerate([
-        ((-9,0,-6.1),.7),((-7.8,0,-5.95),.85),((8.2,0,-5.8),.7),
-        ((9.1,0,-5.65),.85),((-9.25,0,1.8),1.05),((4.3,0,-5.45),.8),
-    ]):
-        # Botanical_04 at the piano is replaced in R3F by a textured GLB plant.
-        # Keep every other room-dressing fixture and botanical unchanged.
-        if i == 4:
-            continue
-        potted_plant(i,loc,scale,sage,ceramic[i%3],soil,stem,petals,brass,botanical)
-    for i,x in enumerate((-8.2,-7,-4.8,-4,3.5,4.5,7,8.1)):
-        hanging_vine(i,(x,7.52,-6.45),sage,stem,petals,brass,botanical)
+    # Botanical silhouettes now come from the separate textured plant GLBs and
+    # the ceiling-wall dressing asset. Keep this file for lighting fixtures only.
     for i,x in enumerate((-3.5,2.9,6.8)):
         star(f'WindowStar_{i:02}',(x,6.1-i*.28,-6.9),.18,brass,glow,fixtures)
     for i,x in enumerate((-5.2,0,5.2)):

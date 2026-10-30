@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { RoundedBox as SoftBox, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { DECOR_COLLIDERS } from '../game/collision'
+import { FURNITURE } from '../config/scene'
 import { hungItems, photoWall } from '../game/photoWall'
 import { layoutPhotoWall } from './photoWallLayout'
 import { builtinCanvas } from './photoArt'
@@ -28,14 +29,12 @@ DECOR_COLLIDERS.push(
 // Browser-facing plants are actual textured GLB assets, not procedural leaf meshes.
 const BOTANICAL = '/assets/models/botanical/'
 function Plant({ position, scale = 1, bush = 'leafy', seed = 1 }) {
-  const small = bush === 'vase' || seed % 3 === 0
-  const tall = bush === 'tall'
-  const file = tall ? 'potted_plant_01-polyhaven.glb' : small ? 'potted_plant_04-polyhaven.glb' : 'potted-plant-02-polyhaven.glb'
-  const size = tall ? scale * .76 : small ? scale * 1.05 : scale * .6
+  const file = bush === 'tall' ? 'monstera-plant.glb' : bush === 'vase' ? 'orchid.glb' : 'flower-pot.glb'
+  const size = bush === 'tall' ? scale * .8 : bush === 'vase' ? scale * .8 : scale
   return <GLBAsset url={BOTANICAL + file} position={position} rotation={[0, seed * 1.73 % (Math.PI * 2), 0]} scale={size} axisCorrection={false} castShadow={false}/>
 }
 function Monstera({ position, scale = 1, seed = 3 }) {
-  return <GLBAsset url={BOTANICAL + 'potted_plant_01-polyhaven.glb'} position={position} rotation={[0, seed * .51 % (Math.PI * 2), 0]} scale={scale * .9} axisCorrection={false} castShadow={false}/>
+  return <GLBAsset url={BOTANICAL + 'monstera-plant.glb'} position={position} rotation={[0, seed * .51 % (Math.PI * 2), 0]} scale={scale} axisCorrection={false} castShadow={false}/>
 }
 
 // ---------- candles & crystals (instanced) ----------
@@ -166,8 +165,7 @@ function SideWallGallery() {
     }))
     add('left', [3.75, 4.22, 4.62, 6.05, 6.48, 6.93, 7.38], [2.85, 3.42, 4.02])
     add('left', [-6.65, -6.12, -4.12, -3.58], [3.8, 4.45])
-    // Quiet collage inside the otherwise bare drum-side wall panel.
-    add('left', [-1.25, -.62, .08, .7], [2.22, 2.86])
+    // The drum-side panel has its own curated composition below.
     add('right', [-5.6, -5.1, -4.6, -4.1, -3.6], [4.95, 5.52])
     add('right', [2.46, 3.02, 3.6, 4.16], [2.86, 3.49])
     return list
@@ -197,6 +195,33 @@ function DrumWallPoster() {
     {[-.13, -.065, 0, .065, .13].map((dy, i) => <mesh key={i} position={[0, -.51 + dy, .018]}>
       <boxGeometry args={[.68, .006, .005]}/><meshBasicMaterial color="#d9b47e"/>
     </mesh>)}
+  </group>
+}
+
+// A single focal grouping above the drums: one painterly print, a few smaller
+// memories and a real potted plant on the shelf below. The photo wall farther
+// along this wall remains entirely player-customizable.
+function DrumMemoryWall() {
+  const art = useTexture('/assets/textures/wall-art/rear-crescent-castle.jpg')
+  const atlas = useMemo(photoAtlas, [])
+  const tiles = useMemo(() => [0, 2, 5].map(i => {
+    const t = atlas.clone(); t.needsUpdate = true
+    t.repeat.set(.25, .5); t.offset.set((i % 4) * .25, i < 4 ? .5 : 0)
+    return t
+  }), [atlas])
+  const memories = [
+    { x: -1.04, y: .38, w: .38, h: .47, rot: -.08 },
+    { x: -.98, y: -.22, w: .43, h: .36, rot: .06 },
+    { x: .98, y: .43, w: .42, h: .51, rot: .07 },
+  ]
+  return <group name="DECOR_DrumMemoryWall" position={[-9.53, 3.66, -2.25]} rotation-y={Math.PI / 2}>
+    <mesh position={[0, .08, -.025]} castShadow><boxGeometry args={[1.12, 1.52, .065]}/><meshStandardMaterial color="#78583f" roughness={.83}/></mesh>
+    <mesh position={[0, .08, .015]}><planeGeometry args={[1.01, 1.4]}/><meshStandardMaterial color="#f3e4d4" roughness={.94}/></mesh>
+    <mesh position={[0, .08, .023]}><planeGeometry args={[.94, 1.32]}/><meshStandardMaterial map={art} roughness={.96}/></mesh>
+    {memories.map((p, i) => <group key={i} position={[p.x, p.y, .015]} rotation-z={p.rot}>
+      <mesh castShadow><boxGeometry args={[p.w + .08, p.h + .13, .028]}/><meshStandardMaterial color="#f0e2d3" roughness={.95}/></mesh>
+      <mesh position={[0, .035, .018]}><planeGeometry args={[p.w, p.h]}/><meshStandardMaterial map={tiles[i]} roughness={.93}/></mesh>
+    </group>)}
   </group>
 }
 
@@ -386,6 +411,59 @@ function Lantern({ position, scale = 1, light = false }) {
   </group>
 }
 
+// ---------- score shelf beside the piano (replaces the walnut one baked into drum-corner.glb) ----------
+// A low honey-wood case: score binders, a few songbooks and a metronome, then three records shown
+// face-out on the top shelf, a plant and a candle on top. Front faces +x, into the room.
+const SHELF_WOOD = '#b98a6c', SHELF_EDGE = '#a0735a'
+const SCORE_COLORS = ['#e8a8bc', '#c8b4e2', '#f3e4d4', '#9fb8d8', '#d98fae', '#b8c9a8', '#f2c48a']
+function ScoreShelf() {
+  const [x, , z] = FURNITURE.musicShelf.position
+  const W = 1.9, D = .46, H = 1.98, boards = [.1, .72, 1.3] // under the wall shelf at y 2.32
+  const binders = useMemo(() => { const r = rand(91); return Array.from({ length: 10 }, (_, i) => ({ h: .5 + r() * .08, t: .07 + r() * .03, c: SCORE_COLORS[(i * 3) % SCORE_COLORS.length] })) }, [])
+  const books = useMemo(() => { const r = rand(17); return Array.from({ length: 7 }, (_, i) => ({ h: .38 + r() * .1, t: .05 + r() * .03, c: SCORE_COLORS[(i * 2 + 1) % SCORE_COLORS.length] })) }, [])
+  let at = -W / 2 + .1
+  const row = (list, gap = .008) => list.map(b => { const zz = at + b.t / 2; at += b.t + gap; return { ...b, z: zz } })
+  const bottom = row(binders); at = -W / 2 + .1
+  const middle = row(books)
+  return <group position={[x + .1, 0, z]}>
+    {/* carcass: sides, back, shelves, a little plinth */}
+    {[-1, 1].map(s => <SoftBox key={s} args={[D, H, .05]} radius={.012} position={[0, H / 2, s * (W / 2 - .025)]} castShadow><meshStandardMaterial color={SHELF_EDGE} roughness={.62}/></SoftBox>)}
+    <mesh position={[-D / 2 + .01, H / 2, 0]}><boxGeometry args={[.02, H, W - .04]}/><meshStandardMaterial color="#e9d6c6" roughness={.9}/></mesh>
+    {boards.map(y => <SoftBox key={y} args={[D, .035, W - .06]} radius={.01} position={[0, y, 0]} receiveShadow><meshStandardMaterial color={SHELF_WOOD} roughness={.6}/></SoftBox>)}
+    <SoftBox args={[D + .04, .05, W + .04]} radius={.015} position={[.01, H, 0]} castShadow><meshStandardMaterial color={SHELF_WOOD} roughness={.6}/></SoftBox>
+    <mesh position={[D / 2 - .02, .05, 0]}><boxGeometry args={[.02, .08, W - .06]}/><meshStandardMaterial color={SHELF_EDGE}/></mesh>
+    {/* bottom: tall score binders with a cream label on each spine, last two leaning */}
+    {bottom.map((b, i) => { const lean = i >= bottom.length - 2 ? (i - bottom.length + 3) * .09 : 0
+      return <group key={i} position={[.02, boards[0] + .02, b.z + lean * .3]} rotation-x={-lean}>
+        <SoftBox args={[.34, b.h, b.t]} radius={.008} position-y={b.h / 2}><meshStandardMaterial color={b.c} roughness={.8}/></SoftBox>
+        <mesh position={[.171, b.h * .7, 0]} rotation-y={Math.PI / 2}><planeGeometry args={[b.t * .7, .09]}/><meshStandardMaterial color="#fbf3e6" roughness={.9}/></mesh>
+      </group> })}
+    {/* middle: songbooks, a lying stack and a brass metronome */}
+    {middle.map((b, i) => <SoftBox key={i} args={[.28, b.h, b.t]} radius={.006} position={[.04, boards[1] + .02 + b.h / 2, b.z]}><meshStandardMaterial color={b.c} roughness={.82}/></SoftBox>)}
+    {[0, 1, 2].map(i => <SoftBox key={i} args={[.3, .04, .4]} radius={.006} position={[.04, boards[1] + .04 + i * .042, .32]} rotation-y={(i - 1) * .08}><meshStandardMaterial color={['#f3e4d4', '#c8b4e2', '#e8a8bc'][i]} roughness={.85}/></SoftBox>)}
+    <group position={[.06, boards[1] + .02, .72]} rotation-y={-.3}>
+      <mesh position-y={.13} rotation-y={Math.PI / 4}><cylinderGeometry args={[.035, .1, .26, 4]}/><meshStandardMaterial color="#7a4a36" roughness={.5}/></mesh>
+      <mesh position={[.05, .14, 0]} rotation-z={.25}><boxGeometry args={[.006, .22, .006]}/><meshStandardMaterial color="#e2c48a" metalness={.8} roughness={.3}/></mesh>
+    </group>
+    {/* top shelf: three records face-out, leaning on the back */}
+    {[-.55, 0, .55].map((zz, i) => <group key={i} position={[-.08, boards[2] + .02, zz]} rotation-z={.12}>
+      <mesh position-y={.25}><boxGeometry args={[.012, .5, .5]}/><meshStandardMaterial color={['#c8b4e2', '#2c2a4a', '#f2c48a'][i]} roughness={.85}/></mesh>
+      <mesh position={[.008, .25, 0]} rotation-y={Math.PI / 2}><circleGeometry args={[.15, 28]}/><meshStandardMaterial color={['#fff2dc', '#e8d08a', '#d98fae'][i]} roughness={.8}/></mesh>
+    </group>)}
+    {/* on top (kept clear of the wall shelf's end): a plant, a candle jar, a little framed score */}
+    <Plant position={[0, H + .025, -.62]} scale={.75} seed={64}/>
+    <group position={[.02, H + .025, .32]}>
+      <mesh position-y={.07}><cylinderGeometry args={[.06, .06, .14, 16]}/><meshPhysicalMaterial color="#fff2dc" transparent opacity={.35} roughness={.1}/></mesh>
+      <mesh position-y={.15}><sphereGeometry args={[.018, 8, 6]}/><meshBasicMaterial color={new THREE.Color('#ffb15a').multiplyScalar(3)} toneMapped={false}/></mesh>
+    </group>
+    <group position={[-.1, H + .025, -.18]} rotation-z={.12}>
+      <mesh position-y={.2}><boxGeometry args={[.02, .4, .3]}/><meshStandardMaterial color="#b0844a" metalness={.5} roughness={.4}/></mesh>
+      <mesh position={[.012, .2, 0]} rotation-y={Math.PI / 2}><planeGeometry args={[.25, .35]}/><meshStandardMaterial color="#fbf3e6" roughness={.95}/></mesh>
+      {[0, 1, 2, 3, 4].map(i => <mesh key={i} position={[.014, .31 - i * .055, 0]} rotation-y={Math.PI / 2}><planeGeometry args={[.2, .004]}/><meshBasicMaterial color="#6a5a6a"/></mesh>)}
+    </group>
+  </group>
+}
+
 // ---------- right wall: CC0 acoustic guitar, amp, a wall shelf ----------
 export function Guitar({ strumId = 0, z = -1.35, red = false, active = false, position = [9.5, .8, z] }) {
   const group = useRef()
@@ -403,7 +481,8 @@ export function Guitar({ strumId = 0, z = -1.35, red = false, active = false, po
       strings.rotation.z = active ? Math.sin(performance.now() * .085) * .007 * vibration : 0
     }
   })
-  return <group ref={group} position={position} rotation-y={-Math.PI / 2}>
+  // The model is real-size (~1.06 m); the room's furniture runs ~1.5x, so the guitar does too.
+  return <group ref={group} position={position} rotation-y={-Math.PI / 2} scale={1.4}>
     <GLBAsset ref={model} url="/assets/models/acoustic-guitar-cc0.glb" axisCorrection={false} fallbackScale={.35} materialOverrides={red ? { 'acoustic-guitar_body_pbr': { color: new THREE.Color('#aa3d50') } } : undefined}/>
     <mesh position={[0, .98, -.025]} rotation-x={Math.PI / 2} castShadow><torusGeometry args={[.045, .012, 8, 16, Math.PI]}/><meshStandardMaterial color="#8a6755" metalness={.45} roughness={.48}/></mesh>
   </group>
@@ -415,8 +494,8 @@ function AmpSignal() {
 }
 function MusicWall({ guitarHit, guitarTone }) {
   return <group>
-    <Guitar strumId={guitarHit} active={guitarTone === 'acoustic'}/>
-    <Guitar strumId={guitarHit} z={-.15} red active={guitarTone === 'electric'}/>
+    <Guitar strumId={guitarHit} z={-1.5} active={guitarTone === 'acoustic'}/>
+    <Guitar strumId={guitarHit} z={-.3} red active={guitarTone === 'electric'}/>
     <AmpSignal/>
     <group position={[9.4, 0, -.9]}>
       <mesh position-y={.32} castShadow><boxGeometry args={[.45, .64, .55]}/><meshStandardMaterial color="#2a2428" roughness={.7}/></mesh>
@@ -442,9 +521,11 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <NeonSign/>
     <SideWallGallery/>
     <DrumWallPoster/>
+    <DrumMemoryWall/>
     <RearWallPrint/>
     <WallShelf side="left" z={6.55} y={2.32} seed={81}/>
     <WallShelf side="left" z={-4.8} y={3.18} seed={82}/>
+    <WallShelf side="left" z={-.55} y={2.68} width={1.12} seed={85}/>
     <WallShelf side="right" z={2.45} y={3.12} seed={83}/>
     <WallShelf side="right" z={6.25} y={2.75} seed={84}/>
     <ReadingNookNeon/>
@@ -459,14 +540,12 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <Plant position={[1.35, 1.31, -4.8]} scale={.7} seed={43}/>
     <Plant position={[3.3, 1.31, -4.8]} scale={.8} bush="vase" seed={44}/>
     {/* big floor plants framing the window wall, by the bed, by the drums */}
-    <Monstera position={[-6.8, 0, -7.0]} scale={1.1} seed={51}/>
     <Monstera position={[6.9, 0, -7.0]} scale={1.05} seed={52}/>
-    <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[9.3, 0, 7.2]} scale={1.7} axisCorrection={false}/>
-    <Plant position={[-4.6, 0, -6.95]} scale={1.6} bush="tall" seed={54}/>
+    <Monstera position={[9.3, 0, 7.2]} scale={1.12} seed={61}/>
     <Plant position={[4.4, 0, -6.95]} scale={1.6} bush="tall" seed={55}/>
-    <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[-9.4, 0, 6.9]} rotation={[0, 1.2, 0]} scale={1.7} axisCorrection={false}/>
+    <Monstera position={[-9.4, 0, 6.9]} scale={1.05} seed={62}/>
     <pointLight position={[-8.9, 1.35, 6.85]} color="#ffd1a0" intensity={2.4} distance={2.4} decay={2}/>
-    <GLBAsset url="/assets/models/botanical/potted-plant-02-polyhaven.glb" position={[-9.2, 0, .55]} rotation={[0, -.7, 0]} scale={1.4} axisCorrection={false}/>
+    <Monstera position={[-9.2, 0, .55]} scale={.93} seed={63}/>
     <CoffeeTable/>
     <FlowerCushion position={[-4.2, 0, 1.5]}/>
     <FloorBits/>
@@ -476,5 +555,6 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <Lantern position={[-2.8, 0, 7.4]} scale={.9}/>
     <Lantern position={[-8.6, 0, 4.9]} scale={.8}/>
     <MusicWall guitarHit={guitarHit} guitarTone={guitarTone}/>
+    <ScoreShelf/>
   </group>
 }

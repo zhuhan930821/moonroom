@@ -1,0 +1,105 @@
+{
+  "slug": "flower-pot",
+  "name": {
+    "en": "Flower Pot",
+    "de": "Blumentopf",
+    "es": "Maceta con flores"
+  },
+  "summary": "Classic terracotta flower pot with a rolled rim on a saucer, holding a flowering geranium with round leaves and coral pink blooms.",
+  "category": "nature",
+  "categoryName": "Nature & Plants",
+  "tier": "lightweight",
+  "style": "stylized",
+  "kit": {
+    "slug": "cozy-plants",
+    "name": "Cozy Plants Kit",
+    "page": "https://grab3d.com/kits/cozy-plants/"
+  },
+  "tags": [
+    "flower pot",
+    "potted plant",
+    "geranium",
+    "terracotta pot",
+    "flowers",
+    "houseplant",
+    "window sill",
+    "plant",
+    "stylized"
+  ],
+  "license": "CC0-1.0",
+  "origin": {
+    "method": "procedural",
+    "aiContent": false,
+    "aiAssistedCode": true,
+    "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+    "licenseUrl": "https://grab3d.com/dl/flower-pot/LICENSE.txt",
+    "manifestUrl": "https://grab3d.com/dl/flower-pot/manifest.json"
+  },
+  "created": "2026-10-25",
+  "specs": {
+    "triangles": 14793,
+    "trianglesLight": null,
+    "texturePx": 2048,
+    "texturePxLight": null,
+    "maps": [
+      "baseColor",
+      "roughness",
+      "metallic",
+      "normal"
+    ],
+    "dimensionsMeters": [
+      0.25,
+      0.262,
+      0.354
+    ],
+    "movingParts": []
+  },
+  "media": {
+    "thumbnail": "https://grab3d.com/m/flower-pot/flower-pot-3d-model.webp",
+    "thumbnailSmall": "https://grab3d.com/m/flower-pot/thumb-400.webp",
+    "og": "https://grab3d.com/m/flower-pot/og.jpg",
+    "previewGlb": "https://grab3d.com/m/flower-pot/preview.glb",
+    "turntableWebm": "https://grab3d.com/m/flower-pot/turntable.webm",
+    "turntableMp4": "https://grab3d.com/m/flower-pot/turntable.mp4"
+  },
+  "files": [
+    {
+      "format": "glb",
+      "variant": "full",
+      "file": "flower-pot.glb",
+      "bytes": 1021760,
+      "url": "https://grab3d.com/dl/flower-pot/flower-pot.glb"
+    },
+    {
+      "format": "fbx",
+      "variant": "full",
+      "file": "flower-pot.fbx",
+      "bytes": 1895852,
+      "url": "https://grab3d.com/dl/flower-pot/flower-pot.fbx"
+    },
+    {
+      "format": "blend",
+      "variant": "full",
+      "file": "flower-pot.blend",
+      "bytes": 1042997,
+      "url": "https://grab3d.com/dl/flower-pot/flower-pot.blend"
+    },
+    {
+      "format": "usdz",
+      "variant": "full",
+      "file": "flower-pot.usdz",
+      "bytes": 1634418,
+      "url": "https://grab3d.com/dl/flower-pot/flower-pot.usdz"
+    },
+    {
+      "format": "obj-zip",
+      "variant": "full",
+      "file": "flower-pot-obj.zip",
+      "bytes": 1098802,
+      "url": "https://grab3d.com/dl/flower-pot/flower-pot-obj.zip"
+    }
+  ],
+  "rigged": null,
+  "relatedVariant": null,
+  "page": "https://grab3d.com/models/nature/flower-pot/"
+}

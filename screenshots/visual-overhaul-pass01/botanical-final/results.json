@@ -1,0 +1,15 @@
+{
+  "results": {
+    "drum-corner": {
+      "mode": "explore",
+      "perf": {
+        "fps": 0.03995141907463385,
+        "calls": 1,
+        "triangles": 1,
+        "geometries": 490,
+        "textures": 36
+      }
+    }
+  },
+  "errors": []
+}

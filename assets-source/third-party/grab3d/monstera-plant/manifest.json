@@ -1,0 +1,105 @@
+{
+  "slug": "monstera-plant",
+  "name": {
+    "en": "Monstera Plant",
+    "de": "Monstera",
+    "es": "Monstera en maceta"
+  },
+  "summary": "Large potted monstera with eight split leaves full of holes, arching stems, a moss support pole and a peach ceramic pot, about 1.1 m tall.",
+  "category": "nature",
+  "categoryName": "Nature & Plants",
+  "tier": "lightweight",
+  "style": "stylized",
+  "kit": {
+    "slug": "cozy-office",
+    "name": "Cozy Office Kit",
+    "page": "https://grab3d.com/kits/cozy-office/"
+  },
+  "tags": [
+    "monstera plant",
+    "monstera",
+    "swiss cheese plant",
+    "houseplant",
+    "potted plant",
+    "plant",
+    "office",
+    "interior",
+    "stylized"
+  ],
+  "license": "CC0-1.0",
+  "origin": {
+    "method": "procedural",
+    "aiContent": false,
+    "aiAssistedCode": true,
+    "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+    "licenseUrl": "https://grab3d.com/dl/monstera-plant/LICENSE.txt",
+    "manifestUrl": "https://grab3d.com/dl/monstera-plant/manifest.json"
+  },
+  "created": "2026-10-06",
+  "specs": {
+    "triangles": 17476,
+    "trianglesLight": null,
+    "texturePx": 2048,
+    "texturePxLight": null,
+    "maps": [
+      "baseColor",
+      "roughness",
+      "metallic",
+      "normal"
+    ],
+    "dimensionsMeters": [
+      1.112,
+      1.137,
+      1.093
+    ],
+    "movingParts": []
+  },
+  "media": {
+    "thumbnail": "https://grab3d.com/m/monstera-plant/monstera-plant-3d-model.webp",
+    "thumbnailSmall": "https://grab3d.com/m/monstera-plant/thumb-400.webp",
+    "og": "https://grab3d.com/m/monstera-plant/og.jpg",
+    "previewGlb": "https://grab3d.com/m/monstera-plant/preview.glb",
+    "turntableWebm": "https://grab3d.com/m/monstera-plant/turntable.webm",
+    "turntableMp4": "https://grab3d.com/m/monstera-plant/turntable.mp4"
+  },
+  "files": [
+    {
+      "format": "glb",
+      "variant": "full",
+      "file": "monstera-plant.glb",
+      "bytes": 960036,
+      "url": "https://grab3d.com/dl/monstera-plant/monstera-plant.glb"
+    },
+    {
+      "format": "fbx",
+      "variant": "full",
+      "file": "monstera-plant.fbx",
+      "bytes": 1845676,
+      "url": "https://grab3d.com/dl/monstera-plant/monstera-plant.fbx"
+    },
+    {
+      "format": "blend",
+      "variant": "full",
+      "file": "monstera-plant.blend",
+      "bytes": 1060198,
+      "url": "https://grab3d.com/dl/monstera-plant/monstera-plant.blend"
+    },
+    {
+      "format": "usdz",
+      "variant": "full",
+      "file": "monstera-plant.usdz",
+      "bytes": 1585083,
+      "url": "https://grab3d.com/dl/monstera-plant/monstera-plant.usdz"
+    },
+    {
+      "format": "obj-zip",
+      "variant": "full",
+      "file": "monstera-plant-obj.zip",
+      "bytes": 959822,
+      "url": "https://grab3d.com/dl/monstera-plant/monstera-plant-obj.zip"
+    }
+  ],
+  "rigged": null,
+  "relatedVariant": null,
+  "page": "https://grab3d.com/models/nature/monstera-plant/"
+}

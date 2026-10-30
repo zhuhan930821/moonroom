@@ -1,0 +1,104 @@
+{
+  "slug": "orchid",
+  "name": {
+    "en": "Potted Orchid",
+    "de": "Orchidee im Topf",
+    "es": "Orquídea en maceta"
+  },
+  "summary": "Stylized moth orchid in a cream pot with bark chips, broad glossy leaves, a wooden stake and an arching spike of five pastel pink flowers and three buds.",
+  "category": "nature",
+  "categoryName": "Nature & Plants",
+  "tier": "lightweight",
+  "style": "stylized",
+  "kit": {
+    "slug": "cozy-plants",
+    "name": "Cozy Plants Kit",
+    "page": "https://grab3d.com/kits/cozy-plants/"
+  },
+  "tags": [
+    "orchid",
+    "phalaenopsis",
+    "houseplant",
+    "potted plant",
+    "flower",
+    "interior",
+    "plant",
+    "stylized"
+  ],
+  "license": "CC0-1.0",
+  "origin": {
+    "method": "procedural",
+    "aiContent": false,
+    "aiAssistedCode": true,
+    "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+    "licenseUrl": "https://grab3d.com/dl/orchid/LICENSE.txt",
+    "manifestUrl": "https://grab3d.com/dl/orchid/manifest.json"
+  },
+  "created": "2026-10-19",
+  "specs": {
+    "triangles": 14318,
+    "trianglesLight": null,
+    "texturePx": 2048,
+    "texturePxLight": null,
+    "maps": [
+      "baseColor",
+      "roughness",
+      "metallic",
+      "normal"
+    ],
+    "dimensionsMeters": [
+      0.523,
+      0.136,
+      0.472
+    ],
+    "movingParts": []
+  },
+  "media": {
+    "thumbnail": "https://grab3d.com/m/orchid/orchid-3d-model.webp",
+    "thumbnailSmall": "https://grab3d.com/m/orchid/thumb-400.webp",
+    "og": "https://grab3d.com/m/orchid/og.jpg",
+    "previewGlb": "https://grab3d.com/m/orchid/preview.glb",
+    "turntableWebm": "https://grab3d.com/m/orchid/turntable.webm",
+    "turntableMp4": "https://grab3d.com/m/orchid/turntable.mp4"
+  },
+  "files": [
+    {
+      "format": "glb",
+      "variant": "full",
+      "file": "orchid.glb",
+      "bytes": 1084336,
+      "url": "https://grab3d.com/dl/orchid/orchid.glb"
+    },
+    {
+      "format": "fbx",
+      "variant": "full",
+      "file": "orchid.fbx",
+      "bytes": 1978156,
+      "url": "https://grab3d.com/dl/orchid/orchid.fbx"
+    },
+    {
+      "format": "blend",
+      "variant": "full",
+      "file": "orchid.blend",
+      "bytes": 1174240,
+      "url": "https://grab3d.com/dl/orchid/orchid.blend"
+    },
+    {
+      "format": "usdz",
+      "variant": "full",
+      "file": "orchid.usdz",
+      "bytes": 1721082,
+      "url": "https://grab3d.com/dl/orchid/orchid.usdz"
+    },
+    {
+      "format": "obj-zip",
+      "variant": "full",
+      "file": "orchid-obj.zip",
+      "bytes": 1193568,
+      "url": "https://grab3d.com/dl/orchid/orchid-obj.zip"
+    }
+  ],
+  "rigged": null,
+  "relatedVariant": null,
+  "page": "https://grab3d.com/models/nature/orchid/"
+}

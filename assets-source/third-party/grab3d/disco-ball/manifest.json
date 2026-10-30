@@ -1,0 +1,108 @@
+{
+  "slug": "disco-ball",
+  "name": {
+    "en": "Disco Ball",
+    "de": "Discokugel",
+    "es": "Bola de discoteca"
+  },
+  "summary": "Tabletop disco ball with almost a thousand flat mirror tiles and a few pastel tiles, turning on a pink motor stand with switch and LED.",
+  "category": "electronics",
+  "categoryName": "Electronics & Tech",
+  "tier": "lightweight",
+  "style": "stylized",
+  "kit": {
+    "slug": "cozy-electronics",
+    "name": "Cozy Electronics Kit",
+    "page": "https://grab3d.com/kits/cozy-electronics/"
+  },
+  "tags": [
+    "disco ball",
+    "mirror ball",
+    "party",
+    "disco",
+    "dance floor",
+    "70s",
+    "rotating",
+    "decor",
+    "electronics",
+    "stylized"
+  ],
+  "license": "CC0-1.0",
+  "origin": {
+    "method": "procedural",
+    "aiContent": false,
+    "aiAssistedCode": true,
+    "detail": "Built procedurally with Blender scripts. The scripts were written with the help of an AI coding assistant. No generative AI model produced the geometry or textures directly.",
+    "licenseUrl": "https://grab3d.com/dl/disco-ball/LICENSE.txt",
+    "manifestUrl": "https://grab3d.com/dl/disco-ball/manifest.json"
+  },
+  "created": "2026-10-26",
+  "specs": {
+    "triangles": 19080,
+    "trianglesLight": null,
+    "texturePx": 2048,
+    "texturePxLight": null,
+    "maps": [
+      "baseColor",
+      "roughness",
+      "metallic",
+      "normal"
+    ],
+    "dimensionsMeters": [
+      0.203,
+      0.203,
+      0.306
+    ],
+    "movingParts": [
+      "disco-ball_globe"
+    ]
+  },
+  "media": {
+    "thumbnail": "https://grab3d.com/m/disco-ball/disco-ball-3d-model.webp",
+    "thumbnailSmall": "https://grab3d.com/m/disco-ball/thumb-400.webp",
+    "og": "https://grab3d.com/m/disco-ball/og.jpg",
+    "previewGlb": "https://grab3d.com/m/disco-ball/preview.glb",
+    "turntableWebm": "https://grab3d.com/m/disco-ball/turntable.webm",
+    "turntableMp4": "https://grab3d.com/m/disco-ball/turntable.mp4"
+  },
+  "files": [
+    {
+      "format": "glb",
+      "variant": "full",
+      "file": "disco-ball.glb",
+      "bytes": 2021916,
+      "url": "https://grab3d.com/dl/disco-ball/disco-ball.glb"
+    },
+    {
+      "format": "fbx",
+      "variant": "full",
+      "file": "disco-ball.fbx",
+      "bytes": 3371644,
+      "url": "https://grab3d.com/dl/disco-ball/disco-ball.fbx"
+    },
+    {
+      "format": "blend",
+      "variant": "full",
+      "file": "disco-ball.blend",
+      "bytes": 1404882,
+      "url": "https://grab3d.com/dl/disco-ball/disco-ball.blend"
+    },
+    {
+      "format": "usdz",
+      "variant": "full",
+      "file": "disco-ball.usdz",
+      "bytes": 3189804,
+      "url": "https://grab3d.com/dl/disco-ball/disco-ball.usdz"
+    },
+    {
+      "format": "obj-zip",
+      "variant": "full",
+      "file": "disco-ball-obj.zip",
+      "bytes": 2079169,
+      "url": "https://grab3d.com/dl/disco-ball/disco-ball-obj.zip"
+    }
+  ],
+  "rigged": null,
+  "relatedVariant": null,
+  "page": "https://grab3d.com/models/electronics/disco-ball/"
+}

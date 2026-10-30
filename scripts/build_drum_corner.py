@@ -296,12 +296,11 @@ def build():
 
     make_rug((rug, rug_rose, rug_gold))
     make_lamp(brass, cream, glow)
-    make_plant('Plant_Left', (-2.05, 0, -3.62), 1.30, terracotta, stem, leaves, 7)
-    make_plant('Plant_Right', (2.25, 0, -3.55), 1.62, ceramic, stem, leaves, 8)
-    make_plant('Plant_Front', (2.47, 0, .92), .88, terracotta, stem, leaves, 6)
+    # Botanical props are loaded as independent textured GLBs in DrumCorner.jsx.
+    # The old spiky plants were batched into this decoration mesh and looked fake in-game.
     make_curtain('Curtain_Left', -2.46, 1, velvet)
     make_curtain('Curtain_Right', 2.42, -1, velvet)
-    make_vines(stem, leaves)
+    # The ceiling-wall dressing GLB supplies the vines; omit this older low-detail set.
     make_stars(brass, glow)
 
     if STAGE == 'c':

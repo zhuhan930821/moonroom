@@ -6,6 +6,7 @@ import { chooseShot } from '../game/padMaps'
 import { sincePlayed } from '../audio/musicBus'
 import { Guitar } from './ReferenceDecor'
 import LiveHouse from './LiveHouse'
+import { FLAGS } from '../config/flags'
 
 // The little stage in the left corner: the drums and piano already live there, the guitar comes
 // over on a stand between them, and each instrument gets a spotlight that flares when it plays.
@@ -48,7 +49,7 @@ function StageEdge() {
 function GuitarOnStand({ tone, strumId }) {
   const [x, , z] = STAGE.guitar.stand
   return <group position={[x, 0, z]}>
-    <group rotation-y={Math.PI}><Guitar position={[0, .84, 0]} red={tone === 'electric'} active strumId={strumId}/></group>
+    <group rotation-y={Math.PI}><Guitar position={[0, .1, 0]} red={tone === 'electric'} active strumId={strumId}/></group>
     {/* a simple A-frame stand and a small round riser */}
     {[-1, 1].map(s => <mesh key={s} position={[.12, .22, s * .12]} rotation={[s * .35, 0, -.25]}><cylinderGeometry args={[.012, .012, .5, 6]}/><meshStandardMaterial color="#2a2428" metalness={.6}/></mesh>)}
     <mesh position-y={.03}><cylinderGeometry args={[.62, .66, .06, 32]}/><meshStandardMaterial color="#6a4632" roughness={.7}/></mesh>
@@ -78,7 +79,7 @@ function Director() {
 
 export default function BandStage({ guitarTone, guitarHit }) {
   const phase = useSyncExternalStore(band.subscribe, () => band.get().phase)
-  if (phase === 'off') return null
+  if (phase === 'off' && !(FLAGS.capture && FLAGS.captureMode === 'band')) return null
   return <group name="BandStage">
     {Object.keys(STAGE).map(part => <Spotlight key={part} part={part}/>)}
     <StageEdge/>

@@ -1,0 +1,19 @@
+{
+  "errors": [
+    "mirror ball wait: page.waitForFunction: Timeout 65000ms exceeded."
+  ],
+  "mode": "band",
+  "ball": false,
+  "stage": true,
+  "sceneChildren": [
+    "Whole_Wall_Sheer_Voile",
+    "BandStage"
+  ],
+  "perf": {
+    "fps": 0.08813678829543452,
+    "calls": 1,
+    "triangles": 1,
+    "geometries": 638,
+    "textures": 56
+  }
+}

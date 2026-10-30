@@ -30,6 +30,7 @@ function grooveTexture() {
 }
 
 const ARM_REST = 0, ARM_PLAY = -.44
+export const RECORD_SCALE = .72 // was crowding the piano corner at full size
 const RPM = 33.333 / 60 * Math.PI * 2
 
 export default function RecordPlayer({ records = [], playingId = null }) {
@@ -42,7 +43,7 @@ export default function RecordPlayer({ records = [], playingId = null }) {
     if (disc.current && playing) disc.current.rotation.y -= RPM * dt
     if (arm.current) arm.current.rotation.y += ((playing ? ARM_PLAY : ARM_REST) - arm.current.rotation.y) * (1 - Math.exp(-dt * 2.4))
   })
-  return <group position={p}>
+  return <group position={p} scale={RECORD_SCALE}>
     {/* cabinet */}
     <RoundedBox args={[1.5, .56, 1.42]} color="#8a5a43" position-y={.42}/>
     <RoundedBox args={[1.56, .06, 1.48]} color="#6d4433" position-y={.72}/>
