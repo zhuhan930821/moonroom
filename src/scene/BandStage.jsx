@@ -33,7 +33,7 @@ function Spotlight({ part }) {
     if (lamp.current) lamp.current.intensity = 1 + k * 5
   })
   return <group position={[x, 0, z]}>
-    <mesh position-y={2.1} renderOrder={2}><coneGeometry args={[.95, 4.2, 28, 1, true]}/><meshBasicMaterial ref={cone} color={COLORS[part]} transparent opacity={.1} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending}/></mesh>
+    <mesh position-y={1.85} renderOrder={2}><coneGeometry args={[.95, 3.7, 28, 1, true]}/><meshBasicMaterial ref={cone} color={COLORS[part]} transparent opacity={.1} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending}/></mesh>
     <mesh position-y={.012} rotation-x={-Math.PI / 2}><circleGeometry args={[.95, 32]}/><meshBasicMaterial ref={pool} color={COLORS[part]} transparent opacity={.3} depthWrite={false} blending={THREE.AdditiveBlending}/></mesh>
     <pointLight ref={lamp} position-y={2.4} color={COLORS[part]} intensity={2} distance={4} decay={2}/>
   </group>

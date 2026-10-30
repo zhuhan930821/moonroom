@@ -101,6 +101,7 @@ void main() {
   vec3 dome = h > 0.0
     ? mix(mix(hz, up, smoothstep(0.0, 0.32, h)), zn, smoothstep(0.32, 0.9, h))
     : mix(hz, below, smoothstep(0.0, -0.35, h));
+  dome = mix(dome, dome * vec3(1.15, .85, 1.05) + vec3(.10, .0, .06), .45 * (1.0 - day * .5));
   vec3 cell = floor(normalize(vDir) * 260.0);
   float star = step(0.9965, hash(cell)) * smoothstep(0.12, 0.45, h);
   dome += star * vec3(1.0, 0.94, 0.82) * (0.5 + 0.5 * hash(cell + 7.0)) * (1.0 - dawn);
@@ -117,6 +118,9 @@ void main() {
   vec3 daylit = painting * vec3(1.05, 1.1, 1.12) + vec3(.13, .15, .18);
   daylit = mix(daylit, vec3(dot(daylit, vec3(.3, .55, .15))), .22);
   painting = mix(painting, daylit, day);
+  // A rosier sky outside: pink lift over the painting, strongest at night, softer by day.
+  vec3 rosy = painting * vec3(1.12, .9, 1.02) + vec3(.16, .03, .10) * smoothstep(1.0, .15, v);
+  painting = mix(painting, rosy, .6 * (1.0 - day * .55));
   // Castle lights (painting coords: castle spans u .62–.90, v .68–.96; tallest spire at .725, .94).
   if (castleGlow > 0.0) {
     float inCastle = smoothstep(.60, .63, u) * smoothstep(.92, .89, u) * smoothstep(.66, .70, v) * smoothstep(.985, .96, v);
