@@ -51,14 +51,14 @@
 
 检查过两个许可清晰的完整鼓组候选：Heataker 的 Sketchfab “Standard Drum Set”（CC BY，约 439k 三角面）和 art.katja 的 Sketchfab “Drum Kit”（CC BY，约 86k 三角面）。两者下载均需要 Sketchfab 账户授权，本项目没有在未取得原始下载文件时声称导入。最终资产由本机 Blender 原创制作并导出；配置与比例参考标准五鼓原声套鼓照片，而未复制第三方网格或贴图。
 
-## 第三方鼓组候选（仅测试，尚未替换默认资产）
+## 第三方鼓组（默认加载）
 
 | 文件 | 来源 | 许可证 / 署名 |
 | --- | --- | --- |
 | `assets-source/drums/art-katja/original/drum-kit.zip` | [“Drum Kit” by art.katja](https://skfb.ly/p9FOp)，由用户提供的原始下载包 | [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)；使用时必须保留作者署名 |
-| `public/assets/models/candidates/art-katja-drum-kit-moonroom.glb` | 上述模型的独立 Moonroom 视觉测试导出 | CC BY 4.0；网格作者 art.katja。项目仅调整朝向、比例、节点组织与酒红/奶油/黄铜材质 |
+| `public/assets/models/candidates/art-katja-drum-kit-moonroom.glb` | 上述模型的 Moonroom 适配导出，现为默认鼓组 | CC BY 4.0；网格作者 art.katja。项目调整朝向、比例、节点组织与酒红/奶油/黄铜材质 |
 
-可编辑比较文件为 `assets-source/drums/art-katja/working/drum-kit-comparison.blend`，测试版本为 `assets-source/drums/art-katja/working/candidate-moonroom-test.blend`。候选只在 URL 加入 `?drumCandidate=1` 时加载；默认仍使用项目原创的 `acoustic-drum-kit.glb`。完整署名文本：`“Drum Kit” (https://skfb.ly/p9FOp) by art.katja is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).`
+可编辑比较文件为 `assets-source/drums/art-katja/working/drum-kit-comparison.blend`，适配版本为 `assets-source/drums/art-katja/working/candidate-moonroom-test.blend`。旧的项目原创 `acoustic-drum-kit.glb` 保留作备份，可用 `?drumLegacy=1` 查看。完整署名文本：`“Drum Kit” (https://skfb.ly/p9FOp) by art.katja is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).`
 
 ## Phase 1.5B 鼓角
 

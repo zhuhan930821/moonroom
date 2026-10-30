@@ -81,7 +81,7 @@ npm run preview
 
 开发服务器支持 `?spawn=bed`、`?spawn=deskView`、`?spawn=lounge`、`?spawn=drumCorner`、`?spawn=drumFront` 与 `?spawn=drumSide`。这些只用于复查固定构图，不改变正常入口；`?spawn=desk` 和 `?spawn=drums` 可快速复查交互。加上 `&capture=1` 后按 `P`，开发服务器将当前 3D 画面保存为 `screenshots/moonroom-<spawn>.png`（1600×900）。这是本地开发辅助功能，不进入生产服务器。
 
-第三方鼓组适配测试可在上述 URL 后加入 `&drumCandidate=1`。该开关只替换视觉子模型，继续沿用原有世界坐标、碰撞体、鼓凳锚点和 8 个交互根节点；未加开关时仍加载旧鼓组。未经确认，不应把候选文件改成默认资产。
+默认鼓组现为用户授权的 art.katja 第三方模型；它继续沿用原有世界坐标、碰撞体、鼓凳锚点和 8 个交互根节点。旧的项目原创 Blender 鼓组保留在仓库中，复查时可加 `&drumLegacy=1`（旧链接 `&drumCandidate=0` 也可用）。作者与 CC BY 4.0 署名见 `ASSETS.md`。
 
 Phase A2 的 Dream Lounge 审计记录位于 `docs/phase-a2-audit.md`。当前只接入第一个摆件原型 `moon-breathing-lamp.glb`；可用 `?spawn=loungeProp&capture=1` 复查它在休息区中的构图。其余五件摆件尚未批量制作，需先确认该原型的美术品质。
 
@@ -102,7 +102,8 @@ Phase 1 Blender 房屋建筑现为默认场景；可用 `?architecture=legacy` �
 | `?bedLegacy=1` | 回看旧的 Moon Nest 床；默认为重新配色的 Messy bed 2.0（E01，CC BY 4.0，署名见 `ASSETS.md`） |
 | `?spawn=edgeLeft|edgeRight|edgeUp` | 窗边斜视和仰视，用于检查窗外远景是否露边 |
 | `?lightingPass=moon|warm|combined|bloom|golden`、`?lightingDebug=1` | 灯光分层与调参面板 |
-| `?drumCandidate=1`、`?decorSample=1`、`?rugMaterialTest=1`、`?rugPileTest=1` | 未确认候选（默认不加载） |
+| `?drumLegacy=1` | 回看项目原创 Blender 鼓组；默认加载 art.katja 第三方模型 |
+| `?decorSample=1`、`?rugMaterialTest=1`、`?rugPileTest=1` | 未确认候选（默认不加载） |
 | `?voileSample=0`、`?curtainClosed=1`、`?architecture=legacy`、`?whiteModel=1`、`?visualBaseline=1` | 帘子、旧建筑、白模与旧灯光对比 |
 
 ## 已知边界

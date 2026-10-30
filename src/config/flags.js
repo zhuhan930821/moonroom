@@ -35,8 +35,9 @@ export function parseFlags(search = '') {
     loungeLegacy: on('loungeLegacy'),
     // E01: recoloured Messy bed 2.0 (default); ?bedLegacy=1 shows the old Moon Nest bed
     bedLegacy: on('bedLegacy'),
-    // Opt-in candidates, not default
-    drumCandidate: on('drumCandidate'),
+    // art.katja's licensed kit is the approved default; keep the original Blender
+    // kit available for comparison without changing the interaction anchors.
+    drumLegacy: on('drumLegacy') || q.get('drumCandidate') === '0',
     decorSample: on('decorSample'),
     rugPileTest: on('rugPileTest'),
     rugMaterialTest: on('rugMaterialTest'),

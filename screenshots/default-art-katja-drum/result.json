@@ -1,0 +1,34 @@
+[
+  {
+    "name": "front",
+    "mode": "explore",
+    "candidate": true,
+    "roots": [
+      "Kick",
+      "Snare",
+      "Tom_One",
+      "Tom_Two",
+      "Floor_Tom",
+      "HiHat_Top",
+      "Crash",
+      "Ride"
+    ],
+    "errors": []
+  },
+  {
+    "name": "drummer",
+    "mode": "drums",
+    "candidate": true,
+    "roots": [
+      "Kick",
+      "Snare",
+      "Tom_One",
+      "Tom_Two",
+      "Floor_Tom",
+      "HiHat_Top",
+      "Crash",
+      "Ride"
+    ],
+    "errors": []
+  }
+]
