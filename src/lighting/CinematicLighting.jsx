@@ -12,7 +12,7 @@ import { FLAGS } from '../config/flags'
 export const CINEMATIC_DEFAULTS = { moonlight: 3.2, warm: 105, ambient: 0.52, exposure: 1.0, bloomStrength: 0.28, bloomThreshold: 1.08 }
 // Golden pass: warm practicals lead, moonlight only rims the window side (reference: amber, lived-in).
 export const GOLDEN_DEFAULTS = FLAGS.visualPass
-  ? { moonlight: 1.55, warm: 70, ambient: 0.84, exposure: 1.12, bloomStrength: 0.23, bloomThreshold: 1.2 }
+  ? { moonlight: 1.55, warm: 84, ambient: 0.94, exposure: 1.16, bloomStrength: 0.25, bloomThreshold: 1.2 } // brighter, warmer room
   : { moonlight: 1.35, warm: 70, ambient: 0.95, exposure: 1.15, bloomStrength: 0.38, bloomThreshold: 1.12 }
 export const BLOOM_PASSES = ['bloom', 'golden']
 

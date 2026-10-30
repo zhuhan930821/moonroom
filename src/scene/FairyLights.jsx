@@ -12,9 +12,14 @@ const STRANDS = [
   { from: [-9.6, 7.15, -7.25], to: [-2.6, 7.15, -7.25], sag: .65 },
   { from: [-2.5, 7.15, -7.25], to: [2.5, 7.15, -7.25], sag: .55 },
   { from: [2.6, 7.15, -7.25], to: [9.6, 7.15, -7.25], sag: .65 },
-  // Left wall above the drum corner
-  { from: [-9.85, 4.7, -6.6], to: [-9.85, 4.7, -2.4], sag: .45, glow: [-9.3, 4.3, -4.5] },
-  { from: [-9.85, 4.7, -2.4], to: [-9.85, 4.7, 1.8], sag: .45 },
+  // Left wall, now above the extended loft deck (top 4.29)
+  { from: [-9.85, 5.15, -6.4], to: [-9.85, 5.15, -2.4], sag: .45, glow: [-9.3, 4.9, -4.5] },
+  { from: [-9.85, 5.15, -2.4], to: [-9.85, 5.15, 1.8], sag: .45 },
+  // Wrapped tight along the top of the full loft front rail (top at y 5.36). A visible sag here
+  // read as a bent rail, so these run straight.
+  { from: [-6.08, 5.39, -6.4], to: [-6.08, 5.39, -2.1], sag: .015, glow: [-5.7, 5.0, -4.2] },
+  { from: [-6.08, 5.39, -2.1], to: [-6.08, 5.39, 2.4], sag: .015, glow: [-5.7, 5.0, .2] },
+  { from: [-6.08, 5.39, 2.4], to: [-6.08, 5.39, 7.7], sag: .015, glow: [-5.7, 5.0, 5.0] },
   // Right bookshelf crown and the wall above the bed head
   { from: [8.42, 4.9, -5.6], to: [8.42, 4.9, -.6], sag: .3, glow: [8.1, 4.4, -3.1] },
   { from: [9.85, 4.25, .8], to: [9.85, 4.25, 3.0], sag: .4, glow: [9.2, 3.9, 3.0] },

@@ -25,7 +25,6 @@ export default function DrumCorner() {
   return <GLBAsset ref={corner} url="/assets/models/drum-corner.glb" position={FURNITURE.drums.position} hiddenNodes={voileSample ? HIDDEN_WITH_VELVET : MUSIC_SHELF}>
     <GLBAsset url="/assets/models/botanical/monstera-plant.glb" position={[-2.05, 0, -3.62]} rotation={[0, .55, 0]} scale={1.05} axisCorrection={false} castShadow={false}/>
     <GLBAsset url="/assets/models/botanical/monstera-plant.glb" position={[2.25, 0, -3.55]} rotation={[0, 2.1, 0]} scale={1.16} axisCorrection={false} castShadow={false}/>
-    <GLBAsset url="/assets/models/botanical/monstera-plant.glb" position={[2.47, 0, .92]} rotation={[0, -.4, 0]} scale={.78} axisCorrection={false} castShadow={false}/>
     {!cinematic && <><pointLight position={[-2.48, 2.32, -.20]} color="#ffaf62" intensity={24} distance={5.4} decay={2} castShadow shadow-mapSize-width={512} shadow-mapSize-height={512}/>
     <pointLight position={[1.5, 3.3, -3.8]} color="#80a8ff" intensity={9} distance={7.5} decay={2}/>
     <pointLight position={[-1.65, 4.15, -3.7]} color="#ffc06b" intensity={3.5} distance={2.2} decay={2}/>

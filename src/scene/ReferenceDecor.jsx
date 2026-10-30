@@ -164,7 +164,7 @@ function SideWallGallery() {
         tile: (i + row * 3 + (side === 'right' ? 2 : 0)) % 8, polaroid: r() > .34 })
     }))
     add('left', [3.75, 4.22, 4.62, 6.05, 6.48, 6.93, 7.38], [2.85, 3.42, 4.02])
-    add('left', [-6.65, -6.12, -4.12, -3.58], [3.8, 4.45])
+    add('left', [-6.65, -6.12, -4.12, -3.58], [5.75, 6.4]) // above the extended loft deck (top 4.29, rail 5.36)
     // The drum-side panel has its own curated composition below.
     add('right', [-5.6, -5.1, -4.6, -4.1, -3.6], [4.95, 5.52])
     add('right', [2.46, 3.02, 3.6, 4.16], [2.86, 3.49])
@@ -188,7 +188,7 @@ function DrumWallPoster() {
     const t = atlas.clone(); t.needsUpdate = true; t.repeat.set(.25, .5); t.offset.set(.25, .5)
     return t
   }, [atlas])
-  return <group name="DECOR_DrumWallPoster_PASS05" position={[-9.53, 4.1, -5.13]} rotation-y={Math.PI / 2}>
+  return <group name="DECOR_DrumWallPoster_PASS05" position={[-9.53, 5.95, -5.13]} rotation-y={Math.PI / 2}>
     <mesh position-z={-.035} castShadow><boxGeometry args={[1.02, 1.42, .065]}/><meshStandardMaterial color="#8b634e" roughness={.78}/></mesh>
     <mesh position-z={.002}><planeGeometry args={[.89, 1.27]}/><meshStandardMaterial map={texture} roughness={.93} side={THREE.DoubleSide}/></mesh>
     <mesh position={[0, -.51, .009]}><planeGeometry args={[.82, .18]}/><meshStandardMaterial color="#352b4f" roughness={1} side={THREE.DoubleSide}/></mesh>
@@ -515,9 +515,27 @@ function MusicWall({ guitarHit, guitarTone }) {
   </group>
 }
 
+// ---------- loft garden: plants along the (now full-length) loft and a few warm lanterns ----------
+const LOFT_TOP = 4.29, LOFT_FRONT = -6.55, LOFT_BACK = -9.35
+const LOFT_PLANTS = [
+  // front edge, tall ones so they show above the rail; alternating with leafy pots
+  ...[-6.1, -4.6, -3.1, -1.6, -.1, 1.4, 2.9, 4.4, 5.9, 7.3].map((z, i) => ({ p: [LOFT_FRONT - (i % 2) * .25, LOFT_TOP, z], bush: i % 2 ? 'leafy' : 'tall', scale: i % 2 ? 1.5 : 1.75, seed: 120 + i })),
+  // back wall, smaller pots between the frames
+  ...[-5.5, -2.4, .6, 3.4, 6.6].map((z, i) => ({ p: [LOFT_BACK, LOFT_TOP, z], bush: 'vase', scale: 1.1, seed: 140 + i })),
+]
+function LoftGarden() {
+  return <group name="DECOR_LoftGarden">
+    {LOFT_PLANTS.map((plant, i) => <Plant key={i} position={plant.p} scale={plant.scale} bush={plant.bush} seed={plant.seed}/>)}
+    <Lantern position={[-7.4, LOFT_TOP, -3.8]} light/>
+    <Lantern position={[-7.6, LOFT_TOP, 2.2]} scale={.9}/>
+    <Lantern position={[-7.3, LOFT_TOP, 5.2]} light scale={.85}/>
+  </group>
+}
+
 export default function ReferenceDecor({ guitarHit, guitarTone }) {
   return <group>
     <PhotoWall/>
+    <LoftGarden/>
     <NeonSign/>
     <SideWallGallery/>
     <DrumWallPoster/>
