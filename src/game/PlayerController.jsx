@@ -114,7 +114,7 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
       camera.position.copy(position.current)
       camera.quaternion.copy(desired.current)
     }
-    onPosition(position.current)
+    onPosition(position.current, yaw.current)
   })
   return null
 }

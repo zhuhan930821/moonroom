@@ -12,7 +12,7 @@ const FOX_SCALE = 1.15 // model is ~0.75 m tall; room furniture runs ~1.7x real 
 // The sleeper keeps its curled model; waking is shown by lifting the head and opening its eyes.
 const awakeUrl = () => '/assets/models/collectibles/fox-sleep.glb'
 const SLEEPER = { position: [6.0, 0, 6.7], rotation: -1.4 }
-const LISTENER = { home: [3.25, 0, 4.45], homeYaw: -1.15, spot: [3.15, 0, 2.35], spotYaw: -2.2 }
+const LISTENER = { home: [3.25, 0, 4.45], homeYaw: -1.15, spot: [1.9, 0, 2.2], spotYaw: -2.1 } // spot: on the rug in front of the sofa, clear of the pouf and the little globe lamp
 
 // Cute Blender fox (scripts/build_cute_fox.py). Both poses share node names, so the same
 // refs drive breathing (Fox_Body), the head (Fox_Head), ears, eyes and tail.

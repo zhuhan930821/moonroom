@@ -25,11 +25,18 @@ export function movePlayer(position, yaw, forward, strafe, speed, delta) {
   return { x, z }
 }
 
-export function nearestInteraction(position, interactions) {
+// With a yaw, things behind you (more than ~105° off where you look) don't count unless you're
+// right on top of them, so standing near a bookcase while facing away doesn't offer its books.
+export function nearestInteraction(position, interactions, yaw = null) {
   let closest = null
   let distance = Infinity
   Object.entries(interactions).forEach(([key, item]) => {
-    const d = Math.hypot(position.x - item.position[0], position.z - item.position[2])
+    const dx = item.position[0] - position.x, dz = item.position[2] - position.z
+    const d = Math.hypot(dx, dz)
+    if (yaw != null && d > .6) {
+      const facing = (-Math.sin(yaw) * dx - Math.cos(yaw) * dz) / d
+      if (facing < -.26) return
+    }
     if (d < item.radius && d < distance) { closest = key; distance = d }
   })
   return closest

@@ -61,3 +61,12 @@ test('the sofa day cycle runs night → dawn → day → dusk → night and loop
   assert.equal(timeAt(CYCLE + 60), 2, 'loops')
   for (let t = 0; t < CYCLE; t += .5) { const v = timeAt(t); assert.ok(v >= 0 && v <= 2) }
 })
+
+test('interaction prompts ignore things behind you', () => {
+  // behind the drum kit, next to the left bookcase: facing it offers the books, facing away does not
+  const spot = { x: -6.2, z: -5.2 }
+  assert.equal(nearestInteraction(spot, INTERACTIONS, Math.atan2(.55, .6)), 'booksLeft')
+  assert.equal(nearestInteraction(spot, INTERACTIONS, Math.PI), null)
+  // right on top of something, the way you face doesn't matter
+  assert.equal(nearestInteraction({ x: -6.75, z: -5.5 }, INTERACTIONS, Math.PI), 'booksLeft')
+})

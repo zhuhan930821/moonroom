@@ -93,11 +93,11 @@ export function useInteractionSystem(root) {
   // starting audio in a browser that has no user gesture.
   const startPreview = useCallback(() => setStarted(true), [])
 
-  const updatePosition = useCallback(position => {
+  const updatePosition = useCallback((position, yaw = null) => {
     playerPositionRef.current = position
     if (worldPhysics.active) { setNear(old => old === null ? old : null); return } // away behind the Anywhere Door
     if (modeRef.current !== 'explore') return
-    const closest = nearestInteraction(position, INTERACTIONS)
+    const closest = nearestInteraction(position, INTERACTIONS, yaw)
     setNear(old => old === closest ? old : closest)
     const fox = FOX_HINTS.find(item => Math.hypot(position.x-item.position[0],position.z-item.position[2]) < item.radius)
     setFoxName(old => old === (fox?.name || null) ? old : fox?.name || null)

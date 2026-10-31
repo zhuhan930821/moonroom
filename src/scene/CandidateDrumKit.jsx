@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import { FURNITURE } from '../config/scene'
@@ -6,6 +7,11 @@ import { animateKit, padFromEvent } from './drumKitHits'
 
 const DRUM_COLLIDERS = [{name:'DrumKit_Collider',position:[0,1.05,0],size:[4.2,2.1,3.8]}]
 const DRUM_ANCHORS = [{name:'DrumThrone_Interaction',position:[-.22,1.1,1.4]}]
+// A spare cymbal from the source model, never hung on a stand: it lay tilted under the snare stand.
+const HIDDEN = ['Circle.009', 'Circle009']
+// Cymbals as smoky black metal: dark base, very metallic, a little rough, so the room reflection
+// (MetalReflections in App.jsx) gives them a soft sheen instead of brass.
+const CYMBALS = { Moonroom_Brushed_Brass: { color: new THREE.Color('#1d1b22'), metalness: .96, roughness: .26 } }
 
 export default function CandidateDrumKit({ hit, onStrike }) {
   const model = useRef(); const lastId = useRef(0); const active = useRef({})
@@ -17,5 +23,5 @@ export default function CandidateDrumKit({ hit, onStrike }) {
     animateKit(root, active.current)
   })
   const strike = onStrike && (event => { const pad = padFromEvent(event); if (pad) { event.stopPropagation(); onStrike(pad) } })
-  return <group onPointerDown={strike || undefined}><GLBAsset ref={model} url="/assets/models/candidates/art-katja-drum-kit-moonroom.glb" position={FURNITURE.drums.position} axisCorrection={false} collisionMeshes={DRUM_COLLIDERS} interactionAnchors={DRUM_ANCHORS} fallbackScale={1.5}/></group>
+  return <group onPointerDown={strike || undefined}><GLBAsset ref={model} url="/assets/models/candidates/art-katja-drum-kit-moonroom.glb" position={FURNITURE.drums.position} axisCorrection={false} hiddenNodes={HIDDEN} materialOverrides={CYMBALS} collisionMeshes={DRUM_COLLIDERS} interactionAnchors={DRUM_ANCHORS} fallbackScale={1.5}/></group>
 }

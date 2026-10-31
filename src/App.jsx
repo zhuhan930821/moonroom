@@ -1,4 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import * as THREE from 'three'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Environment from './scene/Environment'
 import Furniture from './scene/Furniture'
@@ -54,6 +56,32 @@ const isTouchScreen = () => typeof window !== 'undefined' && (
   new URLSearchParams(window.location.search).get('mobile') === '1' ||
   window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && window.innerWidth < 1000)
 )
+
+// A soft room reflection for metals only (cymbals, drum hardware, brass, strings). Without it they
+// reflect nothing and read as dark discs up close. It is set per metallic material, not as the
+// scene environment, so cloth, walls and wood keep the room's own warm lighting. Models stream in,
+// so new materials are picked up on a slow sweep.
+function MetalReflections() {
+  const { gl, scene } = useThree()
+  const env = useRef(null), last = useRef(-1)
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl)
+    env.current = pmrem.fromScene(new RoomEnvironment(), .04).texture
+    return () => { env.current?.dispose(); env.current = null; pmrem.dispose() }
+  }, [gl])
+  useFrame(({ clock }) => {
+    if (!env.current || clock.elapsedTime - last.current < 1) return
+    last.current = clock.elapsedTime
+    scene.traverse(node => {
+      const materials = node.isMesh ? [].concat(node.material) : []
+      for (const m of materials) {
+        if (!m || m.envMap || !(m.metalness > .45)) continue
+        m.envMap = env.current; m.envMapIntensity = .6; m.needsUpdate = true
+      }
+    })
+  })
+  return null
+}
 
 function PerformanceProbe() {
   const gl = useThree(state => state.gl)
@@ -185,6 +213,7 @@ export default function App() {
         <directionalLight position={[-5,9,4]} intensity={2.2}/>
         <GLBAsset url="/assets/models/review/moonroom-reference-blockout.glb" castShadow={false}/>
       </> : <LightingProvider value={{ cinematic, decorationLights: !cinematic }}>
+        <MetalReflections/>
         <Environment hit={game.hit} quality={quality} cinematic={cinematic}/>
         {cinematic && <CinematicLights layer={lightingPass} settings={lighting} quality={quality}/>} 
         <Furniture hit={game.hit} foxPet={game.foxPet} lounging={game.mode === 'beanbag'} quality={quality} onStrike={game.mode === 'drums' ? game.strike : null}
