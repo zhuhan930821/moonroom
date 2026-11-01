@@ -1,5 +1,5 @@
 import { audioGraph } from './drums'
-import { GUITAR_CHORDS, strumNotes } from './guitarChords'
+import { GUITAR_CHORDS, soundingString, strumNotes } from './guitarChords'
 import { scheduleGuitarNote } from './guitarSynth'
 const activeVoices = new Map()
 export const guitarVisual = { acoustic: Array(6).fill(-1e9), electric: Array(6).fill(-1e9) }
@@ -32,7 +32,8 @@ export function guitarAmpLevel() {
 }
 export function muteGuitar() { activeVoices.forEach(voice => voice.mute()); activeVoices.clear() }
 
-export function playGuitarString(chordIndex, stringIndex, strength = .7, electric = false) {
+export function playGuitarString(chordIndex, requested, strength = .7, electric = false) {
+  const stringIndex = soundingString(chordIndex, requested)
   const midi = GUITAR_CHORDS[chordIndex]?.notes[stringIndex]
   if (midi == null) return false
   const { ctx, master } = audioGraph()

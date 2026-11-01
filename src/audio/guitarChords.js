@@ -18,3 +18,15 @@ export function strumNotes(chordIndex, upward = false) {
 }
 
 export const PICK_STRINGS = [0, 2, 3, 5]
+
+// The string a pick actually sounds: if the chord leaves it unplayed (the low E in C, Am, Dm, A),
+// step toward the middle to the nearest string the chord does play, so the "low" key is the
+// chord's real bass instead of silence.
+export function soundingString(chordIndex, stringIndex) {
+  const notes = GUITAR_CHORDS[chordIndex]?.notes
+  if (!notes) return -1
+  if (notes[stringIndex] != null) return stringIndex
+  const step = stringIndex < 3 ? 1 : -1
+  for (let s = stringIndex + step; s >= 0 && s < 6; s += step) if (notes[s] != null) return s
+  return -1
+}

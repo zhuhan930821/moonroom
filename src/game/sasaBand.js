@@ -29,7 +29,8 @@ export const MEMBERS = [
   },
   {
     id: 'shenyu', name: '沈聿', part: 'guitar', role: '作曲 · 制作 · 吉他', tint: '#ffb36b',
-    image: '/assets/band/shenyu.webp', play: '/assets/band/shenyu-play.webp', position: [7.75, -.45], // in front of the guitars and amp, clear of the bookcase
+    image: '/assets/band/shenyu.webp', play: '/assets/band/shenyu-play.webp', position: [7.3, 1.15], // beside the guitar wall, out of the guitar camera (7.55, -.5)
+    seat: [8.55, .55], faces: [9.6, .55], // while you play: at the wall's end, turned to the guitars
     quote: '你以为这只是一首歌？我听见的，是你没有说出口的那部分。',
     lines: ['那把红色的琴，弦该换了。', '别急着收尾，最后一个和弦让它多响一会儿。', '这段我再听一遍。'],
     playing: '……还不错。再来一遍。',

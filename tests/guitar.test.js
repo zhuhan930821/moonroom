@@ -41,3 +41,14 @@ test('the room diary remembers strumming and chord changes', () => {
   assert.match(page.text, /吉他扫了 40 下/)
   assert.match(page.text, /C、G/)
 })
+
+test('every pick key sounds in every chord: an unplayed low string falls back to the chord bass', async () => {
+  const { GUITAR_CHORDS, PICK_STRINGS, soundingString } = await import('../src/audio/guitarChords.js')
+  GUITAR_CHORDS.forEach((chord, c) => PICK_STRINGS.forEach(s => {
+    const used = soundingString(c, s)
+    assert.ok(used >= 0 && chord.notes[used] != null, `${chord.name} string ${s}`)
+  }))
+  const c = GUITAR_CHORDS.findIndex(ch => ch.name === 'C'), dm = GUITAR_CHORDS.findIndex(ch => ch.name === 'Dm')
+  assert.equal(soundingString(c, 0), 1)   // C: low E unplayed -> A string (C3)
+  assert.equal(soundingString(dm, 0), 2)  // Dm: E and A unplayed -> D string
+})
