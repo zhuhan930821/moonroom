@@ -39,3 +39,19 @@ test('night is sparser than day', () => {
   const count = density => { const r = rng(9); let n = 0; for (let bar = 0; bar < 64; bar++) n += composeBar(bar, r, { density }).events.filter(e => e.kind === 'melody').length; return n }
   assert.ok(count(.5) < count(.85))
 })
+
+test('comping is light and varied: at most three right-hand notes at once, no pattern twice in a row', () => {
+  const random = rng(21)
+  const names = []
+  for (let bar = 0; bar < 64; bar++) {
+    const { events, chord } = composeBar(bar, random)
+    const bass = PROGRESSION[bar % 8].bass
+    const rh = events.filter(e => e.kind === 'piano' && e.note !== bass)
+    // group right-hand notes struck within 0.2s of each other
+    const clusters = []
+    for (const e of rh) { const c = clusters.find(c => Math.abs(c.at - e.at) < .2); if (c) c.n++; else clusters.push({ at: e.at, n: 1 }) }
+    for (const c of clusters) assert.ok(c.n <= 3, `bar ${bar} (${chord}) has ${c.n} notes at once`)
+    names.push(rh.map(e => e.at.toFixed(2)).join(','))
+  }
+  assert.ok(new Set(names).size > 40, 'rhythms should rarely repeat')
+})

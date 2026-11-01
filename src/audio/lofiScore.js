@@ -36,12 +36,21 @@ export function composeBar(index, random, { density = .7, last = MELODY_SCALE[3]
   const chord = PROGRESSION[index % PROGRESSION.length]
   const events = []
   const humanize = () => (random() - .5) * .018
-  // Left hand on the downbeat; right-hand chord rolled up a little, sometimes pushed early.
-  events.push({ kind: 'piano', at: 0, note: chord.bass, velocity: .3, length: BAR * .95 })
-  const push = random() < .35 ? -BEAT * (1 - SWING) : 0
-  chord.voicing.forEach((note, i) => events.push({ kind: 'piano', at: Math.max(0, push + i * .028 + humanize()), note, velocity: .19 - i * .015, length: BAR * .9 }))
-  // A soft re-strike of the top of the chord on the "and" of 3, now and then.
-  if (random() < .4) chord.voicing.slice(2).forEach((note, i) => events.push({ kind: 'piano', at: eighth(5) + i * .02, note, velocity: .12, length: BEAT * 1.5 }))
+  // Comping: a light touch, two or three notes at a time, in a rhythm that changes every bar
+  // (never the same pattern twice running), so the chords talk instead of thumping on beat 1.
+  const pattern = pickPattern(index, random)
+  const pick = size => voiceSubset(chord.voicing, size, random)
+  const vel = base => base * (.8 + random() * .4)
+  const play = (notes, at, base, length, roll = .03) => notes.forEach((n, i) => events.push({ kind: 'piano', at: Math.max(0, at + i * roll + humanize()), note: n, velocity: vel(base), length }))
+  const bassAt = pattern === 'late' || pattern === 'float' ? eighth(1) : 0
+  if (pattern !== 'float' || random() < .5) play([chord.bass], bassAt, .26, BAR * .9)
+  if (pattern === 'lazy') play(pick(2), eighth(1), .17, BAR * .8)
+  else if (pattern === 'push') play(pick(3), eighth(3), .16, BEAT * 2.6)
+  else if (pattern === 'charleston') { play(pick(2), 0, .16, BEAT * 1.3); play(pick(2), eighth(3), .13, BEAT * 2) }
+  else if (pattern === 'broken') pick(3).sort((x, y) => x - y).forEach((n, i) => play([n], eighth([2, 3, 5][i]), .15, BAR * .6, 0))
+  else if (pattern === 'late') play(pick(2), eighth(2), .16, BAR * .7, .06)
+  else if (pattern === 'float') play(pick(2).map((n, i) => i ? n + 12 : n), eighth(4), .13, BEAT * 3, .09)
+  else if (pattern === 'answer') { play(pick(2), 0, .15, BEAT * 1.6); play(pick(1), eighth(6), .12, BEAT * 1.2) }
 
   // Melody: a few notes per bar, mostly stepwise, resting often; every 4th bar ends a phrase
   // on a long chord tone.
@@ -73,6 +82,22 @@ export function composeBar(index, random, { density = .7, last = MELODY_SCALE[3]
     for (let n = 0; n < 8; n++) if (random() < .55 + density * .4) events.push({ kind: 'hat', at: eighth(n) + humanize(), velocity: n % 2 ? .55 : .85 })
   }
   return { events: events.sort((a, b) => a.at - b.at), last: note, chord: chord.name }
+}
+
+// Comping rhythms (8th-note slots, swung): see composeBar. Weighted, and never repeated back to back.
+const PATTERNS = [['lazy', 3], ['push', 2], ['charleston', 2], ['broken', 2], ['late', 2], ['float', 1], ['answer', 2]]
+let lastPattern = null
+export function pickPattern(index, random) {
+  const options = PATTERNS.filter(([name]) => name !== lastPattern)
+  let roll = random() * options.reduce((sum, [, w]) => sum + w, 0)
+  for (const [name, w] of options) { roll -= w; if (roll <= 0) return (lastPattern = name) }
+  return (lastPattern = options[0][0])
+}
+// `size` notes from a voicing, always keeping at least one inner (colour) tone.
+export function voiceSubset(voicing, size, random) {
+  const inner = voicing[1 + Math.floor(random() * 2)]
+  const rest = voicing.filter(n => n !== inner).sort(() => random() - .5)
+  return [inner, ...rest].slice(0, size).sort((x, y) => x - y)
 }
 
 function nearest(note) {
