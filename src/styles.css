@@ -120,3 +120,4 @@ main{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}main i
 .touch-layout .mode-panel.collapsed>:not(:first-child):not(.panel-collapse){display:none!important}
 .touch-layout .mode-panel>:first-child{padding-right:70px}
 .touch-layout .mode-panel.collapsed .guitar-tone{display:none}
+.nature-toggles{display:flex;align-items:center;gap:6px}.nature-toggles span{font-size:12px;color:#d9c4d6;margin-right:2px}.nature-toggles button{flex:1;padding:6px 4px;font-size:12px}.nature-toggles button.on{background:#a47b92;border-color:#ffe3ae;box-shadow:0 0 10px #e6adbd55}

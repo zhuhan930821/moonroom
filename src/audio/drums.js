@@ -2,6 +2,7 @@ import { takeLength } from './takes'
 import { scheduleGuitarNote } from './guitarSynth'
 import { FLAGS } from '../config/flags'
 import { createLofi } from './lofi'
+import { LAYERS, createNature } from './nature'
 import { sincePlayed } from './musicBus'
 
 // All CC0 (Virtuosity Drums, see ASSETS.md). Floor tom reuses the low tom pitched down.
@@ -29,6 +30,7 @@ let samplePromise
 let master
 let lofi = null       // the room's lofi bed (src/audio/lofi.js), built on first play
 let lofiTimer = null
+let nature = null     // optional rain / waves / fire beds (src/audio/nature.js)
 let ambientPlaying = false
 let brightness = 0
 let vinylDucks = 0    // a record on the turntable takes over
@@ -315,6 +317,22 @@ function wavBlob(rendered) {
   return new Blob([view], { type: 'audio/wav' })
 }
 
+// Which nature beds are switched on (remembered in this browser). They play with the music.
+const NATURE_KEY = 'moonroom.nature'
+let natureOn = (() => { try { return { rain: false, waves: false, fire: false, ...JSON.parse(localStorage.getItem(NATURE_KEY) || '{}') } } catch { return { rain: false, waves: false, fire: false } } })()
+const natureListeners = new Set()
+function applyNature() { if (nature) for (const name of Object.keys(LAYERS)) nature.set(name, ambientPlaying && !!natureOn[name]) }
+export const natureStore = {
+  layers: LAYERS,
+  get: () => natureOn,
+  subscribe(listener) { natureListeners.add(listener); return () => natureListeners.delete(listener) },
+  toggle(name) {
+    natureOn = { ...natureOn, [name]: !natureOn[name] }
+    try { localStorage.setItem(NATURE_KEY, JSON.stringify(natureOn)) } catch {}
+    applyNature(); natureListeners.forEach(l => l())
+  },
+}
+
 // Background music level, and how far it steps back while you play or a record spins.
 const AMBIENT_LEVEL = .62
 const DUCKED = .22
@@ -338,11 +356,13 @@ export async function setAmbientPlaying(playing) {
     const roots = await preparePiano()
     lofi = createLofi(audio, master, roots)
     lofi.setTone(brightness)
+    nature = createNature(audio, master)
   }
   if (playing && !lofiTimer) {
     let level = -1
     lofiTimer = setInterval(() => {
       lofi.schedule(audio.currentTime + .6)
+      nature.schedule(audio.currentTime + .6)
       const want = ambientTarget()
       if (want !== level) { const falling = want < level; level = want; lofi.out.gain.setTargetAtTime(want, audio.currentTime, falling ? .25 : 1.6) } // step back fast, return slowly
     }, 120)
@@ -352,6 +372,7 @@ export async function setAmbientPlaying(playing) {
     lofi.out.gain.setTargetAtTime(0, audio.currentTime, .8)
     clearInterval(lofiTimer); lofiTimer = null
   }
+  applyNature()
   if (demoLog) demoLog.events.push({ ambient: playing, when: audio.currentTime })
   return ambientPlaying
 }

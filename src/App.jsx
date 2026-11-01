@@ -7,7 +7,7 @@ import Furniture from './scene/Furniture'
 import PlayerController from './game/PlayerController'
 import { INTERACTIONS } from './config/scene'
 import { useInteractionSystem } from './game/useInteractionSystem'
-import { renderDemoLog, startDemoLog } from './audio/drums'
+import { natureStore, renderDemoLog, startDemoLog } from './audio/drums'
 import { roomState } from './game/roomState'
 import Desktop from './ui/Desktop'
 import DrumPanel from './ui/DrumPanel'
@@ -172,6 +172,7 @@ export default function App() {
   const celebrating = performance.now() / 1000 - celebrateAt < 7
   // Hidden mode: typing "sasa" while exploring brings Sasa's band into the room (src/game/sasaBand.js).
   const sasa = useSyncExternalStore(sasaBand.subscribe, sasaBand.get)
+  const natureOn = useSyncExternalStore(natureStore.subscribe, natureStore.get)
   const secretKeys = useRef([])
   useEffect(() => {
     const onKey = event => {
@@ -275,7 +276,7 @@ export default function App() {
       {/* On phones the gear sits on top of every bottom card; it is only needed while exploring. */}
       {(inExplore || !isTouch || showSettings) && <button className="settings-toggle" aria-label="声音与画质设置" onClick={e=>{e.stopPropagation();setShowSettings(v=>!v)}}>⚙</button>}
       {captureEnabled && !FLAGS.demo && <button className="capture-toggle" onClick={e=>{e.stopPropagation();capture()}}>P · 截图</button>}
-      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}{inExplore && !world && <button onClick={openBand} data-testid="open-band">🎮 乐队模式（手柄）</button>}{sasa.discovered && <button onClick={sasaBand.toggle} data-testid="sasa-band-toggle">{sasa.on ? '✦ 让 Sasa 乐队隐去' : '✦ 召唤 Sasa 乐队'}</button>}</section>}
+      {showSettings && <section className="settings" onClick={e=>e.stopPropagation()}><h2>房间设置</h2><label>音量 <input type="range" min="0" max="1" step="0.01" value={game.volume} onChange={e=>game.changeVolume(Number(e.target.value))}/></label><label>画质 <select value={quality} onChange={e=>setQuality(e.target.value)}><option value="high">精致</option><option value="low">流畅</option></select></label><label>时间 <select id="time-mode" defaultValue={roomState.get().timeMode} onChange={e=>roomState.setTimeMode(e.target.value)}><option value="auto">跟随沙发（躺下时流转）</option><option value="night">夜晚</option><option value="dawn">黎明</option><option value="day">白天</option></select></label><button onClick={game.toggleAmbient}>{game.ambient?'关闭环境音':'打开环境音'}</button><div className="nature-toggles" data-testid="nature-toggles"><span>叠加</span>{Object.entries(natureStore.layers).map(([name, label]) => <button key={name} className={natureOn[name] ? 'on' : ''} aria-pressed={!!natureOn[name]} onClick={() => { natureStore.toggle(name); if (!game.ambient && !natureOn[name]) game.toggleAmbient() }}>{label}</button>)}</div>{inExplore && <button onClick={()=>{setShowSettings(false);game.enter('photos')}}>整理照片墙</button>}{inExplore && !world && <button onClick={openBand} data-testid="open-band">🎮 乐队模式（手柄）</button>}{sasa.discovered && <button onClick={sasaBand.toggle} data-testid="sasa-band-toggle">{sasa.on ? '✦ 让 Sasa 乐队隐去' : '✦ 召唤 Sasa 乐队'}</button>}</section>}
       {showLightingDebug && !whiteModel && <section className="lighting-debug" onClick={e=>e.stopPropagation()}>
         <header><span>LIGHTING PASS 01</span><button onClick={()=>setLightingPass(value=>value === 'current' ? 'bloom' : 'current')}>{lightingPass === 'current' ? '查看升级版' : '对比原版'}</button></header>
         <label>渲染层<select value={lightingPass} onChange={e=>setLightingPass(e.target.value)}><option value="current">Current</option><option value="moon">Moon only</option><option value="warm">Warm only</option><option value="combined">Combined</option><option value="bloom">Combined + Bloom</option><option value="golden">Golden (warm)</option></select></label>
