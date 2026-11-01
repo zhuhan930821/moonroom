@@ -9,6 +9,11 @@ import { padInput } from './gamepad'
 
 export const playerRig = { teleport: null }
 
+// Resting spots with a card on screen: you can still look around by dragging (mouse or finger)
+// anywhere outside the card; leaving the spot resets the view.
+const LOOK_MODES = ['bed', 'beanbag', 'deskChair']
+const LOOK_YAW = 1.4, LOOK_PITCH = .6
+
 const keys = new Set()
 
 export default function PlayerController({ locked, mode, onPosition, activeBookShelf = 'right', touchInput, touchEnabled = false }) {
@@ -22,6 +27,8 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
   const desired = useRef(new THREE.Quaternion())
   const poseLook = useRef(new THREE.Camera())
   const returning = useRef(false)
+  const restLook = useRef({ yaw: 0, pitch: 0, drag: null })
+  const offsetQ = useRef(new THREE.Quaternion())
 
   // Anywhere Door: worlds place the player at their spawn and back at the door on return.
   useEffect(() => {
@@ -61,6 +68,31 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('mousemove', look) }
   }, [mode])
 
+  useEffect(() => {
+    const st = restLook.current
+    st.yaw = 0; st.pitch = 0; st.drag = null
+    if (!LOOK_MODES.includes(mode)) return
+    const down = e => {
+      if (e.target?.closest?.('button, input, textarea, .personal-panel, .mode-panel, .settings')) return
+      st.drag = { id: e.pointerId, x: e.clientX, y: e.clientY }
+    }
+    const move = e => {
+      const d = st.drag
+      if (!d || d.id !== e.pointerId) return
+      const k = e.pointerType === 'touch' ? .0045 : .0035
+      st.yaw = THREE.MathUtils.clamp(st.yaw - (e.clientX - d.x) * k, -LOOK_YAW, LOOK_YAW)
+      st.pitch = THREE.MathUtils.clamp(st.pitch - (e.clientY - d.y) * k, -LOOK_PITCH, LOOK_PITCH)
+      d.x = e.clientX; d.y = e.clientY
+    }
+    const up = e => { if (st.drag?.id === e.pointerId) st.drag = null }
+    window.addEventListener('pointerdown', down); window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointerdown', down); window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up)
+    }
+  }, [mode])
+
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05)
     if (mode !== 'explore') {
@@ -70,7 +102,13 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
       camera.position.lerp(target.current, 1 - Math.exp(-dt * 3.1))
       poseLook.current.position.copy(target.current)
       poseLook.current.lookAt(...pose.lookAt)
-      camera.quaternion.slerp(poseLook.current.quaternion, 1 - Math.exp(-dt * 3.1))
+      const look = restLook.current
+      if (LOOK_MODES.includes(mode)) {
+        // drag to look around (same direction as walking around); stays where you leave it
+        offsetQ.current.setFromEuler(new THREE.Euler(look.pitch, look.yaw, 0, 'YXZ'))
+        poseLook.current.quaternion.multiply(offsetQ.current)
+      }
+      camera.quaternion.slerp(poseLook.current.quaternion, 1 - Math.exp(-dt * (look.drag ? 9 : 3.1)))
       returning.current = true
       return
     }
