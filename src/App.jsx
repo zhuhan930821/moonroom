@@ -145,7 +145,7 @@ export default function App() {
     if (!captureEnabled || game.started) return
     game.startPreview()
     if (captureMode === 'band') game.enter('band')
-    else if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar'].includes(captureMode)) game.enter(captureMode)
+    else if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar', 'bed', 'deskChair'].includes(captureMode)) game.enter(captureMode)
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (captureEnabled && captureMode === 'band' && game.mode === 'band' && band.get().phase === 'off') band.open()
