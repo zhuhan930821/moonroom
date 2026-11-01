@@ -4,7 +4,7 @@
 import { rng } from './lofiScore'
 
 export const LAYERS = { rain: '雨声', waves: '海浪', fire: '篝火' }
-const LEVEL = { rain: .17, waves: .19, fire: .3 } // about as loud as the music on average, sitting just under it
+const LEVEL = { rain: .25, waves: .19, fire: .3 } // about as loud as the music on average, sitting just under it
 
 function noise(ctx, seconds, color = 'white', seed = 1) {
   const buffer = ctx.createBuffer(1, Math.round(ctx.sampleRate * seconds), ctx.sampleRate)
@@ -29,9 +29,13 @@ export function createNature(ctx, target) {
 
   // Rain: a soft pink-noise hiss on the glass plus individual drops ticking left and right.
   const rain = bus('rain')
-  { const hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), g = ctx.createGain()
-    hp.type = 'highpass'; hp.frequency.value = 450; lp.type = 'lowpass'; lp.frequency.value = 6000; g.gain.value = .55
-    loop(ctx, noise(ctx, 4.3, 'pink', 5), hp); hp.connect(lp).connect(g).connect(rain.gain) }
+  const rainHiss = ctx.createGain()
+  { const hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter()
+    hp.type = 'highpass'; hp.frequency.value = 450; lp.type = 'lowpass'; lp.frequency.value = 5200; rainHiss.gain.value = .3
+    loop(ctx, noise(ctx, 4.3, 'pink', 5), hp); hp.connect(lp).connect(rainHiss).connect(rain.gain) }
+  // The shower comes and goes: every few seconds it settles on a new intensity, now and then
+  // easing almost to a stop, so there is air between the drops.
+  let rainIntensity = .5, rainShift = 0
   function drop(at) {
     const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(), p = panner(ctx, random() * 1.6 - .8)
     s.buffer = white; f.type = 'bandpass'; f.frequency.value = 2500 + random() * 4500; f.Q.value = 6
@@ -70,7 +74,15 @@ export function createNature(ctx, target) {
   }
 
   function schedule(until) {
-    if (rain.on) while (rain.next < until) { drop(rain.next); rain.next += .03 + random() * .12 }
+    if (rain.on) while (rain.next < until) {
+      if (rain.next >= rainShift) {
+        rainIntensity = random() < .2 ? .12 + random() * .1 : .3 + random() * .55
+        rainShift = rain.next + 3 + random() * 5
+        rainHiss.gain.setTargetAtTime(.1 + rainIntensity * .3, rain.next, 1.5)
+      }
+      drop(rain.next)
+      rain.next += (.1 + random() * .4) / rainIntensity
+    }
     if (waves.on) for (const side of shore) while (side.next < until) side.next += swell(side, side.next)
     if (fire.on) while (fire.next < until) {
       const burst = random() < .25 ? 3 + Math.floor(random() * 5) : 1
