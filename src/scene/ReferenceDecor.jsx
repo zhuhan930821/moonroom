@@ -38,14 +38,13 @@ function Monstera({ position, scale = 1, seed = 3 }) {
   return <GLBAsset url={BOTANICAL + 'monstera-plant.glb'} position={position} rotation={[0, seed * .51 % (Math.PI * 2), 0]} scale={scale} axisCorrection={false} castShadow={false}/>
 }
 
-// ---------- candles & crystals (instanced) ----------
+// ---------- candles (instanced) ----------
 const CANDLES = [
   // coffee table, desk, bookshelf top, window sills, floor clusters
   [.25, .47, 1.05], [.35, .47, 1.25], [-2.0, 1.31, -4.75], [4.0, 1.31, -3.75], [3.75, 1.31, -3.85],
   [-9.3, .02, -.9], [-9.1, .02, -1.1], [-5.6, .02, -6.9], [-5.4, .02, -7.0], [5.3, .02, -6.95], [5.5, .02, -6.85],
   [9.4, .02, 6.6], [9.2, .02, 6.85], [-2.4, .02, 7.35], [-2.2, .02, 7.5], [2.4, .02, 7.4],
 ]
-const CRYSTALS = [[3.95, 1.31, -4.7, 1.2], [4.15, 1.31, -4.55, .8], [-3.9, 1.31, -4.75, .9], [.1, .47, 1.35, .7], [9.5, 3.55, -.4, 1], [9.55, 3.55, -1.2, .7], [-8.3, 2.2, -5.8, .9]]
 function Candles() {
   const wax = useRef(), flame = useRef()
   useLayoutEffect(() => {
@@ -63,16 +62,6 @@ function Candles() {
     <instancedMesh ref={wax} args={[null, null, CANDLES.length]}><cylinderGeometry args={[.035, .035, .1, 10]}/><meshStandardMaterial color="#f6ead6" emissive="#ffb070" emissiveIntensity={.15}/></instancedMesh>
     <instancedMesh ref={flame} args={[null, null, CANDLES.length]} frustumCulled={false}><sphereGeometry args={[.018, 8, 6]}/><meshBasicMaterial color={new THREE.Color('#ffb15a').multiplyScalar(3)} toneMapped={false}/></instancedMesh>
   </>
-}
-function Crystals() {
-  const ref = useRef()
-  const parts = useMemo(() => CRYSTALS.flatMap(([x, y, z, k], i) => { const r = rand(i + 11); return Array.from({ length: 4 }, () => ({ p: [x + (r() - .5) * .14 * k, y, z + (r() - .5) * .14 * k], rot: [(r() - .5) * .6, r() * 6, (r() - .5) * .6], s: [.05 * k, (.1 + r() * .12) * k, .05 * k] })) }), [])
-  useLayoutEffect(() => {
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler()
-    parts.forEach((c, i) => ref.current.setMatrixAt(i, m.compose(new THREE.Vector3(c.p[0], c.p[1] + c.s[1] * .8, c.p[2]), q.setFromEuler(e.set(...c.rot)), new THREE.Vector3(...c.s))))
-    ref.current.instanceMatrix.needsUpdate = true
-  }, [parts])
-  return <instancedMesh ref={ref} args={[null, null, parts.length]}><octahedronGeometry args={[1, 0]}/><meshStandardMaterial color="#b48ae8" emissive="#9a6ad8" emissiveIntensity={.6} roughness={.15} transparent opacity={.9}/></instancedMesh>
 }
 
 // Shared 8-tile atlas for the fixed side-wall photos and the drum-wall poster.
@@ -307,6 +296,16 @@ function Pendants() {
   </>
 }
 
+// ---------- globe lamps: smooth frosted shades ----------
+// room-dressing.glb builds these globes from a 7-step lathe, which reads as a faceted ball up
+// close. A smooth, softly glowing shade sits just over each one (positions match the
+// lantern() calls in scripts/build_room_dressing.py: centre = base + height - .22).
+const GLOBES = [[-6.4, .98, 4.9], [-3.6, .98, 4.1], [3.4, .98, 3.3], [7.2, .98, 2.5], [9.4, 1.92, .7], [3.65, 1.83, -4.55]]
+function GlobeShades() {
+  const material = useMemo(() => new THREE.MeshStandardMaterial({ color: '#f6eadc', emissive: '#ffc58e', emissiveIntensity: .55, roughness: .38 }), [])
+  return <group>{GLOBES.map((p, i) => <mesh key={i} position={p} scale={[1, .94, 1]} material={material}><sphereGeometry args={[.212, 48, 32]}/></mesh>)}</group>
+}
+
 // ---------- desk: chair with star blanket, lamp, plants ----------
 function blanketTexture() {
   const c = document.createElement('canvas'); c.width = 256; c.height = 256
@@ -532,7 +531,7 @@ function MusicWall({ guitarHit, guitarTone }) {
       <mesh position={[-.226, .28, 0]} rotation-y={-Math.PI / 2}><planeGeometry args={[.46, .4]}/><meshStandardMaterial color="#6a5a50" roughness={1}/></mesh>
       {[0, 1, 2, 3].map(i => <mesh key={i} position={[-.226, .57, -.15 + i * .1]} rotation-z={Math.PI / 2}><cylinderGeometry args={[.015, .015, .02, 8]}/><meshStandardMaterial color="#e8d0a0" metalness={.6}/></mesh>)}
     </group>
-    {/* wall shelf above with plants, a fox figurine and crystals */}
+    {/* wall shelf above with plants and a fox figurine */}
     <mesh position={[9.78, 3.5, -.8]}><boxGeometry args={[.36, .05, 1.8]}/><meshStandardMaterial color="#7a5038"/></mesh>
     <Plant position={[9.75, 3.52, -1.5]} scale={.7} seed={31}/>
     <Plant position={[9.75, 3.52, .0]} scale={.65} bush="vase" seed={32}/>
@@ -579,7 +578,7 @@ export default function ReferenceDecor({ guitarHit, guitarTone }) {
     <ReadingNookNeon/>
     <Pendants/>
     <Candles/>
-    <Crystals/>
+    <GlobeShades/>
     <DeskChair/>
     <DeskLamp/>
     {/* desk greenery + flowers */}
