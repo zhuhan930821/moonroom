@@ -1,6 +1,8 @@
 import { takeLength } from './takes'
 import { scheduleGuitarNote } from './guitarSynth'
 import { FLAGS } from '../config/flags'
+import { createLofi } from './lofi'
+import { sincePlayed } from './musicBus'
 
 // All CC0 (Virtuosity Drums, see ASSETS.md). Floor tom reuses the low tom pitched down.
 // `peak` is the target level after per-buffer normalisation: the source files range from
@@ -25,9 +27,11 @@ let pianoPromise
 let context
 let samplePromise
 let master
-let ambientGain
-let ambientAirFilter
+let lofi = null       // the room's lofi bed (src/audio/lofi.js), built on first play
+let lofiTimer = null
 let ambientPlaying = false
+let brightness = 0
+let vinylDucks = 0    // a record on the turntable takes over
 let volume = .42
 let openHat = null // closed hi-hat chokes a ringing open hi-hat
 
@@ -167,7 +171,8 @@ export function startCrackle() {
   filter.type = 'bandpass'; filter.frequency.value = 2400; filter.Q.value = .5
   gain.gain.value = 0; gain.gain.setTargetAtTime(.5, audio.currentTime, .4)
   source.connect(filter).connect(gain).connect(master); source.start()
-  return () => { gain.gain.setTargetAtTime(0, audio.currentTime, .15); setTimeout(() => source.stop(), 800) }
+  vinylDucks += 1
+  return () => { vinylDucks = Math.max(0, vinylDucks - 1); gain.gain.setTargetAtTime(0, audio.currentTime, .15); setTimeout(() => source.stop(), 800) }
 }
 
 
@@ -310,71 +315,43 @@ function wavBlob(rendered) {
   return new Blob([view], { type: 'audio/wav' })
 }
 
-function makeAmbient() { ambientGain = buildAmbient(getContext(), master) }
+// Background music level, and how far it steps back while you play or a record spins.
+const AMBIENT_LEVEL = .62
+const DUCKED = .22
 
 export function setTimeOfDayAudio(dawn, day = 0) {
-  if (!ambientAirFilter) return
-  ambientAirFilter.frequency.setTargetAtTime(260 + 180 * Math.max(dawn, day), getContext().currentTime, 2)
+  brightness = Math.max(dawn * .7, day)
+  lofi?.setTone(brightness)
 }
 
-function buildAmbient(audio, target) {
-  const ambientGain = audio.createGain()
-  ambientGain.gain.value = 0
-  ambientGain.connect(target)
-  // Two soft suspended voicings drift through one another over ~45 seconds.
-  // Low levels leave headroom for the player's drums, piano and guitar.
-  const swell = audio.createOscillator()
-  swell.type = 'sine'
-  swell.frequency.value = 1 / 45
-  for (const [frequencies, phase] of [
-    [[110, 164.81, 220, 246.94], 1],     // Am(add9)
-    [[87.31, 130.81, 174.61, 261.63], -1], // Fmaj7
-  ]) {
-    const chord = audio.createGain()
-    chord.gain.value = .48
-    const motion = audio.createGain()
-    motion.gain.value = .25 * phase
-    swell.connect(motion).connect(chord.gain)
-    chord.connect(ambientGain)
-    frequencies.forEach((frequency, index) => {
-      const osc = audio.createOscillator()
-      const level = audio.createGain()
-      osc.type = 'sine'
-      osc.frequency.value = frequency
-      level.gain.value = index === 0 ? .018 : .008
-      osc.connect(level).connect(chord)
-      osc.start()
-    })
-  }
-  swell.start()
-  const noiseBuffer = audio.createBuffer(1, audio.sampleRate * 4, audio.sampleRate)
-  const data = noiseBuffer.getChannelData(0)
-  let last = 0, seed = 137
-  for (let i = 0; i < data.length; i++) {
-    seed = (seed * 1664525 + 1013904223) >>> 0
-    last = (last + (seed / 0xffffffff * 2 - 1) * .008) * .992
-    data[i] = last
-  }
-  const noise = audio.createBufferSource()
-  const filter = audio.createBiquadFilter()
-  const gain = audio.createGain()
-  noise.buffer = noiseBuffer
-  noise.loop = true
-  filter.type = 'lowpass'
-  filter.frequency.value = 260
-  gain.gain.value = .045
-  noise.connect(filter).connect(gain).connect(ambientGain)
-  noise.start()
-  if (audio === context) ambientAirFilter = filter
-  return ambientGain
+function ambientTarget() {
+  if (!ambientPlaying) return 0
+  const playing = Math.min(sincePlayed('drums'), sincePlayed('piano'), sincePlayed('guitar')) < 2.5
+  return AMBIENT_LEVEL * (playing || vinylDucks ? DUCKED / AMBIENT_LEVEL : 1)
 }
 
 export async function setAmbientPlaying(playing) {
   const audio = getContext()
   await audio.resume()
-  if (!ambientGain) makeAmbient()
   ambientPlaying = playing
-  ambientGain.gain.setTargetAtTime(playing ? .7 : 0, audio.currentTime, .8)
+  if (playing && !lofi) {
+    const roots = await preparePiano()
+    lofi = createLofi(audio, master, roots)
+    lofi.setTone(brightness)
+  }
+  if (playing && !lofiTimer) {
+    let level = -1
+    lofiTimer = setInterval(() => {
+      lofi.schedule(audio.currentTime + .6)
+      const want = ambientTarget()
+      if (want !== level) { const falling = want < level; level = want; lofi.out.gain.setTargetAtTime(want, audio.currentTime, falling ? .25 : 1.6) } // step back fast, return slowly
+    }, 120)
+    lofi.schedule(audio.currentTime + .6)
+  }
+  if (!playing && lofi) {
+    lofi.out.gain.setTargetAtTime(0, audio.currentTime, .8)
+    clearInterval(lofiTimer); lofiTimer = null
+  }
   if (demoLog) demoLog.events.push({ ambient: playing, when: audio.currentTime })
   return ambientPlaying
 }
@@ -394,9 +371,10 @@ export async function renderDemoLog(seconds) {
   const offline = new OfflineAudioContext(2, Math.ceil(seconds * rate), rate)
   const out = offline.createGain(); out.gain.value = volume; out.connect(offline.destination)
   const origin = demoLog.origin
-  const ambient = buildAmbient(offline, out)
-  if (demoLog.ambient) ambient.gain.setValueAtTime(.7, 0)
-  for (const e of demoLog.events.filter(e => e.ambient != null)) ambient.gain.setTargetAtTime(e.ambient ? .7 : 0, Math.max(0, e.when - origin), .8)
+  const ambient = createLofi(offline, out, roots, { seed: 7 })
+  ambient.setTone(brightness); ambient.schedule(seconds)
+  if (demoLog.ambient) ambient.out.gain.setValueAtTime(AMBIENT_LEVEL, 0)
+  for (const e of demoLog.events.filter(e => e.ambient != null)) ambient.out.gain.setTargetAtTime(e.ambient ? AMBIENT_LEVEL : 0, Math.max(0, e.when - origin), .8)
   let openHat = null
   for (const e of [...demoLog.events].sort((a, b) => a.when - b.when)) {
     const at = Math.max(0, e.when - origin)
