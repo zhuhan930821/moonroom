@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useCollapsible } from './useCollapsible'
 import { GUITAR_CHORDS, PICK_STRINGS } from '../audio/guitarChords'
 
 export default function GuitarPanel({ game }) {
@@ -23,7 +24,8 @@ export default function GuitarPanel({ game }) {
     if (!gesture.sounded) game.strumGuitar(false)
     swipe.current = null
   }
-  return <div className="mode-panel guitar-panel" data-testid="guitar-controls" data-recording={game.recording ? '1' : '0'} onClick={event => event.stopPropagation()}>
+  const fold = useCollapsible()
+  return <div className={`mode-panel guitar-panel${fold.className}`} data-testid="guitar-controls" data-recording={game.recording ? '1' : '0'} onClick={event => event.stopPropagation()}>
     <div className="guitar-title"><span>{game.guitarTone === 'electric' ? 'RED AMPLIFIED GUITAR' : 'ORANGE ACOUSTIC GUITAR'} · {GUITAR_CHORDS[game.guitarChord].name}</span><div className="guitar-tone"><button className={game.guitarTone === 'acoustic' ? 'on' : ''} onClick={() => game.setGuitarTone('acoustic')}>木吉他</button><button className={game.guitarTone === 'electric' ? 'on' : ''} onClick={() => game.setGuitarTone('electric')}>接音箱 · Tab</button></div></div>
       <div className="guitar-play-area"><div className="guitar-chords">{GUITAR_CHORDS.map((chord, index) =>
         <button key={chord.name} className={game.guitarChord === index ? 'on' : ''}
@@ -42,5 +44,6 @@ export default function GuitarPanel({ game }) {
       <button onClick={game.togglePlayLast} disabled={!game.lastTake && !game.playingTake}>{game.playingTake ? '■ 停止' : `▶ ${game.lastTake ? game.lastTake.name : '暂无录音'}`}</button>
     </div>
     <small>1–8 换和弦 · 空格扫弦 · Shift+空格反扫 · J K L ; 分解 · M 闷音 · Tab 换琴 · 按住和弦键、松开闷音 · 手机反复划弦 · Esc 返回</small>
+    {fold.toggle}
   </div>
 }

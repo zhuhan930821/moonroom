@@ -1,4 +1,5 @@
 import { useRef, useState, useSyncExternalStore } from 'react'
+import { useCollapsible } from './useCollapsible'
 import { BUILTIN_IDS, MAX_HUNG, MAX_UPLOADS, fileToUpload, photoWall } from '../game/photoWall'
 import { builtinThumb } from '../scene/photoArt'
 import { activity } from '../game/activity'
@@ -22,7 +23,8 @@ export default function PhotoPanel() {
     if (added) setNote(photoWall.saveError() || `挂上了 ${added} 张`)
   }
 
-  return <div className="mode-panel photo-panel" data-testid="photo-controls" onClick={event => event.stopPropagation()}>
+  const fold = useCollapsible()
+  return <div className={`mode-panel photo-panel${fold.className}`} data-testid="photo-controls" onClick={event => event.stopPropagation()}>
     <span>PHOTO WALL</span>
     <div className="photo-actions">
       <button onClick={() => input.current?.click()}>＋ 从相册添加</button>
@@ -40,5 +42,6 @@ export default function PhotoPanel() {
       </div>
     })}</div>
     <small>{note || `点照片挂上 / 取下 · 去任意门后按 F 拍风景 · 已挂 ${wall.hung.length} / ${MAX_HUNG} · 照片只存在这台设备上`}{' · Esc 离开'}</small>
+    {fold.toggle}
   </div>
 }
