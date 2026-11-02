@@ -46,6 +46,9 @@ import TimeOfDay from './scene/TimeOfDay'
 import Milo from './scene/Milo'
 import { FLAGS } from './config/flags'
 import SasaBand from './scene/SasaBand'
+import LoftProps from './scene/LoftProps'
+import { ClimbPanel, RehearsalPanel, StargazePanel, TelescopeView } from './ui/LoftPanels'
+import { loft } from './game/loft'
 import { pushSecretKey, sasaBand } from './game/sasaBand'
 import JourneyHud from './ui/JourneyHud'
 import { journey } from './game/journey'
@@ -145,7 +148,7 @@ export default function App() {
     if (!captureEnabled || game.started) return
     game.startPreview()
     if (captureMode === 'band') game.enter('band')
-    else if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar', 'bed', 'deskChair'].includes(captureMode)) game.enter(captureMode)
+    else if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar', 'bed', 'deskChair', 'telescope', 'stargaze', 'rehearsal', 'climb'].includes(captureMode)) { if (['telescope', 'stargaze', 'rehearsal'].includes(captureMode)) loft.set(true); game.enter(captureMode) }
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (captureEnabled && captureMode === 'band' && game.mode === 'band' && band.get().phase === 'off') band.open()
@@ -207,7 +210,7 @@ export default function App() {
   const prompt = game.mode === 'beanbag' ? (isTouch ? null : '起身') : inExplore && game.near ? INTERACTIONS[game.near].label : null
 
   return <main ref={root} className={isTouch ? 'touch-layout' : ''} onClick={() => game.started && inExplore && !isTouch && !game.locked && game.requestLock()} data-mode={game.mode} data-last-hit={game.hit.name || ''}>
-    <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state;if(captureEnabled)window.__moonroomCaptureScene=state.scene}}>
+    <Canvas shadows={quality === 'high'} dpr={quality === 'high' ? [1,1.5] : 1} camera={{fov:66,near:.06,far:90}} gl={{antialias:quality === 'high',powerPreference:'high-performance',preserveDrawingBuffer:captureEnabled}} onCreated={state=>{captureRef.current=state;if(captureEnabled){window.__moonroomCaptureScene=state.scene;window.__moonroomCaptureCamera=state.camera}}}>
       {world && <WorldShutter/>}
       {world ? <WorldScene world={world}/> : whiteModel ? <>
         <color attach="background" args={['#44444a']}/>
@@ -225,6 +228,7 @@ export default function App() {
         <TimeOfDay resting={game.mode === 'beanbag' || game.mode === 'bed'}/>
         <AnywhereDoor/><SouvenirShelf/>
         <BandStage guitarTone={game.guitarTone} guitarHit={game.guitarHit}/>
+        <LoftProps mode={game.mode}/>
         {sasa.discovered && <Suspense fallback={null}><SasaBand/></Suspense>}
         {game.milo.visiting && <Milo aside={game.mode === 'drums'}/>}
         {cinematic && <CinematicPostFX enabled={quality === 'high' && BLOOM_PASSES.includes(lightingPass)} settings={lighting}/>}
@@ -251,7 +255,7 @@ export default function App() {
         onInteract={() => world ? window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })) : game.interact()}
         onCurtain={() => window.dispatchEvent(new Event('moonroom:toggle-curtain'))}/>}
       {isTouch && !inExplore && <button className="mobile-exit" data-testid="mobile-exit" onClick={event => { event.stopPropagation(); game.leave() }}>← 返回探索</button>}
-      {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse} onOpenInMugo={() => game.enter('mugo')}/><div className="mode-exit">Esc · 返回房间</div></>}
+      {game.mode === 'computer' && <><Desktop ambient={game.ambient} onToggleAmbient={game.toggleAmbient} onHit={game.pulse} onOpenInMugo={() => game.enter('mugo')} onExit={game.leave}/><div className="mode-exit">Esc · 返回房间</div></>}
       {game.mode === 'drums' && <DrumPanel game={game}/>}
       {game.mode === 'drums' && game.challenge && <RhythmOverlay challenge={game.challenge} subscribeStrikes={game.subscribeStrikes} onRetry={() => game.startChallenge(game.challenge.take.id)} onClose={game.endChallenge}/>}
       {game.mode === 'piano' && <PianoPanel game={game}/>}
@@ -267,9 +271,13 @@ export default function App() {
       {game.mode === 'souvenirs' && <SouvenirPanel onRevisit={async item => { game.enter('portal'); await worldState.open({ spec: item.world }); game.leave() }}/>}
       <WorldHud playerPosition={game.playerPosition} mode={game.mode}/>
       <WorldCameraButton active={inExplore}/>
-      {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onClose={game.leave}/>}
+      {game.mode === 'books' && game.book && <DiaryPage book={game.book} onNext={game.pullBook} onPrev={() => game.turnBook(-1)} onClose={game.leave}/>}
       {game.mode === 'musicBooks' && <ScorePage page={game.scorePage} onNext={game.nextScore} onClose={game.leave}/>}
       {game.mode === 'bed' && <BedDreamPanel onClose={game.leave}/>}
+      {game.mode === 'climb' && <ClimbPanel onArrive={game.arriveLoft} onClose={game.leave}/>}
+      {game.mode === 'telescope' && <TelescopeView onClose={game.leave}/>}
+      {game.mode === 'stargaze' && <StargazePanel onClose={game.leave}/>}
+      {game.mode === 'rehearsal' && <RehearsalPanel onClose={game.leave}/>}
       {game.mode === 'deskChair' && <ChairNotePanel onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       {!whiteModel && !world && <JourneyHud/>}

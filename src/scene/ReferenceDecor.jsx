@@ -548,9 +548,9 @@ function MusicWall({ guitarHit, guitarTone }) {
 const LOFT_TOP = 4.29, LOFT_FRONT = -6.55, LOFT_BACK = -9.35
 const LOFT_PLANTS = [
   // front edge, tall ones so they show above the rail; alternating with leafy pots
-  ...[-6.1, -4.6, -3.1, -1.6, -.1, 1.4, 2.9, 4.4, 5.9, 7.3].map((z, i) => ({ p: [LOFT_FRONT - (i % 2) * .25, LOFT_TOP, z], bush: i % 2 ? 'leafy' : 'tall', scale: i % 2 ? 1.5 : 1.75, seed: 120 + i })),
+  ...[-4.6, -3.1, -1.6, -.1, 1.4, 2.9, 4.4, 5.9, 7.3].map((z, i) => ({ p: [LOFT_FRONT - (i % 2) * .25, LOFT_TOP, z], bush: i % 2 ? 'leafy' : 'tall', scale: i % 2 ? 1.5 : 1.75, seed: 120 + i })),
   // back wall, smaller pots between the frames
-  ...[-5.5, -2.4, .6, 3.4, 6.6].map((z, i) => ({ p: [LOFT_BACK, LOFT_TOP, z], bush: 'vase', scale: 1.1, seed: 140 + i })),
+  ...[-5.5, -2.4, .6, 3.4, 5.15].map((z, i) => ({ p: [LOFT_BACK, LOFT_TOP, z], bush: 'vase', scale: 1.1, seed: 140 + i })),
 ]
 function LoftGarden() {
   return <group name="DECOR_LoftGarden">

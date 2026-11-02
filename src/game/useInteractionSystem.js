@@ -9,6 +9,8 @@ import { activity } from './activity'
 import { currentDiaryPages } from '../ui/DiaryPage'
 import { worldPhysics } from '../worlds/worldState'
 import { journey } from './journey'
+import { LOFT_ARRIVAL, ROPE_STAND, climbState, loft, newClimb } from './loft'
+import { playerRig } from './PlayerController'
 import { appendDrumHit, initialDrumHit } from './drumHitState'
 import { muteGuitar, playGuitarString, playGuitarStrum } from '../audio/guitar'
 import { GUITAR_CHORDS, PICK_STRINGS } from '../audio/guitarChords'
@@ -97,9 +99,9 @@ export function useInteractionSystem(root) {
     playerPositionRef.current = position
     if (worldPhysics.active) { setNear(old => old === null ? old : null); return } // away behind the Anywhere Door
     if (modeRef.current !== 'explore') return
-    const closest = nearestInteraction(position, INTERACTIONS, yaw)
+    const closest = nearestInteraction(position, INTERACTIONS, yaw, loft.get().onLoft)
     setNear(old => old === closest ? old : closest)
-    const fox = FOX_HINTS.find(item => Math.hypot(position.x-item.position[0],position.z-item.position[2]) < item.radius)
+    const fox = !loft.get().onLoft && FOX_HINTS.find(item => Math.hypot(position.x-item.position[0],position.z-item.position[2]) < item.radius)
     setFoxName(old => old === (fox?.name || null) ? old : fox?.name || null)
   }, [])
 
@@ -178,6 +180,7 @@ export function useInteractionSystem(root) {
     if (old) return { index: 0, page: (old.page + 1) % pages.length }
     return { index: 0, page: Math.max(0, pages.findIndex(page => page.fresh)) } // an unread page first
   }), [])
+  const turnBook = useCallback(delta => setBook(old => { if (!old) return old; const n = currentDiaryPages().length; return { ...old, page: (old.page + delta + n) % n } }), [])
   const vinylToken = useRef(0)
   const stopVinyl = useCallback(() => { vinylToken.current++; stopVinylRef.current?.(); stopVinylRef.current = null; setVinyl(null) }, [])
   const playVinyl = useCallback(async id => {
@@ -267,6 +270,19 @@ export function useInteractionSystem(root) {
     setNear(null)
   }, [toggleRecording, stopTake, releaseAllNotes])
 
+  // Loft: arrive at the top of the rope / slide back down to its foot.
+  const arriveLoft = useCallback(() => {
+    loft.set(true)
+    activity.log('loft')
+    playerRig.teleport?.({ position: [LOFT_ARRIVAL.position[0], 0, LOFT_ARRIVAL.position[1]], yaw: LOFT_ARRIVAL.yaw, pitch: -.12, smooth: true })
+    setMode('explore'); setNear(null)
+  }, [])
+  const descendLoft = useCallback(() => {
+    loft.set(false)
+    playerRig.teleport?.({ position: [ROPE_STAND[0], 0, ROPE_STAND[1]], yaw: Math.PI / 2, pitch: 0, smooth: true })
+    setMode('explore'); setNear(null)
+  }, [])
+
   const interact = useCallback(() => {
     if (modeRef.current !== 'explore' || !nearRef.current) return
     const item = nearRef.current
@@ -275,6 +291,8 @@ export function useInteractionSystem(root) {
     if (item === 'moonTicket') { journey.takeTicket(); activity.log('moonTicket') }
     else if (fox) { setFoxPet(old => ({ name: fox, id: (old?.id || 0) + 1 })); activity.log('fox', fox) }
     else if (lamp) { roomState.toggleLamp(lamp); activity.log('lamp') }
+    else if (item === 'rope') { climbState.current = newClimb(); enter('climb') }
+    else if (item === 'ropeDown') descendLoft()
     else enter(item === 'booksLeft' ? 'books' : item)
   }, [enter])
 
@@ -360,7 +378,7 @@ export function useInteractionSystem(root) {
         if (string >= 0) { event.preventDefault(); pluckGuitar(PICK_STRINGS[string]) }
         return
       }
-      if (['bed', 'deskChair'].includes(current)) {
+      if (['bed', 'deskChair', 'telescope', 'stargaze', 'rehearsal'].includes(current)) {
         if (event.code === 'KeyE') { event.preventDefault(); leave() }
         return
       }
@@ -391,6 +409,7 @@ export function useInteractionSystem(root) {
       }
       if (current === 'books') {
         if (event.code === 'Space' || event.code === 'KeyE') { event.preventDefault(); if (!event.repeat) pullBook() }
+        else if (event.code === 'KeyQ') { event.preventDefault(); if (!event.repeat) turnBook(-1) }
         return
       }
       if (current === 'musicBooks') {
@@ -417,11 +436,11 @@ export function useInteractionSystem(root) {
     const onBlur = () => { releaseAllNotes(); releaseGuitarChord(); heldChordKey.current = null }
     window.addEventListener('blur', onBlur)
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', onBlur) }
-  }, [interact, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, startChallenge, strumGuitar, pluckGuitar, releaseGuitarChord])
+  }, [interact, leave, strike, toggleAmbient, started, toggleRecording, togglePlayLast, toggleMetronome, changeBpm, noteOn, noteOff, releaseAllNotes, shiftOctave, pullBook, turnBook, startChallenge, strumGuitar, pluckGuitar, releaseGuitarChord])
 
-  return { started, locked, mode, near, foxName, foxPet, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, interact, strike, toggleAmbient, changeVolume,
+  return { arriveLoft, descendLoft, started, locked, mode, near, foxName, foxPet, hit, ambient, volume, audioError, start, startPreview, requestLock, updatePosition, enter, leave, interact, strike, toggleAmbient, changeVolume,
     guitarChord, guitarTone, guitarHit, setGuitarTone: tone => { muteGuitar(); guitarToneRef.current = tone === 'electric' ? 'electric' : 'acoustic'; setGuitarTone(guitarToneRef.current) }, muteGuitar, holdGuitarChord: index => { heldChordAt.current = clock(); guitarChordRef.current = index; setGuitarChord(index); activity.log('chord', GUITAR_CHORDS[index]?.name) }, releaseGuitarChord, setGuitarChord: index => { const next = Math.max(0, Math.min(GUITAR_CHORDS.length - 1, index)); guitarChordRef.current = next; setGuitarChord(next); activity.log('chord', GUITAR_CHORDS[next].name) }, strumGuitar, pluckGuitar,
-    records, vinyl, playVinyl, stopVinyl, book, pullBook, activeBookShelf, scorePage, nextScore: () => setScorePage(page => (page + 1) % 3),
+    records, vinyl, playVinyl, stopVinyl, book, pullBook, turnBook, activeBookShelf, scorePage, nextScore: () => setScorePage(page => (page + 1) % 3),
     drumTakes, challenge, startChallenge, endChallenge, subscribeStrikes,
     milo, inviteMilo, toggleMiloJam,
     playerPosition,

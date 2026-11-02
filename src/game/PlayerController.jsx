@@ -5,14 +5,16 @@ import { CAMERA_POSES, PLAYER, QA_LOOKS, QA_SPAWNS, START, START_LOOK } from '..
 import { movePlayer } from './collision'
 import { FLAGS } from '../config/flags'
 import { worldPhysics } from '../worlds/worldState'
+import { LOFT_Y, ROPE, ROPE_STAND, climbState, loft } from './loft'
 import { padInput } from './gamepad'
 
 export const playerRig = { teleport: null }
 
 // Resting spots with a card on screen: you can still look around by dragging (mouse or finger)
 // anywhere outside the card; leaving the spot resets the view.
-const LOOK_MODES = ['bed', 'beanbag', 'deskChair']
+const LOOK_MODES = ['bed', 'beanbag', 'deskChair', 'telescope', 'stargaze', 'rehearsal']
 const LOOK_YAW = 1.4, LOOK_PITCH = .6
+const FOV = 66, TELESCOPE_FOV = 17
 
 const keys = new Set()
 
@@ -32,11 +34,11 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
 
   // Anywhere Door: worlds place the player at their spawn and back at the door on return.
   useEffect(() => {
-    playerRig.teleport = ({ position: p, yaw: y, pitch: x }) => {
+    playerRig.teleport = ({ position: p, yaw: y, pitch: x, smooth = false }) => {
       if (p) position.current.set(...p)
       if (y != null) yaw.current = y
       if (x != null) pitch.current = x
-      returning.current = false
+      returning.current = smooth // smooth: the camera glides there (e.g. stepping onto the loft)
     }
     return () => { playerRig.teleport = null }
   }, [])
@@ -79,7 +81,7 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
     const move = e => {
       const d = st.drag
       if (!d || d.id !== e.pointerId) return
-      const k = e.pointerType === 'touch' ? .0045 : .0035
+      const k = (e.pointerType === 'touch' ? .0045 : .0035) * (mode === 'telescope' ? .3 : 1) // fine aim through the lens
       st.yaw = THREE.MathUtils.clamp(st.yaw - (e.clientX - d.x) * k, -LOOK_YAW, LOOK_YAW)
       st.pitch = THREE.MathUtils.clamp(st.pitch - (e.clientY - d.y) * k, -LOOK_PITCH, LOOK_PITCH)
       d.x = e.clientX; d.y = e.clientY
@@ -93,8 +95,25 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
     }
   }, [mode])
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     const dt = Math.min(delta, 0.05)
+    // Telescope narrows the view; everything else uses the normal lens.
+    const wantFov = mode === 'telescope' ? TELESCOPE_FOV : FOV
+    if (Math.abs(camera.fov - wantFov) > .05) { camera.fov += (wantFov - camera.fov) * (1 - Math.exp(-dt * 4)); camera.updateProjectionMatrix() }
+    if (mode === 'climb') {
+      // Rope climb: rise with the climb's progress, swaying with the rope, looking at the rope
+      // just above your hands; near the top the view tips over the rail onto the deck.
+      const p = climbState.current.progress, t = clock.elapsedTime
+      const sway = Math.sin(t * 1.6) * .05 * (.4 + p)
+      const top = LOFT_Y + 1.55
+      target.current.set(ROPE_STAND[0] - .25 * p + sway, PLAYER.height - .1 + (top - PLAYER.height + .1) * p, ROPE_STAND[1] + sway * .6)
+      camera.position.lerp(target.current, 1 - Math.exp(-dt * 6))
+      poseLook.current.position.copy(camera.position)
+      poseLook.current.lookAt(ROPE.x - .9 * p * p, camera.position.y + .55 - .9 * p * p, ROPE.z)
+      camera.quaternion.slerp(poseLook.current.quaternion, 1 - Math.exp(-dt * 5))
+      returning.current = true
+      return
+    }
     if (mode !== 'explore') {
       const pose = mode === 'books' && activeBookShelf === 'left' ? CAMERA_POSES.booksLeft : CAMERA_POSES[mode]
       if (!pose) { returning.current = true; return } // e.g. band mode: the auto camera drives
@@ -139,6 +158,7 @@ export default function PlayerController({ locked, mode, onPosition, activeBookS
       }
     }
     if (worldPhysics.active) position.current.y = PLAYER.height + worldPhysics.ground(position.current.x, position.current.z)
+    else position.current.y = PLAYER.height + (loft.get().onLoft ? LOFT_Y : 0)
     desired.current.setFromEuler(new THREE.Euler(pitch.current, yaw.current, 0, 'YXZ'))
     if (returning.current) {
       camera.position.lerp(position.current, 1 - Math.exp(-dt * 4.3))

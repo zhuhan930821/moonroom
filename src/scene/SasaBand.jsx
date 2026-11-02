@@ -2,7 +2,8 @@ import { useMemo, useRef, useSyncExternalStore } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
-import { MEMBERS, sasaBand } from '../game/sasaBand'
+import { LOFT_CHAT, MEMBERS, sasaBand } from '../game/sasaBand'
+import { LOFT_Y, REHEARSAL, loft } from '../game/loft'
 import { sincePlayed } from '../audio/musicBus'
 
 // Sasa's band as Hogwarts-style ghosts: pearly, see-through full-length figures with a cold rim
@@ -100,7 +101,7 @@ function Ghost({ member, map, playMap, on, index }) {
   const playMaterial = useMemo(() => ghostMaterial(playMap, member.tint, { bottom: [.0, .3], side: .1 }), [playMap, member.tint])
   // the playing shot hangs where the standing figure's head and chest are
   const playY = h / 2 - ph / 2 + .02
-  const s = useRef({ show: 0, yaw: 0, awake: 0, home: 0, play: 0, drift: new THREE.Vector2() })
+  const s = useRef({ show: 0, yaw: 0, awake: 0, home: 0, play: 0, loft: 0, drift: new THREE.Vector2() })
   useFrame(({ camera, clock }, dt) => {
     const st = s.current, t = clock.elapsedTime
     st.show += ((on ? 1 : 0) - st.show) * (1 - Math.exp(-dt * (on ? 1.1 : 2.2)))
@@ -115,13 +116,20 @@ function Ghost({ member, map, playMap, on, index }) {
     let x = x0 + st.drift.x * (1 - st.home), z = z0 + st.drift.y * (1 - st.home)
     // playing: glide to their seat at the instrument
     if (member.seat) { x += (member.seat[0] - x) * st.play; z += (member.seat[1] - z) * st.play }
-    live[member.id].set(x, 0, z)
+    // You're on the loft: they drift up to the band corner (and back down when you leave).
+    st.loft += ((loft.get().onLoft ? 1 : 0) - st.loft) * (1 - Math.exp(-dt * .7))
+    if (st.loft > .001) {
+      const [lx, lz] = member.loftSpot
+      x += (lx + st.drift.x * .25 - x) * st.loft; z += (lz + st.drift.y * .25 - z) * st.loft
+    }
+    const y = st.loft * LOFT_Y
+    live[member.id].set(x, y, z)
     st.play += ((glow > .25 ? 1 : 0) - st.play) * (1 - Math.exp(-dt * (glow > .25 ? 4 : 1.2)))
     for (const [m, fade] of [[material, 1 - st.play], [playMaterial, st.play]]) {
       const u = m.userData.uniforms
       u.uShow.value = st.show; u.uGlow.value = glow; u.uAwake.value = st.awake; u.uTime.value = t; u.uFade.value = fade
     }
-    if (root.current) { root.current.visible = st.show > .005; root.current.position.set(x, 0, z) }
+    if (root.current) { root.current.visible = st.show > .005; root.current.position.set(x, y, z) }
     if (turn.current) {
       const face = Math.atan2(camera.position.x - x, camera.position.z - z)
       let want = face, mirror = 1
@@ -157,12 +165,22 @@ function Ghost({ member, map, playMap, on, index }) {
 // Picks who talks: the nearest ghost in range. Their card quote first, then the other lines in
 // turn; their "playing" line while their instrument is being played.
 function Talk() {
-  const s = useRef({ id: null, since: 0, index: 0 })
+  const s = useRef({ id: null, since: 0, index: 0, chat: 0, chatSince: 0 })
   useFrame(({ camera }, dt) => {
     const { on } = sasaBand.get()
-    let best = null, bestD = NEAR
-    if (on) for (const m of MEMBERS) { const p = live[m.id], d = Math.hypot(camera.position.x - p.x, camera.position.z - p.z); if (d < bestD) { best = m; bestD = d } }
     const st = s.current
+    // Up in the band corner: they talk to each other (and about you), one line at a time.
+    if (on && loft.get().onLoft && Math.hypot(camera.position.x - REHEARSAL.position[0], camera.position.z - REHEARSAL.position[1]) < 3.4) {
+      st.chatSince += dt
+      if (st.chatSince > 4.6) { st.chatSince = 0; st.chat = (st.chat + 1) % LOFT_CHAT.length }
+      const [id, line] = LOFT_CHAT[st.chat], m = MEMBERS.find(x => x.id === id)
+      st.id = null
+      sasaBand.say({ id, name: m.name, role: m.role, tint: m.tint, line })
+      return
+    }
+    let best = null, bestD = NEAR
+    // only ghosts on your own level (floor or loft) can hear you
+    if (on) for (const m of MEMBERS) { const p = live[m.id], d = Math.hypot(camera.position.x - p.x, camera.position.z - p.z); if (Math.abs(camera.position.y - p.y - 1.68) < 1.8 && d < bestD) { best = m; bestD = d } }
     if (!best) { if (st.id) { st.id = null; sasaBand.say(null) } return }
     if (best.id !== st.id) { st.id = best.id; st.since = 0; st.index = 0 }
     st.since += dt

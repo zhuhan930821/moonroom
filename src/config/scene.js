@@ -113,6 +113,12 @@ export const INTERACTIONS = {
   foxSleeping: { position: [6.0, 0, 6.7], radius: 1.35, label: '轻轻摸摸眠眠', fox: '眠眠' },
   foxListening: { position: [3.25, 0, 4.45], radius: 1.25, label: '摸摸云团', fox: '云团' },
   photos: { position: [-7.55, 0, 1.05], radius: .75, label: '整理照片墙' }, // in front of the wall, clear of piano + drums
+  rope: { position: [-5.55, 0, -5.9], radius: .95, label: '拉绳子上阁楼' },
+  // Up on the loft (src/game/loft.js): only offered while you're up there.
+  ropeDown: { position: [-7.05, 0, -5.85], radius: .8, label: '顺着绳子滑下去', loft: true },
+  telescope: { position: [-7.75, 0, -4.6], radius: .95, label: '看望远镜', loft: true },
+  stargaze: { position: [-8.0, 0, 3.3], radius: 1.2, label: '躺下看星星', loft: true },
+  rehearsal: { position: [-8.0, 0, 6.05], radius: 1.15, label: '看看排练间', loft: true },
 }
 
 export const FOX_HINTS = [
@@ -138,4 +144,7 @@ export const CAMERA_POSES = {
   bed: { position: [8.35, 1.75, 3.0], lookAt: [4.9, 2.85, -4.8] },
   deskChair: { position: [-.3, 1.45, -2.52], lookAt: [-.4, 1.45, -4.5] },
   photos: { position: [-7.6, 2.95, 2.78], lookAt: [-9.9, 2.85, 2.78] },
+  telescope: { position: [-7.85, 5.71, -5.55], lookAt: [-3.6, 7.1, -9.6] }, // eyepiece, aimed out of the left window
+  stargaze: { position: [-8.3, 4.95, 4.7], lookAt: [-8.1, 7.6, 2.5] },        // lying on the loft mat, up at the skylight
+  rehearsal: { position: [-7.15, 5.9, 4.55], lookAt: [-9.3, 5.25, 6.7] },
 }

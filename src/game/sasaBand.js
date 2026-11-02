@@ -23,6 +23,7 @@ export const MEMBERS = [
     id: 'sasa', name: 'Sasa', part: 'drums', role: '主唱 · 鼓 · 作曲', tint: '#ff8fc8',
     image: '/assets/band/sasa.webp', play: '/assets/band/sasa-play.webp', position: [-4.75, -1.15], // beside the drum rug
     seat: [-5.85, -2.6], faces: [-7.1, -2.8], // while playing: at the kit's side, facing it
+    loftSpot: [-7.35, 5.75], // in the loft band corner, by the mic
     quote: '我不是谁的灵感，也不是谁的答案。我只是我，而我现在，想要你们都认真。',
     lines: ['鼓凳借我一下？就一首。', '这个房间的月亮，比我写过的都亮。', '今晚别排练了，直接录吧。'],
     playing: '再大声一点！',
@@ -31,6 +32,7 @@ export const MEMBERS = [
     id: 'shenyu', name: '沈聿', part: 'guitar', role: '作曲 · 制作 · 吉他', tint: '#ffb36b',
     image: '/assets/band/shenyu.webp', play: '/assets/band/shenyu-play.webp', position: [7.3, 1.15], // beside the guitar wall, out of the guitar camera (7.55, -.5)
     seat: [8.55, .55], faces: [9.6, .55], // while you play: at the wall's end, turned to the guitars
+    loftSpot: [-8.85, 6.75],
     quote: '你以为这只是一首歌？我听见的，是你没有说出口的那部分。',
     lines: ['那把红色的琴，弦该换了。', '别急着收尾，最后一个和弦让它多响一会儿。', '这段我再听一遍。'],
     playing: '……还不错。再来一遍。',
@@ -39,10 +41,27 @@ export const MEMBERS = [
     id: 'linche', name: '林澈', part: 'piano', role: '编曲 · 键盘 · 作词', tint: '#a9c8ff',
     image: '/assets/band/linche.webp', play: '/assets/band/linche-play.webp', position: [-6.85, 4.35], // between the piano and the record player
     seat: [-7.75, 3.6], faces: [-8.9, 3.6], maxTurn: Math.PI / 2, // while playing: at the piano's upper end, squarely facing the keys
+    loftSpot: [-8.75, 5.15],
     quote: '我可以一直在你身边，但我不想一直假装我对你和对其他人一样。',
     lines: ['你刚才那段，我记下来了。', '累了就去沙发上躺会儿。', '这首的副歌，我想换个和弦。'],
     playing: '左手轻一点，会更温柔。',
   },
+]
+
+// When you're up on the loft they float up to the rehearsal corner and talk among themselves.
+export const LOFT_CHAT = [
+  ['sasa', '副歌那里，鼓我想晚半拍进。'],
+  ['shenyu', '晚半拍可以。但别拖，拖了就没劲了。'],
+  ['linche', '那我把和弦换成 Fmaj7，留点空给你。'],
+  ['sasa', '……有人上来了。'],
+  ['shenyu', '爬绳子上来的？手不疼吗。'],
+  ['linche', '欢迎来排练间。别踩到那根线。'],
+  ['sasa', '你刚才在楼下弹的那段，我们都听到了。'],
+  ['shenyu', '节奏还可以。就是最后一个音收得太快。'],
+  ['linche', '他的意思是，很好听。'],
+  ['sasa', '天窗那边能看到流星。要许愿的话，现在正好。'],
+  ['shenyu', '下一首写什么？'],
+  ['linche', '写这个房间吧。月亮，绳子，还有今天来的人。'],
 ]
 
 const KEY = 'moonroom.sasaBand'
