@@ -145,3 +145,5 @@ main{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}main i
 .win-dreams{margin:0;padding-left:20px;max-height:230px;overflow:auto;display:grid;gap:8px}.win-dreams li b{display:block;color:#5c365c}.win-dreams li small{color:#8a7a8a;font-size:11px}.win-dreams li span{display:block;font-size:12px;line-height:1.5}
 .desktop-window .window-body{max-height:min(330px,52vh);overflow:auto}
 .diary-count{align-self:center;font-size:12px;opacity:.6}
+/* five icons: flow into a second column when the screen is short, never under the taskbar */
+.desktop-icons{grid-auto-flow:column;grid-template-rows:repeat(auto-fill,minmax(66px,auto));max-height:calc(100% - 64px);justify-content:start;align-content:start;gap:8px 10px;padding:14px 16px}
