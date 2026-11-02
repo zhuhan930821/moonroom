@@ -110,10 +110,12 @@ function Mat() {
 
 // The band corner: a mic on a stand, a small amp, floor cushions and a cork board of notes.
 // A few of the band's photos pinned to the cork board, like polaroids.
-const PINNED = [MEMORIES[3], MEMORIES[10], MEMORIES[13], MEMORIES[20]]
+// Only shots where faces are big enough to survive the small print: the 16-up sheet's tiles are
+// ~380 px wide, so its faces (and eyes) are just a few pixels and warp.
+const PINNED = [MEMORIES[3], MEMORIES[0], MEMORIES[5], MEMORIES[1]]
 function PinnedPhotos() {
   const maps = useTexture(PINNED.map(m => m.image))
-  maps.forEach(map => { map.colorSpace = THREE.SRGBColorSpace })
+  maps.forEach(map => { map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8 }) // crisp at a glancing angle
   return maps.map((map, i) => <group key={i} position={[-.42 + (i % 3) * .42 + (i > 2 ? .21 : 0), .14 - Math.floor(i / 3) * .36, .02]} rotation-z={[-.07, .05, -.03, .08][i]}>
     <mesh><planeGeometry args={[.34, .3]}/><meshStandardMaterial color="#f8f2e6" roughness={1}/></mesh>
     <mesh position={[0, .025, .001]}><planeGeometry args={[.3, .2]}/><meshBasicMaterial map={map} toneMapped={false}/></mesh>
