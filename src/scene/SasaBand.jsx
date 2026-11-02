@@ -2,8 +2,8 @@ import { useMemo, useRef, useSyncExternalStore } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
-import { LOFT_CHAT, MEMBERS, sasaBand } from '../game/sasaBand'
-import { LOFT_Y, REHEARSAL, loft } from '../game/loft'
+import { LOFT_CHAT, LOFT_TOGETHER, MEMBERS, TOGETHER_CHAT, sasaBand } from '../game/sasaBand'
+import { LOFT_Y, MAT, REHEARSAL, loft } from '../game/loft'
 import { sincePlayed } from '../audio/musicBus'
 
 // Sasa's band as Hogwarts-style ghosts: pearly, see-through full-length figures with a cold rim
@@ -23,19 +23,22 @@ const wrap = a => Math.atan2(Math.sin(a), Math.cos(a))
 
 // Where each ghost is right now (Talk measures distance to these, not to the fixed spots).
 const live = Object.fromEntries(MEMBERS.map(m => [m.id, new THREE.Vector3(m.position[0], 0, m.position[1])]))
+// Loft scene: 'rehearse' (all three in the band corner) or 'together' (the pair on the mat).
+const scene = { phase: 'rehearse', since: 0 }
+const chest = Object.fromEntries(MEMBERS.map(m => [m.id, new THREE.Vector3()])) // for the glow between the pair
 
 function ghostMaterial(map, tint, { bottom = [.0, .1], side = .02 } = {}) {
   const mat = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })
   const { width, height } = map.image
   mat.userData.uniforms = {
-    uShow: { value: 0 }, uGlow: { value: 0 }, uAwake: { value: 0 }, uTime: { value: 0 }, uFade: { value: 1 },
+    uShow: { value: 0 }, uGlow: { value: 0 }, uAwake: { value: 0 }, uTime: { value: 0 }, uFade: { value: 1 }, uBlush: { value: 0 },
     uTint: { value: new THREE.Color(tint) }, uTexel: { value: new THREE.Vector2(1 / width, 1 / height) },
   }
   mat.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, mat.userData.uniforms)
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uShow, uGlow, uAwake, uTime, uFade; uniform vec3 uTint; uniform vec2 uTexel;
+        uniform float uShow, uGlow, uAwake, uTime, uFade, uBlush; uniform vec3 uTint; uniform vec2 uTexel;
         float gRim, gHalo; vec2 gUv;`)
       // Resample the portrait through a gentle shimmer, and read the alpha around each pixel
       // for the inner rim (edge of the figure) and the outer halo (just outside it).
@@ -65,6 +68,8 @@ function ghostMaterial(map, tint, { bottom = [.0, .1], side = .02 } = {}) {
         vec3 ghost = pearl * (.14 + lum * 2.2) + pearl * gRim * 1.3; // keep the face readable: dark stays dim
         float flicker = .93 + .07 * sin(uTime * 11.3 + sin(uTime * 2.7) * 3.);
         diffuseColor.rgb = mix(ghost, col * (1. + uGlow * .3), uAwake * .85) + pearl * gHalo * .9 * (1. - uAwake * .5);
+        // blush: a warm rose glow seeps in, strongest round the face and the rim
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.12, .92, .98) + vec3(.22, .06, .12) * (gRim + smoothstep(.6, .85, uvp.y) * .5), uBlush * .8);
         float a = diffuseColor.a * mix(.56, .93, uAwake) * flicker + gHalo * .32 * (1. - uAwake * .5);
         diffuseColor.a = clamp(a, 0., 1.) * edge * (1. - hidden);`)
   }
@@ -101,7 +106,7 @@ function Ghost({ member, map, playMap, on, index }) {
   const playMaterial = useMemo(() => ghostMaterial(playMap, member.tint, { bottom: [.0, .3], side: .1 }), [playMap, member.tint])
   // the playing shot hangs where the standing figure's head and chest are
   const playY = h / 2 - ph / 2 + .02
-  const s = useRef({ show: 0, yaw: 0, awake: 0, home: 0, play: 0, loft: 0, drift: new THREE.Vector2() })
+  const s = useRef({ show: 0, yaw: 0, awake: 0, home: 0, play: 0, loft: 0, together: 0, drift: new THREE.Vector2() })
   useFrame(({ camera, clock }, dt) => {
     const st = s.current, t = clock.elapsedTime
     st.show += ((on ? 1 : 0) - st.show) * (1 - Math.exp(-dt * (on ? 1.1 : 2.2)))
@@ -118,16 +123,21 @@ function Ghost({ member, map, playMap, on, index }) {
     if (member.seat) { x += (member.seat[0] - x) * st.play; z += (member.seat[1] - z) * st.play }
     // You're on the loft: they drift up to the band corner (and back down when you leave).
     st.loft += ((loft.get().onLoft ? 1 : 0) - st.loft) * (1 - Math.exp(-dt * .7))
+    const paired = !!member.togetherSpot
+    st.together += (((paired && st.loft > .5 && scene.phase === 'together') ? 1 : 0) - st.together) * (1 - Math.exp(-dt * .5))
     if (st.loft > .001) {
-      const [lx, lz] = member.loftSpot
-      x += (lx + st.drift.x * .25 - x) * st.loft; z += (lz + st.drift.y * .25 - z) * st.loft
+      const [sx, sz] = member.loftSpot, [tx, tz] = member.togetherSpot || member.loftSpot
+      const lx = sx + (tx - sx) * st.together, lz = sz + (tz - sz) * st.together
+      const drift = .25 * (1 - st.together * .8)
+      x += (lx + st.drift.x * drift - x) * st.loft; z += (lz + st.drift.y * drift - z) * st.loft
     }
-    const y = st.loft * LOFT_Y
+    // sitting on the mat: settle lower, so the smoky hem pools on the cushions
+    const y = st.loft * LOFT_Y - st.together * .55
     live[member.id].set(x, y, z)
     st.play += ((glow > .25 ? 1 : 0) - st.play) * (1 - Math.exp(-dt * (glow > .25 ? 4 : 1.2)))
     for (const [m, fade] of [[material, 1 - st.play], [playMaterial, st.play]]) {
       const u = m.userData.uniforms
-      u.uShow.value = st.show; u.uGlow.value = glow; u.uAwake.value = st.awake; u.uTime.value = t; u.uFade.value = fade
+      u.uShow.value = st.show; u.uGlow.value = glow; u.uAwake.value = Math.max(st.awake, st.together * .45); u.uTime.value = t; u.uFade.value = fade; u.uBlush.value = st.together
     }
     if (root.current) { root.current.visible = st.show > .005; root.current.position.set(x, y, z) }
     if (turn.current) {
@@ -145,11 +155,14 @@ function Ghost({ member, map, playMap, on, index }) {
         want = face + Math.max(-limit, Math.min(limit, wrap(yaw - face))) * st.play
       }
       if (playMesh.current) playMesh.current.scale.x = mirror
+      // together: each turns a little toward the other and leans in
+      want += (member.lean || 0) * -.38 * st.together
       st.yaw += wrap(want - st.yaw) * (1 - Math.exp(-dt * (1.2 + st.awake * 2)))
-      turn.current.rotation.set(0, st.yaw, Math.sin(t * .4 + p) * .03 * (1 - st.awake)) // a slight, lazy lean while drifting
+      turn.current.rotation.set(0, st.yaw, Math.sin(t * .4 + p) * .03 * (1 - st.awake) + (member.lean || 0) * -.11 * st.together)
       turn.current.position.y = FLOAT + h / 2 + Math.sin(t * .7 + p) * .07 - (1 - st.show) * .35 + glow * Math.abs(Math.sin(t * 9)) * .03
       turn.current.scale.setScalar(1 + Math.sin(t * 1.1 + p) * .008 + glow * .015)
     }
+    chest[member.id].set(x, y + FLOAT + h * .62, z)
     if (lamp.current) lamp.current.intensity = (.5 + st.awake * .8 + glow * 1.5) * st.show
   })
   return <group ref={root} position={[member.position[0], 0, member.position[1]]} visible={false}>
@@ -162,6 +175,53 @@ function Ghost({ member, map, playMap, on, index }) {
   </group>
 }
 
+// Runs the loft scene: rehearsal in the band corner, then a while on the mat for the pair.
+function LoftDirector() {
+  useFrame((_, dt) => {
+    const onLoft = loft.get().onLoft && sasaBand.get().on
+    if (!onLoft) { scene.phase = 'rehearse'; scene.since = 0; return }
+    scene.since += dt
+    if (scene.since > LOFT_TOGETHER[scene.phase]) { scene.phase = scene.phase === 'rehearse' ? 'together' : 'rehearse'; scene.since = 0 }
+  })
+  return null
+}
+
+// A soft glow strung between the pair while they sit together, with little hearts rising off it.
+function Bond() {
+  const line = useRef(), hearts = useRef(), amount = useRef(0)
+  const [a, b] = LOFT_TOGETHER.pair
+  const curve = useMemo(() => new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()), [])
+  const heartShape = useMemo(() => { const s = new THREE.Shape(); s.moveTo(0, -.5); s.bezierCurveTo(-.9, .1, -.5, .9, 0, .45); s.bezierCurveTo(.5, .9, .9, .1, 0, -.5); return new THREE.ShapeGeometry(s, 8) }, [])
+  const lineMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#ffb8d8', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), [])
+  const heartMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#ffc4dc', transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false }), [])
+  useFrame(({ clock, camera }, dt) => {
+    const want = loft.get().onLoft && sasaBand.get().on && scene.phase === 'together' && scene.since > 3 ? 1 : 0
+    amount.current += (want - amount.current) * (1 - Math.exp(-dt * .8))
+    const k = amount.current, t = clock.elapsedTime
+    if (line.current) {
+      line.current.visible = k > .01
+      if (k > .01) {
+        const p0 = chest[a], p2 = chest[b]
+        curve.v0.copy(p0); curve.v2.copy(p2); curve.v1.copy(p0).add(p2).multiplyScalar(.5).add(new THREE.Vector3(0, .18 + Math.sin(t * 1.3) * .05, 0))
+        line.current.geometry.dispose(); line.current.geometry = new THREE.TubeGeometry(curve, 24, .007, 5)
+        lineMat.opacity = k * (.45 + Math.sin(t * 2.1) * .15)
+      }
+    }
+    if (hearts.current) hearts.current.children.forEach((h, i) => {
+      const life = (t * .22 + i / 5) % 1
+      h.position.copy(chest[a]).lerp(chest[b], .5).add(new THREE.Vector3(Math.sin(i * 2.4 + t * .7) * .25, .25 + life * 1.1, Math.cos(i * 1.7) * .15))
+      h.scale.setScalar(.05 + Math.sin(life * Math.PI) * .03)
+      h.quaternion.copy(camera.quaternion)
+      h.visible = k > .01
+    })
+    heartMat.opacity = k * .7
+  })
+  return <group>
+    <mesh ref={line} material={lineMat} visible={false}><bufferGeometry/></mesh>
+    <group ref={hearts}>{Array.from({ length: 5 }, (_, i) => <mesh key={i} geometry={heartShape} material={heartMat}/>)}</group>
+  </group>
+}
+
 // Picks who talks: the nearest ghost in range. Their card quote first, then the other lines in
 // turn; their "playing" line while their instrument is being played.
 function Talk() {
@@ -169,8 +229,19 @@ function Talk() {
   useFrame(({ camera }, dt) => {
     const { on } = sasaBand.get()
     const st = s.current
+    // On the mat, the pair (and a grumbling Shen Yu) take over the lines.
+    if (on && loft.get().onLoft && scene.phase === 'together' && Math.hypot(camera.position.x - MAT.position[0], camera.position.z - MAT.position[1]) < 4) {
+      st.chatSince += dt
+      if (st.togetherLine == null) { st.togetherLine = 0; st.chatSince = 0 }
+      if (st.chatSince > 4.8) { st.chatSince = 0; st.togetherLine = (st.togetherLine + 1) % TOGETHER_CHAT.length }
+      const [id, line] = TOGETHER_CHAT[st.togetherLine], m = MEMBERS.find(x => x.id === id)
+      st.id = null
+      sasaBand.say({ id, name: m.name, role: m.role, tint: m.tint, line })
+      return
+    }
+    st.togetherLine = null
     // Up in the band corner: they talk to each other (and about you), one line at a time.
-    if (on && loft.get().onLoft && Math.hypot(camera.position.x - REHEARSAL.position[0], camera.position.z - REHEARSAL.position[1]) < 3.4) {
+    if (on && loft.get().onLoft && scene.phase === 'rehearse' && Math.hypot(camera.position.x - REHEARSAL.position[0], camera.position.z - REHEARSAL.position[1]) < 3.4) {
       st.chatSince += dt
       if (st.chatSince > 4.6) { st.chatSince = 0; st.chat = (st.chat + 1) % LOFT_CHAT.length }
       const [id, line] = LOFT_CHAT[st.chat], m = MEMBERS.find(x => x.id === id)
@@ -198,6 +269,8 @@ export default function SasaBand() {
   maps.forEach(map => { map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4 })
   return <group name="SasaBand">
     {MEMBERS.map((m, i) => <Ghost key={m.id} member={m} map={maps[i]} playMap={maps[i + MEMBERS.length]} on={on} index={i}/>)}
+    <LoftDirector/>
+    <Bond/>
     <Talk/>
   </group>
 }

@@ -24,6 +24,7 @@ export const MEMBERS = [
     image: '/assets/band/sasa.webp', play: '/assets/band/sasa-play.webp', position: [-4.75, -1.15], // beside the drum rug
     seat: [-5.85, -2.6], faces: [-7.1, -2.8], // while playing: at the kit's side, facing it
     loftSpot: [-7.35, 5.75], // in the loft band corner, by the mic
+    togetherSpot: [-8.6, 2.55], lean: 1, // on the stargazing mat with Lin Che (see LOFT_TOGETHER)
     quote: '我不是谁的灵感，也不是谁的答案。我只是我，而我现在，想要你们都认真。',
     lines: ['鼓凳借我一下？就一首。', '这个房间的月亮，比我写过的都亮。', '今晚别排练了，直接录吧。'],
     playing: '再大声一点！',
@@ -42,6 +43,7 @@ export const MEMBERS = [
     image: '/assets/band/linche.webp', play: '/assets/band/linche-play.webp', position: [-6.85, 4.35], // between the piano and the record player
     seat: [-7.75, 3.6], faces: [-8.9, 3.6], maxTurn: Math.PI / 2, // while playing: at the piano's upper end, squarely facing the keys
     loftSpot: [-8.75, 5.15],
+    togetherSpot: [-8.05, 2.7], lean: -1,
     quote: '我可以一直在你身边，但我不想一直假装我对你和对其他人一样。',
     lines: ['你刚才那段，我记下来了。', '累了就去沙发上躺会儿。', '这首的副歌，我想换个和弦。'],
     playing: '左手轻一点，会更温柔。',
@@ -62,6 +64,25 @@ export const LOFT_CHAT = [
   ['sasa', '天窗那边能看到流星。要许愿的话，现在正好。'],
   ['shenyu', '下一首写什么？'],
   ['linche', '写这个房间吧。月亮，绳子，还有今天来的人。'],
+]
+
+// Every so often on the loft, Lin Che and Sasa slip away from the band corner to the stargazing
+// mat and sit close under the skylight; Shen Yu stays by the amp and teases them. Tender, not
+// more than that: leaning in, a soft glow between them, a few lines.
+export const LOFT_TOGETHER = { pair: ['sasa', 'linche'], rehearse: 38, together: 46 } // seconds per phase
+export const TOGETHER_CHAT = [
+  ['linche', '冷吗？靠过来一点。'],
+  ['sasa', '……就一点点。'],
+  ['sasa', '你看，那颗星星在动。'],
+  ['linche', '是流星。快许愿。'],
+  ['sasa', '许好了。不告诉你。'],
+  ['linche', '我猜得到。'],
+  ['shenyu', '你们两个，还排不排练了。'],
+  ['sasa', '再看一会儿嘛。'],
+  ['linche', '那首歌的最后一句，我写好了。是写给你的。'],
+  ['sasa', '……念给我听。'],
+  ['linche', '「月亮在等的，一直是同一扇窗。」'],
+  ['shenyu', '……我去调音了。'],
 ]
 
 const KEY = 'moonroom.sasaBand'
