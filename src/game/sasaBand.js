@@ -85,6 +85,26 @@ export const TOGETHER_CHAT = [
   ['shenyu', '……我去调音了。'],
 ]
 
+// The pair's moments as drawn together (assets-source/band/sasa-linche-duo.png); one per visit
+// to the mat, in turn. Heights are metres in the room (which runs ~1.5x real scale).
+export const DUO_SCENES = [
+  { image: '/assets/band/duo-lean.webp', spot: [-8.35, 3.2], height: 1.85, lift: .02 },  // her head on his shoulder, on the mat
+  { image: '/assets/band/duo-hair.webp', spot: [-7.85, 5.85], height: 2.15, lift: .3 },  // he tucks her hair back, in the band corner
+  { image: '/assets/band/duo-back.webp', spot: [-8.35, 3.2], height: 1.8, lift: .02 },   // back to back after rehearsal
+]
+
+// The band's photo album, pinned up and paged through in the rehearsal corner.
+export const MEMORIES = [
+  ['a01', '录音那天，三个人挤在一支麦前。'], ['a02', '改了一整晚的歌词。'], ['a03', '林澈弹琴，Sasa 在后面打鼓。'],
+  ['a04', '第一首歌写完的晚上，干杯。'], ['a05', '谁也没说话，就这样靠了一会儿。'], ['a06', '她唱到最高的那个音。'],
+  ['a07', '那天她哭了。林澈一直坐在旁边。'], ['a08', '沈聿在窗边睡着了，外面在下雨。'], ['a09', '凌晨三点，她一个人剪完了音轨。'],
+  ['b01', '躺在天台上数星星。'], ['b02', '他弹琴的时候，她靠在他肩上。'], ['b03', '吉他声停了，她已经睡着了。'],
+  ['b04', '水晶球里的光，像一颗很小的星球。'], ['b05', '鼓声一响，整个房间都醒了。'], ['b06', '笑到停不下来。'],
+  ['b07', '窗边的月亮，和一只不怕人的小狐狸。'], ['b08', '林澈一个人对着谱子，很久。'], ['b09', '她睡在两个人中间。'],
+  ['b10', '闭上眼睛，唱给耳机里的世界。'], ['b11', '三个人一起写的第一页歌词。'], ['b12', '她指着流星：看！'],
+  ['b13', '他递给她一朵小花。'], ['b14', '不需要观众的排练。'], ['b15', '书堆里的下午。'], ['b16', '最后，躺在一起看天花板上的星星。'],
+].map(([id, caption]) => ({ image: `/assets/band/memories/${id}.webp`, caption }))
+
 const KEY = 'moonroom.sasaBand'
 function load() {
   try { return { discovered: false, on: false, ...JSON.parse(localStorage.getItem(KEY) || '{}') } } catch { return { discovered: false, on: false } }

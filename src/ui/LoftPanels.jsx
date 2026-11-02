@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { climbState, pull, slide } from '../game/loft'
 import { activity } from '../game/activity'
-import { sasaBand } from '../game/sasaBand'
+import { MEMORIES, sasaBand } from '../game/sasaBand'
 
 // ---------- rope climb: alternate left / right hands ----------
 const LEFT = ['KeyA', 'ArrowLeft', 'KeyJ'], RIGHT = ['KeyD', 'ArrowRight', 'KeyK']
@@ -95,6 +95,17 @@ export function StargazePanel({ onClose }) {
 // ---------- the band's rehearsal corner ----------
 export function RehearsalPanel({ onClose }) {
   const band = useSyncExternalStore(sasaBand.subscribe, sasaBand.get)
+  const [album, setAlbum] = useState(null) // index of the photo being looked at
+  if (album != null) {
+    const m = MEMORIES[album], go = d => setAlbum((album + d + MEMORIES.length) % MEMORIES.length)
+    return <section className="personal-panel rehearsal-panel album" data-testid="band-album" onClick={e => e.stopPropagation()}>
+      <button className="personal-close" onClick={() => setAlbum(null)} aria-label="合上相册">×</button>
+      <span className="eyebrow">BAND ALBUM · {album + 1} / {MEMORIES.length}</span>
+      <img className="album-photo" src={m.image} alt={m.caption}/>
+      <p>{m.caption}</p>
+      <div className="personal-actions"><button onClick={() => go(-1)}>◀ 上一张</button><button onClick={() => go(1)}>下一张 ▶</button><button onClick={() => setAlbum(null)}>合上</button></div>
+    </section>
+  }
   return <section className="personal-panel rehearsal-panel" data-testid="rehearsal-panel" onClick={e => e.stopPropagation()}>
     <button className="personal-close" onClick={onClose} aria-label="离开">×</button>
     <span className="eyebrow">BAND ROOM</span><h2>阁楼排练间</h2>
@@ -107,6 +118,6 @@ export function RehearsalPanel({ onClose }) {
     <p>{!band.discovered ? '软木板角落贴着一张便签：「想见我们的话，打出她的名字。— S」'
       : band.on ? '他们都在。说话声、调音声，还有人在偷偷哼你刚才弹的那段。'
       : '今天这里很安静。设置里可以叫他们来。'}</p>
-    <div className="personal-actions"><button onClick={onClose}>离开</button></div>
+    <div className="personal-actions">{band.discovered && <button onClick={() => setAlbum(0)} data-testid="open-album">翻看相册</button>}<button onClick={onClose}>离开</button></div>
   </section>
 }

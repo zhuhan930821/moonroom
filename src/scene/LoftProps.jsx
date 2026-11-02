@@ -1,8 +1,9 @@
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { RoundedBox as SoftBox } from '@react-three/drei'
+import { RoundedBox as SoftBox, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { LOFT_Y, MAT, REHEARSAL, ROPE, SKYLIGHT, TELESCOPE, climbState } from '../game/loft'
+import { MEMORIES } from '../game/sasaBand'
 
 // Props for the loft (src/game/loft.js): the knotted climbing rope, a brass telescope at the
 // window end, a stargazing mat under a skylight, and the band's little rehearsal corner.
@@ -108,9 +109,21 @@ function Mat() {
 }
 
 // The band corner: a mic on a stand, a small amp, floor cushions and a cork board of notes.
+// A few of the band's photos pinned to the cork board, like polaroids.
+const PINNED = [MEMORIES[3], MEMORIES[10], MEMORIES[13], MEMORIES[20]]
+function PinnedPhotos() {
+  const maps = useTexture(PINNED.map(m => m.image))
+  maps.forEach(map => { map.colorSpace = THREE.SRGBColorSpace })
+  return maps.map((map, i) => <group key={i} position={[-.42 + (i % 3) * .42 + (i > 2 ? .21 : 0), .14 - Math.floor(i / 3) * .36, .02]} rotation-z={[-.07, .05, -.03, .08][i]}>
+    <mesh><planeGeometry args={[.34, .3]}/><meshStandardMaterial color="#f8f2e6" roughness={1}/></mesh>
+    <mesh position={[0, .025, .001]}><planeGeometry args={[.3, .2]}/><meshBasicMaterial map={map} toneMapped={false}/></mesh>
+    <mesh position={[0, .13, .01]}><sphereGeometry args={[.013, 8, 6]}/><meshStandardMaterial color={['#e05a6a', '#5a8ae0', '#e0b04a', '#9a5ae0'][i]}/></mesh>
+  </group>)
+}
+
 function Rehearsal() {
   const [x, z] = REHEARSAL.position
-  const notes = ['#fff3c4', '#ffd6e0', '#d9ecff', '#e6ffd9', '#fff3c4']
+  const notes = ['#fff3c4', '#ffd6e0']
   return <group position={[0, LOFT_Y, 0]}>
     <group position={[x + .95, 0, z]}>
       <mesh position-y={.012}><cylinderGeometry args={[.16, .18, .025, 18]}/><meshStandardMaterial color="#2b2430" metalness={.6}/></mesh>
@@ -128,8 +141,8 @@ function Rehearsal() {
     <group position={[-9.86, 1.55, 6.15]} rotation-y={Math.PI / 2}>
       <mesh><boxGeometry args={[1.3, .85, .03]}/><meshStandardMaterial color="#b98d5e" roughness={1}/></mesh>
       <mesh position-z={.016}><planeGeometry args={[1.2, .75]}/><meshStandardMaterial color="#c9a074" roughness={1}/></mesh>
-      {notes.map((c, i) => <mesh key={i} position={[-.42 + (i % 3) * .42, .17 - Math.floor(i / 3) * .34, .02]} rotation-z={(i % 2 ? 1 : -1) * .06}><planeGeometry args={[.3, .26]}/><meshStandardMaterial color={c} roughness={1}/></mesh>)}
-      {notes.map((_, i) => <mesh key={`p${i}`} position={[-.42 + (i % 3) * .42, .27 - Math.floor(i / 3) * .34, .03]}><sphereGeometry args={[.014, 8, 6]}/><meshStandardMaterial color={['#e05a6a', '#5a8ae0', '#e0b04a'][i % 3]}/></mesh>)}
+      <Suspense fallback={null}><PinnedPhotos/></Suspense>
+      {notes.map((c, i) => <mesh key={i} position={[-.47 + i * .94, -.24, .02]} rotation-z={(i % 2 ? 1 : -1) * .06}><planeGeometry args={[.2, .18]}/><meshStandardMaterial color={c} roughness={1}/></mesh>)}
     </group>
   </group>
 }
