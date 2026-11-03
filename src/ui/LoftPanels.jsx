@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { climbState, pull, slide } from '../game/loft'
 import { activity } from '../game/activity'
 import { MEMORIES, sasaBand } from '../game/sasaBand'
+import { BLINDFOLD_STORY, BREATH, NEEDED, WINDOW, blindfoldProgress, cueTimes, judge } from '../game/blindfold'
+import { createRehearsal } from '../audio/blindfold'
 
 // ---------- rope climb: alternate left / right hands ----------
 const LEFT = ['KeyA', 'ArrowLeft', 'KeyJ'], RIGHT = ['KeyD', 'ArrowRight', 'KeyK']
@@ -93,7 +95,7 @@ export function StargazePanel({ onClose }) {
 }
 
 // ---------- the band's rehearsal corner ----------
-export function RehearsalPanel({ onClose }) {
+export function RehearsalPanel({ onClose, onBlindfold }) {
   const band = useSyncExternalStore(sasaBand.subscribe, sasaBand.get)
   const [album, setAlbum] = useState(null) // index of the photo being looked at
   if (album != null) {
@@ -118,6 +120,90 @@ export function RehearsalPanel({ onClose }) {
     <p>{!band.discovered ? '软木板角落贴着一张便签：「想见我们的话，打出她的名字。— S」'
       : band.on ? '他们都在。说话声、调音声，还有人在偷偷哼你刚才弹的那段。'
       : '今天这里很安静。设置里可以叫他们来。'}</p>
-    <div className="personal-actions">{band.discovered && <button onClick={() => setAlbum(0)} data-testid="open-album">翻看相册</button>}<button onClick={onClose}>离开</button></div>
+    <div className="personal-actions"><button onClick={onBlindfold} data-testid="open-blindfold">闭眼排练</button>{band.discovered && <button onClick={() => setAlbum(0)} data-testid="open-album">翻看相册</button>}<button onClick={onClose}>离开</button></div>
   </section>
+}
+
+// ---------- blindfold rehearsal (闭眼排练): listen for Sasa's breath, come in with her ----------
+const BF_LINES = { early: '太早了，再等等她', late: '晚了一点', stray: '先听她换气', lock: '合上了' }
+export function BlindfoldPanel({ onClose }) {
+  const [phase, setPhase] = useState('intro')     // intro | playing | done
+  const [locks, setLocks] = useState(0)
+  const [flash, setFlash] = useState(null)        // { id, result }
+  const [breath, setBreath] = useState(0)         // 0–1, how far into her current breath
+  const [page, setPage] = useState(0)
+  const take = useRef(null)
+  const progress = useRef(blindfoldProgress.get())
+  const finish = won => {
+    const t = take.current; if (!t) return
+    take.current = null
+    setTimeout(() => t.audio.stop(), won ? 2600 : 300)
+    if (won) { blindfoldProgress.save({ unlocked: true, best: Math.max(progress.current.best, NEEDED) }); progress.current = blindfoldProgress.get(); activity.log('blindfold') }
+    setPhase('done')
+  }
+  const press = () => {
+    const t = take.current
+    if (!t) return
+    const r = judge(t.audio.now(), t.cues, t.used)
+    if (r.result === 'lock') { t.used.add(r.cue); t.audio.lock(); t.locks += 1; setLocks(t.locks); if (t.locks >= NEEDED) finish(true) }
+    else if (r.cue >= 0) t.used.add(r.cue)
+    setFlash({ id: Date.now(), result: r.result })
+  }
+  const start = async () => {
+    const audio = await createRehearsal()
+    const cues = cueTimes(audio.now())
+    audio.schedule(cues)
+    take.current = { audio, cues, used: new Set(), locks: 0 }
+    if (new URLSearchParams(location.search).has('capture')) window.__moonroomBlindfold = take // screenshot QA reads the cue times
+    setLocks(0); setFlash(null); setPhase('playing')
+  }
+  useEffect(() => {
+    if (phase !== 'playing') return
+    let raf
+    const tick = () => {
+      const t = take.current
+      if (!t) return
+      const now = t.audio.now()
+      const next = t.cues.find((c, i) => !t.used.has(i) && c > now - WINDOW)
+      setBreath(next == null ? 0 : Math.max(0, Math.min(1, 1 - (next - now) / BREATH)))
+      if (now > t.cues[t.cues.length - 1] + 1.2) { finish(false); return }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    const onKey = e => { if (!e.repeat && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); press() } }
+    window.addEventListener('keydown', onKey)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey) }
+  }, [phase])
+  useEffect(() => () => { take.current?.audio.stop(); take.current = null }, [])
+  const won = locks >= NEEDED
+  if (phase === 'done' && won && page > 0) {
+    const s = BLINDFOLD_STORY[page - 1]
+    return <section className="personal-panel rehearsal-panel bf-story" data-testid="blindfold-story" onClick={e => e.stopPropagation()}>
+      <button className="personal-close" onClick={onClose} aria-label="离开">×</button>
+      <span className="eyebrow">同一扇窗 · {page} / {BLINDFOLD_STORY.length}</span><h2>{s.title}</h2>
+      <div className="bf-text">{s.text.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}</div>
+      <div className="personal-actions">{page > 1 && <button onClick={() => setPage(page - 1)}>◀ 上一节</button>}{page < BLINDFOLD_STORY.length ? <button onClick={() => setPage(page + 1)}>下一节 ▶</button> : <button onClick={onClose}>合上本子</button>}</div>
+    </section>
+  }
+  return <div className={`blindfold ${phase}`} data-testid="blindfold" onPointerDown={e => { if (phase === 'playing' && !e.target.closest('button')) { e.preventDefault(); press() } }} style={{ '--breath': breath }}>
+    <div className="bf-dark"/>
+    <div className="bf-lights">{['#ff8fc8', '#ffb36b', '#a9c8ff'].map((c, i) => <i key={i} style={{ '--c': c, '--on': i < locks ? 1 : 0 }}/>)}</div>
+    {phase === 'intro' && <div className="bf-card">
+      <span>闭眼排练</span>
+      <p>沈聿递来一条淡紫色的丝巾：「蒙上。今天不准看。」</p>
+      <p className="bf-how">黑暗里，林澈在弹 F、G、F。每次 Sasa 开口之前，你会听到她吸一口气。<br/>在她<b>开口唱的那一刻</b>按下：空格 / 点屏幕。合上三次。<br/><small>建议戴耳机，把声音开大一点。</small></p>
+      <div className="bf-actions"><button onClick={start} data-testid="blindfold-start">蒙上眼睛</button>{progress.current.unlocked && <button onClick={() => { setLocks(NEEDED); setPhase('done'); setPage(1) }}>读那一章</button>}<button onClick={onClose}>算了</button></div>
+    </div>}
+    {phase === 'playing' && <>
+      {flash && <div key={flash.id} className={`bf-flash ${flash.result}`}>{BF_LINES[flash.result]}</div>}
+      <div className="bf-hint">听她换气 · 空格 / 点屏幕 · {locks} / {NEEDED}</div>
+      <button className="bf-quit" onClick={() => { take.current?.audio.stop(); take.current = null; onClose() }}>摘下丝巾</button>
+    </>}
+    {phase === 'done' && <div className="bf-card">
+      {won ? <><span>锁住了</span><p>三个人在同一个瞬间停住，又在同一个瞬间落下。谁都不想先把丝巾摘下来。</p>
+        <div className="bf-actions"><button onClick={() => setPage(1)} data-testid="blindfold-read">读《同一扇窗》</button><button onClick={onClose}>摘下丝巾</button></div></>
+        : <><span>还没合上</span><p>{locks ? `合上了 ${locks} 次。` : ''}再听一次她换气的声音，等她，而不是等拍子。</p>
+        <div className="bf-actions"><button onClick={start}>再来一次</button><button onClick={onClose}>摘下丝巾</button></div></>}
+    </div>}
+  </div>
 }

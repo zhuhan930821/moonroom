@@ -147,4 +147,5 @@ export const CAMERA_POSES = {
   telescope: { position: [-7.85, 5.71, -5.55], lookAt: [-3.6, 7.1, -9.6] }, // eyepiece, aimed out of the left window
   stargaze: { position: [-8.3, 4.95, 4.7], lookAt: [-8.1, 7.6, 2.5] },        // lying on the loft mat, up at the skylight
   rehearsal: { position: [-7.15, 5.9, 4.55], lookAt: [-9.3, 5.25, 6.7] },
+  blindfold: { position: [-7.6, 5.6, 5.4], lookAt: [-9.3, 5.4, 6.7] },
 }

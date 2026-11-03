@@ -378,6 +378,7 @@ export function useInteractionSystem(root) {
         if (string >= 0) { event.preventDefault(); pluckGuitar(PICK_STRINGS[string]) }
         return
       }
+      if (current === 'blindfold') return // the blindfold panel handles Space / Enter itself
       if (['bed', 'deskChair', 'telescope', 'stargaze', 'rehearsal'].includes(current)) {
         if (event.code === 'KeyE') { event.preventDefault(); leave() }
         return

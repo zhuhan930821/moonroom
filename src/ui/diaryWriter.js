@@ -36,6 +36,7 @@ export function writeDiaryEntry(key, day) {
   if (c.band) lines.push(pick(['和朋友们组了一支乐队，鼓、吉他、钢琴挤在角落里，灯光跟着我们闪。', '小舞台的灯亮了。我们一起弹了一会儿，谁也没有看谱。'], 'band'))
   if (c.loft) lines.push(pick(['拉着绳子爬上了阁楼，手心有点烫，可是上面的风景值得。', '顺着那根打结的绳子爬上阁楼，从上面看，整个房间像一个小小的模型。'], 'loft'))
   if (c.telescope || c.stargaze) lines.push(c.wish ? `在阁楼上看星星，对着流星许了${c.wish > 1 ? ` ${c.wish} 个` : '一个'}愿望。不告诉别人。` : pick(['在阁楼上看了一会儿星星，天窗外面很安静。', '透过望远镜看窗外的城堡，比想象中还要远。'], 'sky'))
+  if (c.blindfold) lines.push(pick(['在阁楼上蒙着眼睛排练。看不见的时候，反而听见了他们。', '丝巾蒙住眼睛，三个人在黑暗里同时停住、同时落下。'], 'blindfold'))
   if (c.rehearsal) lines.push(pick(['阁楼角落有一块软木板，贴满了歌单和便签。', '排练间里有人留了一张便签。我假装没看见。'], 'rehearsal'))
   if (c.guitar) {
     const chords = (l.chord || []).slice(0, 3).join('、')

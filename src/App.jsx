@@ -47,7 +47,7 @@ import Milo from './scene/Milo'
 import { FLAGS } from './config/flags'
 import SasaBand from './scene/SasaBand'
 import LoftProps from './scene/LoftProps'
-import { ClimbPanel, RehearsalPanel, StargazePanel, TelescopeView } from './ui/LoftPanels'
+import { BlindfoldPanel, ClimbPanel, RehearsalPanel, StargazePanel, TelescopeView } from './ui/LoftPanels'
 import { loft } from './game/loft'
 import { pushSecretKey, sasaBand } from './game/sasaBand'
 import JourneyHud from './ui/JourneyHud'
@@ -148,7 +148,7 @@ export default function App() {
     if (!captureEnabled || game.started) return
     game.startPreview()
     if (captureMode === 'band') game.enter('band')
-    else if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar', 'bed', 'deskChair', 'telescope', 'stargaze', 'rehearsal', 'climb'].includes(captureMode)) { if (['telescope', 'stargaze', 'rehearsal'].includes(captureMode)) loft.set(true); game.enter(captureMode) }
+    else if (captureMode && ['drums', 'computer', 'beanbag', 'piano', 'mugo', 'record', 'books', 'musicBooks', 'photos', 'guitar', 'bed', 'deskChair', 'telescope', 'stargaze', 'rehearsal', 'climb', 'blindfold'].includes(captureMode)) { if (['telescope', 'stargaze', 'rehearsal', 'blindfold'].includes(captureMode)) loft.set(true); game.enter(captureMode) }
   }, [captureEnabled, captureMode, game.started, game.startPreview, game.enter])
   useEffect(() => {
     if (captureEnabled && captureMode === 'band' && game.mode === 'band' && band.get().phase === 'off') band.open()
@@ -277,7 +277,8 @@ export default function App() {
       {game.mode === 'climb' && <ClimbPanel onArrive={game.arriveLoft} onClose={game.leave}/>}
       {game.mode === 'telescope' && <TelescopeView onClose={game.leave}/>}
       {game.mode === 'stargaze' && <StargazePanel onClose={game.leave}/>}
-      {game.mode === 'rehearsal' && <RehearsalPanel onClose={game.leave}/>}
+      {game.mode === 'rehearsal' && <RehearsalPanel onClose={game.leave} onBlindfold={() => game.enter('blindfold')}/>}
+      {game.mode === 'blindfold' && <BlindfoldPanel onClose={game.leave}/>}
       {game.mode === 'deskChair' && <ChairNotePanel onClose={game.leave}/>}
       {game.mode === 'beanbag' && <div className="mode-panel" data-testid="lounge-controls"><span>TAKE A BREATH</span><button onClick={e=>{e.stopPropagation();game.toggleAmbient()}}>{game.ambient ? '❚❚ 暂停环境音乐' : '▶ 播放环境音乐'}</button><small>E · 起身　M · 音乐开关</small></div>}
       {!whiteModel && !world && <JourneyHud/>}
