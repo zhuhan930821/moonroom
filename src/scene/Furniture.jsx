@@ -62,13 +62,17 @@ function Rug({ quality }){
 // E01: "Messy bed 2.0" by thethieme (Sketchfab, CC BY 4.0, credit in ASSETS.md), recoloured to the
 // Moonroom palette. Base maps are dropped (they bake the original grey/black look); normal and
 // roughness maps keep the fabric folds and wood grain. Scaled 2.1x: the room's furniture is ~1.7x real scale, and the bed is deliberately oversized beyond that as the dream bed.
+// The frame keeps its wood grain: its grey base map is remapped to honey tones offline
+// (public/assets/models/bed/bed-frame-honey.webp), so the grain still follows the model's UVs.
+const honeyWood = new THREE.TextureLoader().load('/assets/models/bed/bed-frame-honey.webp', t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 8 })
+honeyWood.flipY = false
 const BED_TINTS = {
   Nordli_Cover: { color: new THREE.Color('#d98fae'), map: null },     // draped throw: rose knit
   Nordli_Comforter: { color: new THREE.Color('#f3e4dc'), map: null }, // folded duvet: cream
   Nordli_Sheet: { color: new THREE.Color('#efe2e6'), map: null },
   Nordli_Pillows: { color: new THREE.Color('#c8b4e2'), map: null },   // lilac pillows
-  Nordli_Frame: { color: new THREE.Color('#b98a6c'), map: null },     // warm honey wood
-  Nordli_Shelves: { color: new THREE.Color('#b98a6c'), map: null },
+  Nordli_Frame: { color: new THREE.Color('#ffffff'), map: honeyWood },   // warm honey wood, real grain
+  Nordli_Shelves: { color: new THREE.Color('#ffffff'), map: honeyWood },
 }
 
 function Bed() {

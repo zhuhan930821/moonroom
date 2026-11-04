@@ -5,6 +5,9 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js'
 import { energy } from '../audio/musicBus'
 import { darkness, roomState } from '../game/roomState'
 import { FLAGS } from '../config/flags'
@@ -60,16 +63,50 @@ export function CinematicLights({ layer, settings, quality }) {
   </>
 }
 
+// Film look after tone mapping: violet shadows, warm highlights, a soft vignette and fine grain.
+const GradeShader = {
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAmount: { value: 1 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+  fragmentShader: `
+    uniform sampler2D tDiffuse; uniform float uTime, uAmount; varying vec2 vUv;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main(){
+      vec3 c = texture2D(tDiffuse, vUv).rgb;
+      float l = dot(c, vec3(.299, .587, .114));
+      vec3 shadows = vec3(.035, .012, .05), highlights = vec3(1.04, 1.0, .95);
+      vec3 graded = c * mix(vec3(1.), highlights, smoothstep(.45, 1., l)) + shadows * (1. - smoothstep(0., .45, l));
+      graded = mix(vec3(dot(graded, vec3(.299, .587, .114))), graded, 1.06);            // a touch more colour
+      float vig = smoothstep(1.15, .35, length((vUv - .5) * vec2(1.25, 1.)));
+      graded *= mix(.78, 1., vig);
+      graded += (hash(vUv * 1000. + fract(uTime) * 61.) - .5) * .022;                   // fine film grain
+      gl_FragColor = vec4(mix(c, graded, uAmount), 1.);
+    }`,
+}
+
 export function CinematicPostFX({ enabled, settings }) {
   const { gl, scene, camera, size } = useThree()
   const composer = useMemo(() => {
     const next = new EffectComposer(gl)
     next.addPass(new RenderPass(scene, camera))
-    next.addPass(new UnrealBloomPass(new THREE.Vector2(size.width, size.height), settings.bloomStrength, .55, settings.bloomThreshold))
+    const look = new URLSearchParams(location.search).get('look') !== '0' // ?look=0: the old chain, for before/after review
+    // Contact shadows: ambient occlusion where furniture meets the floor and walls meet.
+    const ao = new GTAOPass(scene, camera, size.width, size.height)
+    ao.output = GTAOPass.OUTPUT.Default
+    ao.blendIntensity = .9
+    ao.updateGtaoMaterial({ radius: .7, distanceExponent: 1.6, thickness: 1.2, scale: 1.1, samples: 12 })
+    ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 })
+    if (look) next.addPass(ao)
+    const bloom = new UnrealBloomPass(new THREE.Vector2(size.width, size.height), settings.bloomStrength, .55, settings.bloomThreshold)
+    next.addPass(bloom)
     next.addPass(new OutputPass())
+    const grade = new ShaderPass(GradeShader)
+    if (look) next.addPass(grade)
+    // The composer renders off-screen, so the canvas's own antialias does nothing: SMAA instead.
+    if (look) next.addPass(new SMAAPass(size.width * gl.getPixelRatio(), size.height * gl.getPixelRatio()))
+    next.userData = { bloom, grade, ao }
     return next
   }, [gl, scene, camera])
-  const bloom = composer.passes[1]
+  const { bloom, grade } = composer.userData
   useEffect(() => {
     gl.outputColorSpace = THREE.SRGBColorSpace
     gl.toneMapping = THREE.ACESFilmicToneMapping
@@ -79,8 +116,9 @@ export function CinematicPostFX({ enabled, settings }) {
   useEffect(() => { composer.setSize(size.width, size.height) }, [composer, size])
   useEffect(() => () => composer.dispose(), [composer])
   bloom.threshold = settings.bloomThreshold
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (!enabled) return
+    grade.uniforms.uTime.value = clock.elapsedTime
     // The whole room's glow breathes with kicks and cymbals.
     bloom.strength = settings.bloomStrength + energy('kick', 5) * .18 + energy('cymbal', 1.8) * .28 + energy('piano', 2) * .1
     composer.render()

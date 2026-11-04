@@ -110,7 +110,18 @@ void main() {
   float v = (vUv.y - imageV0) / (imageV1 - imageV0);
   float fadeU = smoothstep(0.0, 0.14, u) * smoothstep(1.0, 0.86, u);
   float fadeV = smoothstep(0.0, 0.10, v) * smoothstep(1.0, 0.82, v);
-  vec3 painting = texture2D(map, clamp(vec2(u, v), 0.0, 1.0)).rgb;
+  // The painting comes alive: the cloud sea (lower band) drifts and swells slowly.
+  float cloud = smoothstep(.46, .12, v);
+  vec2 uvp = vec2(u, v) + cloud * vec2(sin(v * 38.0 + time * .23) * .0026 + time * .0009 * (1.0 - v), sin(u * 24.0 + time * .31) * .0018);
+  vec3 painting = texture2D(map, clamp(uvp, 0.0, 1.0)).rgb;
+  float plum = dot(painting, vec3(.3, .55, .15));
+  // Waterfalls and the glowing river: bright, pale pixels shimmer as if flowing downward.
+  float pale = smoothstep(.55, .85, plum) * (1.0 - smoothstep(.12, .35, max(max(painting.r, painting.g), painting.b) - min(min(painting.r, painting.g), painting.b)));
+  float flow = .5 + .5 * sin(v * 420.0 + time * 6.5 + sin(u * 300.0) * 2.0);
+  painting += pale * flow * .16 * smoothstep(.25, .45, v) * smoothstep(.9, .7, v);
+  // Painted stars twinkle.
+  float sparkle = smoothstep(.72, .95, plum) * smoothstep(.7, .85, v);
+  painting *= 1.0 + sparkle * .35 * sin(time * (2.0 + fract(u * 91.0) * 3.0) + u * 400.0 + v * 300.0);
   // Sunrise grades the painted night: warmer, lifted shadows, a low peach glow near the horizon.
   vec3 sunrise = painting * vec3(1.18, 1.0, .82) + vec3(.10, .05, .02) + vec3(.22, .10, .03) * smoothstep(.55, .1, v);
   painting = mix(painting, sunrise, dawn);
